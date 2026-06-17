@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Palette, Book, Layout, Ruler, ShoppingCart, Droplet, Layers } from 'lucide-react';
+import { Palette, Book, Layout, Ruler, ShoppingCart, Droplet, Layers, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import AuthModal from './AuthModal';
@@ -35,12 +35,37 @@ const layoutOptions = [
   { id: 'custom', name: 'Custom Design', desc: 'Unique, personalized layout', price: 5000 },
 ];
 
-const bookSizes = [
-  { id: '5x8', name: '5" x 8"', desc: 'Pocket-sized, portable', price: 0 },
-  { id: '6x9', name: '6" x 9"', desc: 'Standard paperback size', price: 500 },
-  { id: '8x10', name: '8" x 10"', desc: 'Coffee table book size', price: 1500 },
-  { id: 'large', name: 'Large Format (10" x 12")', desc: 'Premium oversized edition', price: 3000 },
+// Standard Indian/UK trade book sizes (Width x Length / trim size).
+// Hardback covers run slightly larger than paperback. The spine (H) is NOT a
+// size choice — it's derived from page count (word count) by the pricing engine.
+// `price` is a placeholder until the cost matrix is finalised.
+interface BookSize {
+  id: string;
+  name: string;
+  desc: string;
+  pb: { w: number; l: number; win: number; lin: number };
+  hb: { w: number; l: number; win: number; lin: number };
+  price: number;
+}
+
+const bookSizes: BookSize[] = [
+  { id: 'demy', name: 'Demy', desc: 'Classic novel / fiction size',
+    pb: { w: 140, l: 215, win: 5.5, lin: 8.5 }, hb: { w: 145, l: 222, win: 5.7, lin: 8.75 }, price: 0 },
+  { id: 'crown1', name: 'Crown1', desc: 'Compact non-fiction',
+    pb: { w: 170, l: 240, win: 6.75, lin: 9.5 }, hb: { w: 174, l: 240, win: 6.85, lin: 9.5 }, price: 0 },
+  { id: 'royal', name: 'Royal', desc: 'Popular all-rounder',
+    pb: { w: 160, l: 240, win: 6.25, lin: 9.5 }, hb: { w: 163, l: 248, win: 6.4, lin: 9.75 }, price: 0 },
+  { id: 'crown', name: 'Crown', desc: 'Wider trim, textbooks',
+    pb: { w: 185, l: 235, win: 7.25, lin: 9.25 }, hb: { w: 188, l: 248, win: 7.4, lin: 9.75 }, price: 0 },
+  { id: 'doubledemy', name: 'Double Demy', desc: 'Coffee-table / photo books',
+    pb: { w: 215, l: 280, win: 8.5, lin: 11 }, hb: { w: 220, l: 285, win: 8.7, lin: 11.25 }, price: 0 },
 ];
+
+// Width x Length string for a size in the chosen binding.
+const sizeDims = (size: BookSize, binding: string) => {
+  const d = binding === 'hardback' ? size.hb : size.pb;
+  return `${d.w} × ${d.l} mm (${d.win}" × ${d.lin}")`;
+};
 
 // NOTE: color/binding prices below are placeholders — adjust to your real costs.
 const colorOptions = [
@@ -53,6 +78,48 @@ const bindingOptions = [
   { id: 'hardback', name: 'Hardback', desc: 'Hard cover, premium & durable', price: 1500 },
 ];
 
+interface Suggestion {
+  id: string;
+  text: string;
+  ctaLabel: string;
+  field: keyof CustomizationData;
+  value: string;
+}
+
+// Rule-based suggestions: contextual nudges based on what the author has picked.
+// Each rule only fires when the recommended option isn't already selected.
+function getSuggestions(c: CustomizationData): Suggestion[] {
+  const s: Suggestion[] = [];
+  const isLarge = c.bookSize === 'doubledemy';
+  const premiumCover = ['foil', 'embossed', 'textured'].includes(c.coverDesign);
+
+  if (c.interiorColor === 'color' && !['glossy', 'matte'].includes(c.paperType))
+    s.push({ id: 'color-paper', text: 'Full-colour interiors look sharpest on glossy paper.', ctaLabel: 'Use Glossy Paper', field: 'paperType', value: 'glossy' });
+
+  if (c.interiorColor === 'color' && c.binding !== 'hardback')
+    s.push({ id: 'color-hardback', text: 'Colour photo books hold up better as a hardback.', ctaLabel: 'Make it Hardback', field: 'binding', value: 'hardback' });
+
+  if (isLarge && c.interiorColor !== 'color')
+    s.push({ id: 'large-color', text: 'Large formats really shine in full colour.', ctaLabel: 'Switch to Full Colour', field: 'interiorColor', value: 'color' });
+
+  if (isLarge && c.layoutOption !== 'illustrated')
+    s.push({ id: 'large-illustrated', text: 'Coffee-table sizes pair well with an illustrated layout.', ctaLabel: 'Use Illustrated Layout', field: 'layoutOption', value: 'illustrated' });
+
+  if (c.layoutOption === 'illustrated' && c.interiorColor !== 'color')
+    s.push({ id: 'illus-color', text: 'Illustrated layouts come alive in full colour.', ctaLabel: 'Switch to Full Colour', field: 'interiorColor', value: 'color' });
+
+  if (premiumCover && c.binding !== 'hardback')
+    s.push({ id: 'cover-hardback', text: 'A premium cover feels best on a hardback.', ctaLabel: 'Make it Hardback', field: 'binding', value: 'hardback' });
+
+  if (c.binding === 'hardback' && c.paperType !== 'premium')
+    s.push({ id: 'hardback-paper', text: 'Hardbacks pair beautifully with Premium Cream paper.', ctaLabel: 'Use Premium Cream', field: 'paperType', value: 'premium' });
+
+  if (!isLarge && c.interiorColor === 'bw' && c.coverDesign === 'standard' && c.paperType === 'glossy')
+    s.push({ id: 'novel-paper', text: 'For a classic novel, Premium Cream paper gives a refined reading feel.', ctaLabel: 'Use Premium Cream', field: 'paperType', value: 'premium' });
+
+  return s.slice(0, 3); // keep it focused
+}
+
 export default function BookCustomizer() {
   const { user } = useAuth();
   const [customization, setCustomization] = useState<CustomizationData>({
@@ -61,7 +128,7 @@ export default function BookCustomizer() {
     binding: 'paperback',
     coverDesign: 'standard',
     layoutOption: 'single',
-    bookSize: '6x9',
+    bookSize: 'demy',
   });
 
   const [estimatedPrice, setEstimatedPrice] = useState(0);
@@ -149,6 +216,8 @@ export default function BookCustomizer() {
       setIsSaving(false);
     }
   };
+
+  const suggestions = getSuggestions(customization);
 
   return (
     <section id="customizer" className="py-20 px-4 bg-gradient-to-br from-slate-50 to-gray-100">
@@ -260,13 +329,17 @@ export default function BookCustomizer() {
                     }`}
                   >
                     <h4 className="font-bold text-gray-900">{size.name}</h4>
-                    <p className="text-sm text-gray-600 mb-2">{size.desc}</p>
-                    <p className="text-sm font-semibold text-purple-600">
-                      +₹{size.price}
+                    <p className="text-sm text-gray-600 mb-1">{size.desc}</p>
+                    <p className="text-xs font-semibold text-purple-600">
+                      {sizeDims(size, customization.binding)}
                     </p>
                   </button>
                 ))}
               </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Dimensions shown for {customization.binding === 'hardback' ? 'Hardback' : 'Paperback'}.
+                Spine width is calculated from your page count.
+              </p>
             </div>
 
             <div>
@@ -356,8 +429,13 @@ export default function BookCustomizer() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700">Book Size:</span>
-                    <span className="font-semibold text-gray-900">
-                      {bookSizes.find(s => s.id === customization.bookSize)?.name}
+                    <span className="font-semibold text-gray-900 text-right">
+                      {(() => {
+                        const s = bookSizes.find((b) => b.id === customization.bookSize);
+                        if (!s) return '—';
+                        const d = customization.binding === 'hardback' ? s.hb : s.pb;
+                        return `${s.name} (${d.w}×${d.l} mm)`;
+                      })()}
                     </span>
                   </div>
                 </div>
@@ -369,6 +447,33 @@ export default function BookCustomizer() {
                     This is the production cost per unit. Varies by order quantity and plan tier.
                   </p>
                 </div>
+
+                {suggestions.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-3">
+                      <Sparkles className="w-5 h-5 text-amber-600" />
+                      Recommended for your book
+                    </h4>
+                    <div className="space-y-3">
+                      {suggestions.map((s) => (
+                        <div
+                          key={s.id}
+                          className="bg-amber-50 border border-amber-200 rounded-xl p-3"
+                        >
+                          <p className="text-sm text-gray-700 mb-2">{s.text}</p>
+                          <button
+                            onClick={() =>
+                              setCustomization({ ...customization, [s.field]: s.value })
+                            }
+                            className="text-sm font-semibold text-amber-700 hover:text-amber-900"
+                          >
+                            {s.ctaLabel} →
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-3 p-4 bg-blue-50 rounded-xl mb-6 border border-blue-200">
                   <p className="text-sm text-blue-900 font-semibold">Pro Tip:</p>
