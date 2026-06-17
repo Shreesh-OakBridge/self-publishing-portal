@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Palette, Book, Layout, Ruler, ShoppingCart, Droplet, Layers, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
+import { useContent } from '../content/ContentProvider';
+import type { CustomizerSize } from '../content/defaults';
 import AuthModal from './AuthModal';
 
 interface CustomizationData {
@@ -13,70 +15,12 @@ interface CustomizationData {
   bookSize: string;
 }
 
-const paperTypes = [
-  { id: 'glossy', name: 'Glossy Paper', desc: 'High shine finish, vibrant colors', price: 0 },
-  { id: 'matte', name: 'Matte Paper', desc: 'Professional look, no glare', price: 500 },
-  { id: 'premium', name: 'Premium Cream', desc: 'Classic feel, elegant appearance', price: 1000 },
-  { id: 'recycled', name: 'Recycled Paper', desc: 'Eco-friendly option', price: 800 },
-];
-
-const coverDesigns = [
-  { id: 'standard', name: 'Standard Design', desc: 'Clean, professional layout', price: 0 },
-  { id: 'embossed', name: 'Embossed Cover', desc: 'Raised text & patterns', price: 2000 },
-  { id: 'foil', name: 'Foil Stamping', desc: 'Metallic accents', price: 3500 },
-  { id: 'textured', name: 'Textured Cover', desc: 'Premium tactile finish', price: 2500 },
-  { id: 'full_color', name: 'Full Color HD', desc: 'Ultra-vibrant, photo-quality', price: 1500 },
-];
-
-const layoutOptions = [
-  { id: 'single', name: 'Single Column', desc: 'Traditional book layout', price: 0 },
-  { id: 'double', name: 'Two Column', desc: 'Modern, compact layout', price: 1000 },
-  { id: 'illustrated', name: 'Illustrated Layout', desc: 'With art & graphics', price: 3000 },
-  { id: 'custom', name: 'Custom Design', desc: 'Unique, personalized layout', price: 5000 },
-];
-
-// Standard Indian/UK trade book sizes (Width x Length / trim size).
-// Hardback covers run slightly larger than paperback. The spine (H) is NOT a
-// size choice — it's derived from page count (word count) by the pricing engine.
-// `price` is a placeholder until the cost matrix is finalised.
-interface BookSize {
-  id: string;
-  name: string;
-  desc: string;
-  pb: { w: number; l: number; win: number; lin: number };
-  hb: { w: number; l: number; win: number; lin: number };
-  price: number;
-}
-
-const bookSizes: BookSize[] = [
-  { id: 'demy', name: 'Demy', desc: 'Classic novel / fiction size',
-    pb: { w: 140, l: 215, win: 5.5, lin: 8.5 }, hb: { w: 145, l: 222, win: 5.7, lin: 8.75 }, price: 0 },
-  { id: 'crown1', name: 'Crown1', desc: 'Compact non-fiction',
-    pb: { w: 170, l: 240, win: 6.75, lin: 9.5 }, hb: { w: 174, l: 240, win: 6.85, lin: 9.5 }, price: 0 },
-  { id: 'royal', name: 'Royal', desc: 'Popular all-rounder',
-    pb: { w: 160, l: 240, win: 6.25, lin: 9.5 }, hb: { w: 163, l: 248, win: 6.4, lin: 9.75 }, price: 0 },
-  { id: 'crown', name: 'Crown', desc: 'Wider trim, textbooks',
-    pb: { w: 185, l: 235, win: 7.25, lin: 9.25 }, hb: { w: 188, l: 248, win: 7.4, lin: 9.75 }, price: 0 },
-  { id: 'doubledemy', name: 'Double Demy', desc: 'Coffee-table / photo books',
-    pb: { w: 215, l: 280, win: 8.5, lin: 11 }, hb: { w: 220, l: 285, win: 8.7, lin: 11.25 }, price: 0 },
-];
-
-// Width x Length string for a size in the chosen binding.
-const sizeDims = (size: BookSize, binding: string) => {
+// All option lists, prices and headings are now managed in the CMS
+// (Site Content → Book Customizer). Width x Length string for a size below.
+const sizeDims = (size: CustomizerSize, binding: string) => {
   const d = binding === 'hardback' ? size.hb : size.pb;
   return `${d.w} × ${d.l} mm (${d.win}" × ${d.lin}")`;
 };
-
-// NOTE: color/binding prices below are placeholders — adjust to your real costs.
-const colorOptions = [
-  { id: 'bw', name: 'Black & White', desc: 'Single-color interior printing', price: 0 },
-  { id: 'color', name: 'Full Color (4-Color)', desc: '4-color pages throughout', price: 2500 },
-];
-
-const bindingOptions = [
-  { id: 'paperback', name: 'Paperback', desc: 'Soft cover, lightweight', price: 0 },
-  { id: 'hardback', name: 'Hardback', desc: 'Hard cover, premium & durable', price: 1500 },
-];
 
 interface Suggestion {
   id: string;
@@ -122,6 +66,10 @@ function getSuggestions(c: CustomizationData): Suggestion[] {
 
 export default function BookCustomizer() {
   const { user } = useAuth();
+  const { customizer } = useContent();
+  // All options/prices are CMS-managed; reuse the same names locally.
+  const { paperTypes, coverDesigns, layoutOptions, bookSizes, colorOptions, bindingOptions } =
+    customizer;
   // Pre-load from query params when an author re-opens a saved design.
   const [customization, setCustomization] = useState<CustomizationData>(() => {
     const p = new URLSearchParams(window.location.search);
@@ -145,7 +93,7 @@ export default function BookCustomizer() {
   }, [customization]);
 
   const calculatePrice = () => {
-    const baseCost = 8000; // Base production cost in INR
+    const baseCost = customizer.baseCost; // CMS-managed base production cost
 
     const paperCost = paperTypes.find(p => p.id === customization.paperType)?.price || 0;
     const colorCost = colorOptions.find(c => c.id === customization.interiorColor)?.price || 0;
@@ -228,12 +176,9 @@ export default function BookCustomizer() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Design Your Book
+            {customizer.heading}
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Customize every aspect of your book production and get real-time price estimates.
-            See exactly what you're getting before you commit.
-          </p>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">{customizer.subheading}</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12">

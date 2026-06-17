@@ -77,12 +77,48 @@ export interface FooterContent {
   copyrightName: string;
 }
 
+export interface CustomizerOption {
+  id: string;
+  name: string;
+  desc: string;
+  price: number;
+}
+
+export interface CustomizerSizeDim {
+  w: number;
+  l: number;
+  win: number;
+  lin: number;
+}
+
+export interface CustomizerSize {
+  id: string;
+  name: string;
+  desc: string;
+  price: number;
+  pb: CustomizerSizeDim;
+  hb: CustomizerSizeDim;
+}
+
+export interface CustomizerContent {
+  heading: string;
+  subheading: string;
+  baseCost: number;
+  paperTypes: CustomizerOption[];
+  colorOptions: CustomizerOption[];
+  bindingOptions: CustomizerOption[];
+  coverDesigns: CustomizerOption[];
+  layoutOptions: CustomizerOption[];
+  bookSizes: CustomizerSize[];
+}
+
 export interface SiteContent {
   branding: BrandingContent;
   hero: HeroContent;
   valueProps: ValuePropsContent;
   video: VideoContent;
   pricing: PricingContent;
+  customizer: CustomizerContent;
   contact: ContactContent;
   footer: FooterContent;
 }
@@ -262,6 +298,51 @@ export const defaultContent: SiteContent = {
           'Full copyright & trademark protection',
         ],
       },
+    ],
+  },
+  customizer: {
+    heading: 'Design Your Book',
+    subheading:
+      "Customize every aspect of your book production and get real-time price estimates. See exactly what you're getting before you commit.",
+    baseCost: 8000,
+    paperTypes: [
+      { id: 'glossy', name: 'Glossy Paper', desc: 'High shine finish, vibrant colors', price: 0 },
+      { id: 'matte', name: 'Matte Paper', desc: 'Professional look, no glare', price: 500 },
+      { id: 'premium', name: 'Premium Cream', desc: 'Classic feel, elegant appearance', price: 1000 },
+      { id: 'recycled', name: 'Recycled Paper', desc: 'Eco-friendly option', price: 800 },
+    ],
+    colorOptions: [
+      { id: 'bw', name: 'Black & White', desc: 'Single-color interior printing', price: 0 },
+      { id: 'color', name: 'Full Color (4-Color)', desc: '4-color pages throughout', price: 2500 },
+    ],
+    bindingOptions: [
+      { id: 'paperback', name: 'Paperback', desc: 'Soft cover, lightweight', price: 0 },
+      { id: 'hardback', name: 'Hardback', desc: 'Hard cover, premium & durable', price: 1500 },
+    ],
+    coverDesigns: [
+      { id: 'standard', name: 'Standard Design', desc: 'Clean, professional layout', price: 0 },
+      { id: 'embossed', name: 'Embossed Cover', desc: 'Raised text & patterns', price: 2000 },
+      { id: 'foil', name: 'Foil Stamping', desc: 'Metallic accents', price: 3500 },
+      { id: 'textured', name: 'Textured Cover', desc: 'Premium tactile finish', price: 2500 },
+      { id: 'full_color', name: 'Full Color HD', desc: 'Ultra-vibrant, photo-quality', price: 1500 },
+    ],
+    layoutOptions: [
+      { id: 'single', name: 'Single Column', desc: 'Traditional book layout', price: 0 },
+      { id: 'double', name: 'Two Column', desc: 'Modern, compact layout', price: 1000 },
+      { id: 'illustrated', name: 'Illustrated Layout', desc: 'With art & graphics', price: 3000 },
+      { id: 'custom', name: 'Custom Design', desc: 'Unique, personalized layout', price: 5000 },
+    ],
+    bookSizes: [
+      { id: 'demy', name: 'Demy', desc: 'Classic novel / fiction size', price: 0,
+        pb: { w: 140, l: 215, win: 5.5, lin: 8.5 }, hb: { w: 145, l: 222, win: 5.7, lin: 8.75 } },
+      { id: 'crown1', name: 'Crown1', desc: 'Compact non-fiction', price: 0,
+        pb: { w: 170, l: 240, win: 6.75, lin: 9.5 }, hb: { w: 174, l: 240, win: 6.85, lin: 9.5 } },
+      { id: 'royal', name: 'Royal', desc: 'Popular all-rounder', price: 0,
+        pb: { w: 160, l: 240, win: 6.25, lin: 9.5 }, hb: { w: 163, l: 248, win: 6.4, lin: 9.75 } },
+      { id: 'crown', name: 'Crown', desc: 'Wider trim, textbooks', price: 0,
+        pb: { w: 185, l: 235, win: 7.25, lin: 9.25 }, hb: { w: 188, l: 248, win: 7.4, lin: 9.75 } },
+      { id: 'doubledemy', name: 'Double Demy', desc: 'Coffee-table / photo books', price: 0,
+        pb: { w: 215, l: 280, win: 8.5, lin: 11 }, hb: { w: 220, l: 285, win: 8.7, lin: 11.25 } },
     ],
   },
   contact: {

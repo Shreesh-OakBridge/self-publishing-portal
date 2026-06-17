@@ -13,6 +13,7 @@ const SECTION_LABELS: Record<string, string> = {
   valueProps: 'Value Proposition',
   video: 'Process & Video',
   pricing: 'Pricing Plans',
+  customizer: 'Book Customizer',
   contact: 'Contact Section',
   footer: 'Footer',
 };
