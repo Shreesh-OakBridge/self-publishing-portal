@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingUp, DollarSign, BookOpen, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
@@ -19,10 +19,14 @@ const planRoyalties = {
 
 export default function RoyaltyCalculator() {
   const { user } = useAuth();
-  const [royaltyData, setRoyaltyData] = useState<RoyaltyData>({
-    bookPrice: 299,
-    expectedSales: 100,
-    planType: 'Professional',
+  // Pre-load from query params when an author re-opens a saved projection.
+  const [royaltyData, setRoyaltyData] = useState<RoyaltyData>(() => {
+    const p = new URLSearchParams(window.location.search);
+    return {
+      bookPrice: Number(p.get('price')) || 299,
+      expectedSales: Number(p.get('sales')) || 100,
+      planType: p.get('plan') || 'Professional',
+    };
   });
 
   const [results, setResults] = useState({
@@ -58,6 +62,12 @@ export default function RoyaltyCalculator() {
       breakeven: monthsToBreakeven,
     });
   };
+
+  // Compute once on load so preloaded/default values show results immediately.
+  useEffect(() => {
+    calculateRoyalty();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Require login so saved projections are tied to an account we can follow up
   // with; otherwise nudge the visitor to log in / sign up first.

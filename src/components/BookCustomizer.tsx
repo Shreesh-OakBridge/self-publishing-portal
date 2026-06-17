@@ -122,13 +122,17 @@ function getSuggestions(c: CustomizationData): Suggestion[] {
 
 export default function BookCustomizer() {
   const { user } = useAuth();
-  const [customization, setCustomization] = useState<CustomizationData>({
-    paperType: 'glossy',
-    interiorColor: 'bw',
-    binding: 'paperback',
-    coverDesign: 'standard',
-    layoutOption: 'single',
-    bookSize: 'demy',
+  // Pre-load from query params when an author re-opens a saved design.
+  const [customization, setCustomization] = useState<CustomizationData>(() => {
+    const p = new URLSearchParams(window.location.search);
+    return {
+      paperType: p.get('paper') || 'glossy',
+      interiorColor: p.get('color') || 'bw',
+      binding: p.get('binding') || 'paperback',
+      coverDesign: p.get('cover') || 'standard',
+      layoutOption: p.get('layout') || 'single',
+      bookSize: p.get('size') || 'demy',
+    };
   });
 
   const [estimatedPrice, setEstimatedPrice] = useState(0);

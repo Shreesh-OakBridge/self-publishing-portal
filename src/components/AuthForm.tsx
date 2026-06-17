@@ -12,7 +12,8 @@ interface AuthFormProps {
 
 export default function AuthForm({ onAuthenticated, initialMode = 'login' }: AuthFormProps) {
   const [mode, setMode] = useState<Mode>(initialMode);
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -25,6 +26,11 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login' }: Aut
     setError('');
     setInfo('');
 
+    if (mode === 'signup' && !firstName.trim()) {
+      setError('First name is required.');
+      return;
+    }
+
     if (password.length < 6) {
       setError('Password must be at least 6 characters.');
       return;
@@ -33,10 +39,17 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login' }: Aut
     setBusy(true);
     try {
       if (mode === 'signup') {
+        const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: fullName } },
+          options: {
+            data: {
+              first_name: firstName.trim(),
+              last_name: lastName.trim(),
+              full_name: fullName,
+            },
+          },
         });
         if (signUpError) throw signUpError;
 
@@ -86,16 +99,30 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login' }: Aut
       )}
 
       {mode === 'signup' && (
-        <div className="mb-4">
-          <label className="block text-gray-700 font-semibold mb-2">Full Name</label>
-          <input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            required
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
-            placeholder="Jane Author"
-          />
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">
+              First Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
+              placeholder="Jane"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">Last Name</label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
+              placeholder="Author"
+            />
+          </div>
         </div>
       )}
 

@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, LogOut, Palette, Calculator, Home } from 'lucide-react';
+import { BookOpen, LogOut, Palette, Calculator, Home, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
+import ProfileEditor from './ProfileEditor';
 
 interface Customization {
   id: string;
   paper_type: string | null;
+  interior_color: string | null;
+  binding: string | null;
   cover_design: string | null;
   layout_option: string | null;
   book_size: string | null;
@@ -33,6 +36,7 @@ export default function AccountPage() {
   const [customizations, setCustomizations] = useState<Customization[]>([]);
   const [calculations, setCalculations] = useState<Calculation[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [editingProfile, setEditingProfile] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -70,7 +74,31 @@ export default function AccountPage() {
     );
   }
 
-  const name = (user.user_metadata?.full_name as string) || user.email;
+  const fullName = (user.user_metadata?.full_name as string) || '';
+  const bio = (user.user_metadata?.bio as string) || '';
+  const bookScope = (user.user_metadata?.book_scope as string) || '';
+
+  // Re-open a saved item on its page, pre-loaded via query params.
+  const openCustomization = (c: Customization) => {
+    const params = new URLSearchParams({
+      paper: c.paper_type ?? '',
+      color: c.interior_color ?? '',
+      binding: c.binding ?? '',
+      cover: c.cover_design ?? '',
+      layout: c.layout_option ?? '',
+      size: c.book_size ?? '',
+    });
+    window.location.href = `/customize?${params.toString()}`;
+  };
+
+  const openCalculation = (r: Calculation) => {
+    const params = new URLSearchParams({
+      price: String(r.book_price ?? ''),
+      sales: String(r.expected_sales ?? ''),
+      plan: r.plan_type ?? '',
+    });
+    window.location.href = `/royalty-calculator?${params.toString()}`;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -106,10 +134,43 @@ export default function AccountPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
-        <div className="bg-white rounded-2xl border p-6">
-          <h1 className="text-2xl font-bold text-gray-900">Welcome, {name}</h1>
-          <p className="text-gray-500">{user.email}</p>
-        </div>
+        {editingProfile ? (
+          <ProfileEditor onDone={() => setEditingProfile(false)} />
+        ) : (
+          <div className="bg-white rounded-2xl border p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Login ID</p>
+                <h1 className="text-2xl font-bold text-gray-900">{user.email}</h1>
+                <p className="text-gray-600 mt-1">{fullName || 'Name not set'}</p>
+              </div>
+              <button
+                onClick={() => setEditingProfile(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm flex-shrink-0"
+              >
+                <Pencil className="w-4 h-4" />
+                <span>Edit Profile</span>
+              </button>
+            </div>
+
+            {(bio || bookScope) && (
+              <div className="mt-4 pt-4 border-t space-y-2 text-sm">
+                {bio && (
+                  <p>
+                    <span className="font-semibold text-gray-700">About: </span>
+                    <span className="text-gray-600">{bio}</span>
+                  </p>
+                )}
+                {bookScope && (
+                  <p>
+                    <span className="font-semibold text-gray-700">My book: </span>
+                    <span className="text-gray-600">{bookScope}</span>
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         <section>
           <div className="flex items-center space-x-2 mb-3">
@@ -140,13 +201,18 @@ export default function AccountPage() {
                 </thead>
                 <tbody>
                   {customizations.map((c) => (
-                    <tr key={c.id} className="border-b last:border-0 hover:bg-gray-50">
+                    <tr
+                      key={c.id}
+                      onClick={() => openCustomization(c)}
+                      title="Open this design in the customizer"
+                      className="border-b last:border-0 hover:bg-amber-50 cursor-pointer"
+                    >
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(c.created_at)}</td>
                       <td className="px-4 py-3">{c.paper_type || '—'}</td>
                       <td className="px-4 py-3">{c.cover_design || '—'}</td>
                       <td className="px-4 py-3">{c.layout_option || '—'}</td>
                       <td className="px-4 py-3">{c.book_size || '—'}</td>
-                      <td className="px-4 py-3 font-semibold">{inr(c.estimated_price)}</td>
+                      <td className="px-4 py-3 font-semibold text-amber-700">{inr(c.estimated_price)} ›</td>
                     </tr>
                   ))}
                 </tbody>
@@ -184,13 +250,18 @@ export default function AccountPage() {
                 </thead>
                 <tbody>
                   {calculations.map((r) => (
-                    <tr key={r.id} className="border-b last:border-0 hover:bg-gray-50">
+                    <tr
+                      key={r.id}
+                      onClick={() => openCalculation(r)}
+                      title="Open this projection in the calculator"
+                      className="border-b last:border-0 hover:bg-amber-50 cursor-pointer"
+                    >
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(r.created_at)}</td>
                       <td className="px-4 py-3">{r.plan_type || '—'}</td>
                       <td className="px-4 py-3">{inr(r.book_price)}</td>
                       <td className="px-4 py-3">{r.expected_sales ?? '—'}</td>
                       <td className="px-4 py-3">{inr(r.estimated_royalty)}</td>
-                      <td className="px-4 py-3 font-semibold">{inr(r.monthly_earnings)}</td>
+                      <td className="px-4 py-3 font-semibold text-amber-700">{inr(r.monthly_earnings)} ›</td>
                     </tr>
                   ))}
                 </tbody>

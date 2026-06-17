@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText } from 'lucide-react';
+import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import ContentEditor from './ContentEditor';
+import AuthorsPanel from './AuthorsPanel';
 
 interface Lead {
   id: string;
@@ -30,7 +31,7 @@ export default function AdminDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [leadsError, setLeadsError] = useState('');
-  const [tab, setTab] = useState<'leads' | 'content'>('leads');
+  const [tab, setTab] = useState<'leads' | 'authors' | 'content'>('leads');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -231,6 +232,17 @@ export default function AdminDashboard() {
             <span>Leads</span>
           </button>
           <button
+            onClick={() => setTab('authors')}
+            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+              tab === 'authors'
+                ? 'border-amber-600 text-amber-700'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>Authors</span>
+          </button>
+          <button
             onClick={() => setTab('content')}
             className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
               tab === 'content'
@@ -247,6 +259,8 @@ export default function AdminDashboard() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         {tab === 'content' ? (
           <ContentEditor />
+        ) : tab === 'authors' ? (
+          <AuthorsPanel />
         ) : (
         <>
         <p className="text-gray-600 mb-4">
