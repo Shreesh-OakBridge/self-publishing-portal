@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users } from 'lucide-react';
+import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { logActivity } from '../lib/activity';
 import ContentEditor from './ContentEditor';
 import AuthorsPanel from './AuthorsPanel';
+import ActivityPanel from './ActivityPanel';
 
 interface Lead {
   id: string;
@@ -31,7 +33,7 @@ export default function AdminDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [leadsError, setLeadsError] = useState('');
-  const [tab, setTab] = useState<'leads' | 'authors' | 'content'>('leads');
+  const [tab, setTab] = useState<'leads' | 'authors' | 'activity' | 'content'>('leads');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -85,6 +87,7 @@ export default function AdminDashboard() {
   };
 
   const handleSignOut = async () => {
+    await logActivity('auth.logout');
     await supabase.auth.signOut();
     setLeads([]);
   };
@@ -243,6 +246,17 @@ export default function AdminDashboard() {
             <span>Authors</span>
           </button>
           <button
+            onClick={() => setTab('activity')}
+            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+              tab === 'activity'
+                ? 'border-amber-600 text-amber-700'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <Activity className="w-4 h-4" />
+            <span>Activity</span>
+          </button>
+          <button
             onClick={() => setTab('content')}
             className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
               tab === 'content'
@@ -261,6 +275,8 @@ export default function AdminDashboard() {
           <ContentEditor />
         ) : tab === 'authors' ? (
           <AuthorsPanel />
+        ) : tab === 'activity' ? (
+          <ActivityPanel />
         ) : (
         <>
         <p className="text-gray-600 mb-4">

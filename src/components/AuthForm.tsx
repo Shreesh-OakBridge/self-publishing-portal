@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BookOpen, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { logActivity } from '../lib/activity';
 
 type Mode = 'login' | 'signup';
 
@@ -62,6 +63,7 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login' }: Aut
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
+        await logActivity('auth.login');
         onAuthenticated();
       }
     } catch (err) {

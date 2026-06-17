@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { logActivity } from './activity';
 
 interface AuthContextValue {
   session: Session | null;
@@ -32,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    await logActivity('auth.logout');
     await supabase.auth.signOut();
   };
 
