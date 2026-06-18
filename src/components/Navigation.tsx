@@ -15,7 +15,7 @@ export default function Navigation() {
   // Scroll-spy: highlight the nav item for the section currently under the nav.
   useEffect(() => {
     if (!isHome) return;
-    const ids = ['home', 'about', 'process', 'plans', 'contact'];
+    const ids = ['home', 'about', 'process', 'submit', 'plans', 'contact'];
     const onScroll = () => {
       const offset = 120; // fixed-nav height + a little margin
       let current = 'home';
@@ -99,6 +99,12 @@ export default function Navigation() {
               Process
             </button>
             <button
+              onClick={() => goToSection('submit')}
+              className={navClass(isHome && activeSection === 'submit')}
+            >
+              Manuscript
+            </button>
+            <button
               onClick={() => goToSection('plans')}
               className={navClass(isHome && activeSection === 'plans')}
             >
@@ -157,6 +163,12 @@ export default function Navigation() {
               className={mobileNavClass(isHome && activeSection === 'process')}
             >
               Process
+            </button>
+            <button
+              onClick={() => goToSection('submit')}
+              className={mobileNavClass(isHome && activeSection === 'submit')}
+            >
+              Manuscript
             </button>
             <button
               onClick={() => goToSection('plans')}

@@ -310,7 +310,7 @@ CREATE TABLE IF NOT EXISTS manuscripts (
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   title text NOT NULL,
   genre text,
-  file_path text NOT NULL,
+  file_path text,
   file_name text,
   file_size bigint,
   word_count integer,
@@ -320,6 +320,7 @@ CREATE TABLE IF NOT EXISTS manuscripts (
 );
 ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS word_count integer;
 ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS content text;
+ALTER TABLE manuscripts ALTER COLUMN file_path DROP NOT NULL;
 ALTER TABLE manuscripts ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Authors insert own manuscripts" ON manuscripts;
