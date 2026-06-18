@@ -15,6 +15,11 @@ import ManuscriptEditor from './components/ManuscriptEditor';
 import Checkout from './components/Checkout';
 import HomeManuscriptSection from './components/HomeManuscriptSection';
 import Testimonials from './components/Testimonials';
+import ConfidenceBar from './components/ConfidenceBar';
+import ServicesPage from './components/ServicesPage';
+import PortfolioPage from './components/PortfolioPage';
+import FaqPage from './components/FaqPage';
+import StaticPage from './components/StaticPage';
 
 function HomePage() {
   // When arriving from another page with a hash (e.g. /#plans), scroll there.
@@ -31,6 +36,7 @@ function HomePage() {
     <div className="min-h-screen bg-white">
       <Navigation />
       <Hero />
+      <ConfidenceBar />
       <ValueProposition />
       <VideoSection />
       <HomeManuscriptSection />
@@ -79,6 +85,42 @@ function App() {
     return (
       <SubPage>
         <RoyaltyCalculator />
+      </SubPage>
+    );
+  if (path === '/services')
+    return (
+      <SubPage>
+        <ServicesPage />
+      </SubPage>
+    );
+  if (path === '/portfolio')
+    return (
+      <SubPage>
+        <PortfolioPage />
+      </SubPage>
+    );
+  if (path === '/faq')
+    return (
+      <SubPage>
+        <FaqPage />
+      </SubPage>
+    );
+  if (path === '/about')
+    return (
+      <SubPage>
+        <StaticPage pageKey="about" />
+      </SubPage>
+    );
+  if (path === '/terms')
+    return (
+      <SubPage>
+        <StaticPage pageKey="terms" />
+      </SubPage>
+    );
+  if (path === '/privacy')
+    return (
+      <SubPage>
+        <StaticPage pageKey="privacy" />
       </SubPage>
     );
 

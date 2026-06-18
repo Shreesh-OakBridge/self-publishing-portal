@@ -39,15 +39,17 @@ export default function Footer() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 lg:gap-16">
           <div>
-            <h4 className="text-lg font-bold mb-4">About Us</h4>
+            <h4 className="text-lg font-bold mb-4">Company</h4>
             <ul className="space-y-2">
               <li>
-                <button
-                  onClick={() => goToSection('about')}
-                  className="text-gray-400 hover:text-amber-500 transition-colors"
-                >
+                <a href="/about" className="text-gray-400 hover:text-amber-500 transition-colors">
                   About Us
-                </button>
+                </a>
+              </li>
+              <li>
+                <a href="/services" className="text-gray-400 hover:text-amber-500 transition-colors">
+                  Services
+                </a>
               </li>
               <li>
                 <button
@@ -58,12 +60,9 @@ export default function Footer() {
                 </button>
               </li>
               <li>
-                <button
-                  onClick={() => goToSection('faq')}
-                  className="text-gray-400 hover:text-amber-500 transition-colors"
-                >
+                <a href="/faq" className="text-gray-400 hover:text-amber-500 transition-colors">
                   FAQ
-                </button>
+                </a>
               </li>
             </ul>
           </div>
@@ -98,6 +97,11 @@ export default function Footer() {
                 </a>
               </li>
               <li>
+                <a href="/portfolio" className="text-gray-400 hover:text-amber-500 transition-colors">
+                  Portfolio
+                </a>
+              </li>
+              <li>
                 <button
                   onClick={() => goToSection('submit')}
                   className="text-gray-400 hover:text-amber-500 transition-colors"
@@ -129,6 +133,19 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-800 pt-8 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mb-4 text-sm">
+            <a href="/terms" className="text-gray-400 hover:text-amber-500 transition-colors">
+              Terms &amp; Conditions
+            </a>
+            <span className="text-gray-700">|</span>
+            <a href="/privacy" className="text-gray-400 hover:text-amber-500 transition-colors">
+              Privacy Policy
+            </a>
+            <span className="text-gray-700">|</span>
+            <a href="/faq" className="text-gray-400 hover:text-amber-500 transition-colors">
+              FAQ
+            </a>
+          </div>
           <p className="text-gray-400">
             &copy; {new Date().getFullYear()} {footer.copyrightName}. All rights reserved.
           </p>

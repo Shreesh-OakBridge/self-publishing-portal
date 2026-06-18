@@ -112,14 +112,77 @@ export interface CustomizerContent {
   bookSizes: CustomizerSize[];
 }
 
+export interface StaticPageContent {
+  title: string;
+  body: string;
+}
+
+export interface PagesContent {
+  about: StaticPageContent;
+  terms: StaticPageContent;
+  privacy: StaticPageContent;
+}
+
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface FaqContent {
+  title: string;
+  subtitle: string;
+  items: FaqItem[];
+}
+
+export interface ServiceItem {
+  title: string;
+  summary: string;
+  description: string;
+}
+
+export interface ServicesContent {
+  heading: string;
+  subheading: string;
+  items: ServiceItem[];
+}
+
+export interface ConfidenceItem {
+  label: string;
+  sublabel: string;
+}
+
+export interface ConfidenceBarContent {
+  enabled: boolean;
+  speed: number;
+  items: ConfidenceItem[];
+}
+
+export interface PortfolioItem {
+  title: string;
+  author: string;
+  category: string;
+  coverUrl: string;
+}
+
+export interface PortfolioContent {
+  heading: string;
+  subheading: string;
+  items: PortfolioItem[];
+}
+
 export interface SiteContent {
   branding: BrandingContent;
   hero: HeroContent;
   valueProps: ValuePropsContent;
   video: VideoContent;
+  confidenceBar: ConfidenceBarContent;
+  services: ServicesContent;
+  portfolio: PortfolioContent;
   pricing: PricingContent;
   customizer: CustomizerContent;
   contact: ContactContent;
+  faq: FaqContent;
+  pages: PagesContent;
   footer: FooterContent;
 }
 
@@ -352,6 +415,121 @@ export const defaultContent: SiteContent = {
     successTitle: 'Thank You!',
     successMessage:
       "We've received your information and are excited to learn more about your project. A member of our team will reach out to you within 24 hours to discuss your publishing journey.",
+  },
+  confidenceBar: {
+    enabled: true,
+    speed: 30,
+    items: [
+      { label: '30+ Years', sublabel: 'Publishing Experience' },
+      { label: '500+ Titles', sublabel: 'Successfully Published' },
+      { label: '4.8 / 5', sublabel: 'Average Author Rating' },
+      { label: '40+ Platforms', sublabel: 'Global Distribution' },
+      { label: '100%', sublabel: 'Rights Retained by Authors' },
+      { label: 'On-Time', sublabel: 'Transparent Royalty Payouts' },
+    ],
+  },
+  services: {
+    heading: 'Our Publishing Services',
+    subheading:
+      'End-to-end support to take your manuscript from a draft to a professionally published book.',
+    items: [
+      {
+        title: 'Editorial & Proofreading',
+        summary: 'Developmental, copy, and line editing.',
+        description:
+          'Our experienced editors refine structure, language, and consistency—from developmental editing that shapes your narrative to meticulous proofreading that polishes every line.',
+      },
+      {
+        title: 'Cover Design',
+        summary: 'Custom, market-ready covers.',
+        description:
+          'Original cover concepts designed to stand out on shelves and thumbnails alike, tailored to your genre and audience.',
+      },
+      {
+        title: 'Interior Formatting',
+        summary: 'Print & ebook typesetting.',
+        description:
+          'Professional interior layout and typesetting for paperback, hardback, and ebook formats, with attention to readability and trim size.',
+      },
+      {
+        title: 'ISBN & Copyright',
+        summary: 'Registration handled for you.',
+        description:
+          'We assign ISBNs and assist with copyright registration so your work is protected and discoverable.',
+      },
+      {
+        title: 'Distribution',
+        summary: 'Reach Amazon, Flipkart & more.',
+        description:
+          'Global and Indian distribution across major online retailers, libraries, and 40+ platforms to maximise your reach.',
+      },
+      {
+        title: 'Marketing Support',
+        summary: 'Launch & promote with confidence.',
+        description:
+          'Launch strategy, press materials, and promotional assets to help your book find its readers.',
+      },
+    ],
+  },
+  portfolio: {
+    heading: 'From Our Portfolio',
+    subheading: 'A selection of titles we have proudly brought to readers.',
+    items: [
+      { title: 'Threads of Dawn', author: 'Ananya Sharma', category: 'Fiction', coverUrl: '' },
+      { title: 'The Quiet Quarter', author: 'Rajat Mehta', category: 'Literary Fiction', coverUrl: '' },
+      { title: 'Beyond the Ledger', author: 'Vikram Nair', category: 'Business', coverUrl: '' },
+      { title: 'Monsoon Letters', author: 'Fatima Qureshi', category: 'Poetry', coverUrl: '' },
+      { title: 'The Founder’s Map', author: 'Sneha Iyer', category: 'Non-Fiction', coverUrl: '' },
+      { title: 'Echoes of Silence', author: 'Arjun Desai', category: 'Thriller', coverUrl: '' },
+    ],
+  },
+  faq: {
+    title: 'Frequently Asked Questions',
+    subtitle: 'Answers to the questions authors ask us most.',
+    items: [
+      {
+        question: 'Who owns the rights to my book?',
+        answer:
+          'You do. OakBridge authors retain 100% of their rights and creative control. We publish on your behalf—we never take ownership of your work.',
+      },
+      {
+        question: 'How long does the publishing process take?',
+        answer:
+          'Timelines vary by plan and manuscript length, but most books move from manuscript to publication within a few weeks once editing begins.',
+      },
+      {
+        question: 'How are royalties calculated and paid?',
+        answer:
+          'Royalty rates depend on your chosen plan. Payouts are transparent and made on a regular schedule. Logged-in authors can project their earnings using the Royalty Calculator.',
+      },
+      {
+        question: 'Do you offer editing for manuscripts in languages other than English?',
+        answer:
+          'Please reach out via the contact form with details of your manuscript and language, and our team will advise on the best options.',
+      },
+      {
+        question: 'Can I customise my book’s size, paper, and binding?',
+        answer:
+          'Yes. Use our book customiser to choose trim size, interior colour, paper, binding, cover finish, and layout, with a real-time price estimate.',
+      },
+    ],
+  },
+  pages: {
+    about: {
+      title: 'About OakBridge Publishing',
+      body:
+        'OakBridge Publishing is a premium self-publishing partner dedicated to helping authors bring their stories to readers. Founded by industry veterans with over 30 years of combined experience, we combine traditional publishing craft with modern, author-first technology.\n\nWe believe a book is more than words on a page—it is a legacy. That is why we treat every manuscript as a unique project, offering personalised attention through editing, design, production, distribution, and marketing.\n\nUnlike many services, our authors retain full ownership and creative control of their work. Our role is to serve your vision, not to dictate it. From your first consultation to long after your launch, we remain your partner in building a lasting readership.',
+    },
+    terms: {
+      title: 'Terms & Conditions',
+      body:
+        'These Terms & Conditions govern your use of the OakBridge Publishing website and services. By accessing our site or engaging our services, you agree to these terms.\n\n1. Services. OakBridge provides self-publishing services including editing, design, production, distribution, and related support as described in your selected plan.\n\n2. Author Rights. Authors retain ownership of their intellectual property. OakBridge is granted a limited licence solely to provide the contracted services.\n\n3. Payments. Fees are as set out in your chosen plan or quotation. Applicable taxes, including 18% GST, are added at checkout.\n\n4. Refunds. Refund eligibility depends on the stage of work completed and is handled on a case-by-case basis.\n\n5. Liability. OakBridge is not liable for indirect or consequential losses arising from use of our services to the extent permitted by law.\n\nThis is placeholder text. Please replace it with your final legal terms before going live.',
+    },
+    privacy: {
+      title: 'Privacy Policy',
+      body:
+        'This Privacy Policy explains how OakBridge Publishing collects, uses, and protects your personal information.\n\n1. Information We Collect. We collect information you provide directly—such as your name, email, phone number, and manuscript details—and limited technical information when you use our site.\n\n2. How We Use It. We use your information to provide and improve our services, communicate with you, process orders, and meet legal obligations.\n\n3. Sharing. We do not sell your personal information. We share it only with service providers who help us operate, and where required by law.\n\n4. Security. We take reasonable measures to protect your data, but no method of transmission or storage is completely secure.\n\n5. Your Rights. You may request access to, correction of, or deletion of your personal information by contacting us.\n\nThis is placeholder text. Please replace it with your final privacy policy before going live.',
+    },
   },
   footer: {
     tagline:

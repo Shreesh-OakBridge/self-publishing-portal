@@ -1,4 +1,4 @@
-import { BookOpen, Menu, X, UserCircle } from 'lucide-react';
+import { BookOpen, Menu, X, UserCircle, ChevronDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
@@ -8,7 +8,7 @@ export default function Navigation() {
   const [activeSection, setActiveSection] = useState('home');
   const [scrolled, setScrolled] = useState(false);
   const { user } = useAuth();
-  const { branding } = useContent();
+  const { branding, services } = useContent();
 
   const path = window.location.pathname.replace(/\/+$/, '');
   const isHome = path === '';
@@ -45,16 +45,6 @@ export default function Navigation() {
     setIsMenuOpen(false);
     window.location.href = p;
   };
-
-  // Nav items for the public marketing header. `match` is the section the
-  // scroll-spy uses to highlight the item (Services maps to the offerings/about
-  // section until the dedicated Services page lands).
-  const items = [
-    { label: 'Home', section: 'home', match: 'home' },
-    { label: 'Services', section: 'about', match: 'about' },
-    { label: 'Testimonials', section: 'testimonials', match: 'testimonials' },
-    { label: 'Plans', section: 'plans', match: 'plans' },
-  ];
 
   const isActive = (match: string) => isHome && activeSection === match;
 
@@ -96,11 +86,46 @@ export default function Navigation() {
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center space-x-9">
-            {items.map((it) => (
-              <button key={it.label} onClick={() => goToSection(it.section)} className={deskLink(isActive(it.match))}>
-                {it.label}
+            <button onClick={() => goToSection('home')} className={deskLink(isActive('home'))}>
+              Home
+            </button>
+
+            {/* Services — hover flyout, click goes to the landing page */}
+            <div className="relative group">
+              <button onClick={() => goTo('/services')} className={deskLink(path === '/services')}>
+                <span className="inline-flex items-center gap-1">
+                  Services <ChevronDown className="w-3.5 h-3.5" />
+                </span>
               </button>
-            ))}
+              <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3 opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200">
+                <div className="w-72 bg-white rounded-xl shadow-xl border border-gray-100 p-2">
+                  {services.items.map((s) => (
+                    <button
+                      key={s.title}
+                      onClick={() => goTo('/services')}
+                      className="block w-full text-left px-3 py-2 rounded-lg hover:bg-amber-50 transition-colors"
+                    >
+                      <span className="block text-sm font-semibold text-gray-800">{s.title}</span>
+                      <span className="block text-xs text-gray-500">{s.summary}</span>
+                    </button>
+                  ))}
+                  <div className="border-t border-gray-100 my-1" />
+                  <button
+                    onClick={() => goTo('/services')}
+                    className="block w-full text-left px-3 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 rounded-lg"
+                  >
+                    View all services →
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button onClick={() => goToSection('testimonials')} className={deskLink(isActive('testimonials'))}>
+              Testimonials
+            </button>
+            <button onClick={() => goToSection('plans')} className={deskLink(isActive('plans'))}>
+              Plans
+            </button>
           </div>
 
           {/* Desktop CTA */}
@@ -138,11 +163,18 @@ export default function Navigation() {
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t shadow-lg">
           <div className="px-4 py-4 space-y-2">
-            {items.map((it) => (
-              <button key={it.label} onClick={() => goToSection(it.section)} className={mobileLink(isActive(it.match))}>
-                {it.label}
-              </button>
-            ))}
+            <button onClick={() => goToSection('home')} className={mobileLink(isActive('home'))}>
+              Home
+            </button>
+            <button onClick={() => goTo('/services')} className={mobileLink(path === '/services')}>
+              Services
+            </button>
+            <button onClick={() => goToSection('testimonials')} className={mobileLink(isActive('testimonials'))}>
+              Testimonials
+            </button>
+            <button onClick={() => goToSection('plans')} className={mobileLink(isActive('plans'))}>
+              Plans
+            </button>
             <div className="pt-2 space-y-2">
               {user ? (
                 <button

@@ -12,9 +12,14 @@ const SECTION_LABELS: Record<string, string> = {
   hero: 'Hero / Banner',
   valueProps: 'Value Proposition',
   video: 'Process & Video',
+  confidenceBar: 'Confidence Bar',
+  services: 'Services',
+  portfolio: 'Portfolio',
   pricing: 'Pricing Plans',
   customizer: 'Book Customizer',
   contact: 'Contact Section',
+  faq: 'FAQ',
+  pages: 'Static Pages (About / Terms / Privacy)',
   footer: 'Footer',
 };
 
@@ -24,6 +29,7 @@ const MEDIA_FIELDS: Record<string, { label: string; accept: 'image' | 'video' }>
   posterUrl: { label: 'Video Poster Image', accept: 'image' },
   imageUrl: { label: 'Hero Image', accept: 'image' },
   logoUrl: { label: 'Logo Image', accept: 'image' },
+  coverUrl: { label: 'Book Cover Image', accept: 'image' },
 };
 
 function humanize(key: string): string {
