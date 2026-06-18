@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Save, RotateCcw, Plus, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useContent } from '../content/ContentProvider';
@@ -21,6 +21,12 @@ const SECTION_LABELS: Record<string, string> = {
   faq: 'FAQ',
   pages: 'Static Pages (About / Terms / Privacy)',
   footer: 'Footer',
+};
+
+// Sections whose object keys should be edited one-at-a-time via sub-tabs
+// (e.g. the Static Pages section → About / Terms / Privacy).
+const SUBSECTIONS: Record<string, Record<string, string>> = {
+  pages: { about: 'About Us', terms: 'Terms & Conditions', privacy: 'Privacy Policy' },
 };
 
 // Content fields that hold media — rendered as drag-and-drop uploaders.
@@ -238,9 +244,25 @@ export default function ContentEditor() {
 
   const draft = drafts[active];
 
+  // Sub-tab handling for sectioned editors (e.g. Static Pages).
+  const subConfig = SUBSECTIONS[active as string];
+  const subKeys = subConfig ? Object.keys(subConfig) : [];
+  const [subKey, setSubKey] = useState<string>('');
+  useEffect(() => {
+    if (subConfig) {
+      setSubKey((prev) => (prev && prev in subConfig ? prev : subKeys[0]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
   const setDraft = (v: Json) => {
     setDrafts((d) => ({ ...d, [active]: v }));
     setStatus(null);
+  };
+
+  const setSubDraft = (v: Json) => {
+    const obj = (draft && typeof draft === 'object' ? draft : {}) as Record<string, Json>;
+    setDraft({ ...obj, [subKey]: v });
   };
 
   const save = async () => {
@@ -323,7 +345,34 @@ export default function ContentEditor() {
           </div>
         )}
 
-        <Field label="" value={draft} onChange={setDraft} />
+        {subConfig ? (
+          <>
+            <div className="flex flex-wrap gap-2 mb-5 border-b border-gray-200 pb-3">
+              {subKeys.map((k) => (
+                <button
+                  key={k}
+                  onClick={() => setSubKey(k)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                    subKey === k
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  {subConfig[k]}
+                </button>
+              ))}
+            </div>
+            {subKey && draft && typeof draft === 'object' && (
+              <Field
+                label=""
+                value={(draft as Record<string, Json>)[subKey]}
+                onChange={setSubDraft}
+              />
+            )}
+          </>
+        ) : (
+          <Field label="" value={draft} onChange={setDraft} />
+        )}
       </div>
     </div>
   );
