@@ -10,6 +10,7 @@ interface Manuscript {
   file_path: string;
   file_name: string | null;
   file_size: number | null;
+  word_count: number | null;
   status: string;
   created_at: string;
 }
@@ -117,6 +118,7 @@ export default function ManuscriptsPanel() {
                 <th className="px-4 py-3 font-semibold">Author</th>
                 <th className="px-4 py-3 font-semibold">Title</th>
                 <th className="px-4 py-3 font-semibold">Genre</th>
+                <th className="px-4 py-3 font-semibold">Words</th>
                 <th className="px-4 py-3 font-semibold">File</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="px-4 py-3 font-semibold"></th>
@@ -142,6 +144,9 @@ export default function ManuscriptsPanel() {
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-900">{m.title}</td>
                     <td className="px-4 py-3 text-gray-600">{m.genre || '—'}</td>
+                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                      {m.word_count != null ? m.word_count.toLocaleString('en-IN') : '—'}
+                    </td>
                     <td className="px-4 py-3 text-gray-600 max-w-[12rem] truncate">
                       {m.file_name || '—'} <span className="text-gray-400">{kb(m.file_size)}</span>
                     </td>

@@ -17,10 +17,14 @@ CREATE TABLE IF NOT EXISTS manuscripts (
   file_path text NOT NULL,
   file_name text,
   file_size bigint,
+  word_count integer,
   status text NOT NULL DEFAULT 'submitted',
   notes text,
   created_at timestamptz DEFAULT now()
 );
+
+-- For environments where the table already existed:
+ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS word_count integer;
 
 ALTER TABLE manuscripts ENABLE ROW LEVEL SECURITY;
 

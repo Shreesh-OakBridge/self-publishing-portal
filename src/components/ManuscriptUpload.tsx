@@ -11,9 +11,12 @@ interface Manuscript {
   title: string;
   genre: string | null;
   file_name: string | null;
+  word_count: number | null;
   status: string;
   created_at: string;
 }
+
+const countWords = (t: string) => t.trim().match(/\S+/g)?.length ?? 0;
 
 const STATUS_COLOR: Record<string, string> = {
   submitted: 'bg-amber-100 text-amber-800',
@@ -30,20 +33,49 @@ const STATUS_LABEL: Record<string, string> = {
 const fmt = (d: string) =>
   new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
-export default function ManuscriptUpload() {
+export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?: boolean }) {
   const { user } = useAuth();
   const [items, setItems] = useState<Manuscript[]>([]);
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [wordCount, setWordCount] = useState<number | null>(null);
+  const [counting, setCounting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
+
+  // Auto-detect word count: native for text files, mammoth for .docx.
+  const handleFile = async (f: File | null) => {
+    setFile(f);
+    setWordCount(null);
+    if (!f) return;
+    const ext = f.name.split('.').pop()?.toLowerCase() || '';
+    setCounting(true);
+    try {
+      if (['txt', 'md', 'rtf', 'csv'].includes(ext)) {
+        setWordCount(countWords(await f.text()));
+      } else if (ext === 'docx') {
+        const arrayBuffer = await f.arrayBuffer();
+        const mod: any = await import('mammoth');
+        const mammoth = mod.default ?? mod;
+        const res = await mammoth.extractRawText({ arrayBuffer });
+        setWordCount(countWords(res.value || ''));
+      } else {
+        setWordCount(null); // pdf/doc/odt/epub — author enters manually
+      }
+    } catch (err) {
+      console.error('word count failed:', err);
+      setWordCount(null);
+    } finally {
+      setCounting(false);
+    }
+  };
 
   const load = async () => {
     if (!user) return;
     const { data } = await supabase
       .from('manuscripts')
-      .select('id, title, genre, file_name, status, created_at')
+      .select('id, title, genre, file_name, word_count, status, created_at')
       .order('created_at', { ascending: false });
     setItems((data as Manuscript[]) ?? []);
   };
@@ -81,6 +113,7 @@ export default function ManuscriptUpload() {
         file_path: path,
         file_name: file.name,
         file_size: file.size,
+        word_count: wordCount,
       });
       if (insErr) throw insErr;
 
@@ -88,6 +121,7 @@ export default function ManuscriptUpload() {
       setTitle('');
       setGenre('');
       setFile(null);
+      setWordCount(null);
       load();
     } catch (err) {
       console.error('Manuscript upload failed:', err);
@@ -105,10 +139,12 @@ export default function ManuscriptUpload() {
 
   return (
     <section>
-      <div className="flex items-center space-x-2 mb-3">
-        <FileText className="w-5 h-5 text-amber-600" />
-        <h2 className="text-xl font-bold text-gray-900">My Manuscripts</h2>
-      </div>
+      {!hideHeading && (
+        <div className="flex items-center space-x-2 mb-3">
+          <FileText className="w-5 h-5 text-amber-600" />
+          <h2 className="text-xl font-bold text-gray-900">My Manuscripts</h2>
+        </div>
+      )}
 
       <form onSubmit={submit} className="bg-white rounded-2xl border p-6 space-y-4 mb-4">
         <p className="text-sm text-gray-600">
@@ -168,9 +204,28 @@ export default function ManuscriptUpload() {
               type="file"
               accept={ACCEPT}
               className="hidden"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
             />
           </label>
+        </div>
+
+        <div>
+          <label className="block text-gray-700 font-semibold mb-2">
+            Word count{' '}
+            {counting && <span className="text-sm font-normal text-gray-400">(detecting…)</span>}
+          </label>
+          <input
+            type="number"
+            min="0"
+            value={wordCount ?? ''}
+            onChange={(e) => setWordCount(e.target.value ? parseInt(e.target.value, 10) : null)}
+            className={inputClass}
+            placeholder="Auto-detected for Word/text files — or enter manually"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Auto-detected for .docx and text files. For PDF/other formats, please enter the
+            approximate word count — it helps us quote accurately.
+          </p>
         </div>
 
         <button
@@ -191,6 +246,7 @@ export default function ManuscriptUpload() {
                 <th className="px-4 py-3 font-semibold">Date</th>
                 <th className="px-4 py-3 font-semibold">Title</th>
                 <th className="px-4 py-3 font-semibold">Genre</th>
+                <th className="px-4 py-3 font-semibold">Words</th>
                 <th className="px-4 py-3 font-semibold">File</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
               </tr>
@@ -201,6 +257,9 @@ export default function ManuscriptUpload() {
                   <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmt(m.created_at)}</td>
                   <td className="px-4 py-3 font-medium text-gray-900">{m.title}</td>
                   <td className="px-4 py-3 text-gray-600">{m.genre || '—'}</td>
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                    {m.word_count != null ? m.word_count.toLocaleString('en-IN') : '—'}
+                  </td>
                   <td className="px-4 py-3 text-gray-600 max-w-[14rem] truncate">{m.file_name || '—'}</td>
                   <td className="px-4 py-3">
                     <span

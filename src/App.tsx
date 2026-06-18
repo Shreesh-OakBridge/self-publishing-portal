@@ -11,6 +11,7 @@ import Footer from './components/Footer';
 import AdminDashboard from './components/AdminDashboard';
 import AuthPage from './components/AuthPage';
 import AccountPage from './components/AccountPage';
+import HomeManuscriptSection from './components/HomeManuscriptSection';
 
 function HomePage() {
   // When arriving from another page with a hash (e.g. /#plans), scroll there.
@@ -29,6 +30,7 @@ function HomePage() {
       <Hero />
       <ValueProposition />
       <VideoSection />
+      <HomeManuscriptSection />
       <PricingPlans />
 
       <section id="contact" className="py-20 px-4 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50">
