@@ -11,6 +11,7 @@ import Footer from './components/Footer';
 import AdminDashboard from './components/AdminDashboard';
 import AuthPage from './components/AuthPage';
 import AccountPage from './components/AccountPage';
+import ManuscriptEditor from './components/ManuscriptEditor';
 import HomeManuscriptSection from './components/HomeManuscriptSection';
 
 function HomePage() {
@@ -63,6 +64,7 @@ function App() {
   if (path === '/admin') return <AdminDashboard />;
   if (path === '/login' || path === '/signup') return <AuthPage />;
   if (path === '/account') return <AccountPage />;
+  if (path === '/manuscript') return <ManuscriptEditor />;
   if (path === '/customize')
     return (
       <SubPage>

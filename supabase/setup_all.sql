@@ -319,6 +319,7 @@ CREATE TABLE IF NOT EXISTS manuscripts (
   created_at timestamptz DEFAULT now()
 );
 ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS word_count integer;
+ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS content text;
 ALTER TABLE manuscripts ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Authors insert own manuscripts" ON manuscripts;
@@ -336,6 +337,10 @@ CREATE POLICY "Admins read all manuscripts"
 DROP POLICY IF EXISTS "Admins update manuscripts" ON manuscripts;
 CREATE POLICY "Admins update manuscripts"
   ON manuscripts FOR UPDATE TO authenticated USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS "Authors update own manuscripts" ON manuscripts;
+CREATE POLICY "Authors update own manuscripts"
+  ON manuscripts FOR UPDATE TO authenticated
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('manuscripts', 'manuscripts', false)

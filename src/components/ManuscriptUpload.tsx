@@ -249,6 +249,7 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
                 <th className="px-4 py-3 font-semibold">Words</th>
                 <th className="px-4 py-3 font-semibold">File</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 font-semibold"></th>
               </tr>
             </thead>
             <tbody>
@@ -269,6 +270,14 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
                     >
                       {STATUS_LABEL[m.status] ?? m.status}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <a
+                      href={`/manuscript?id=${m.id}`}
+                      className="text-sm font-semibold text-amber-700 hover:text-amber-900 whitespace-nowrap"
+                    >
+                      Review &amp; Edit ›
+                    </a>
                   </td>
                 </tr>
               ))}
