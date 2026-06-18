@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity } from 'lucide-react';
+import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { logActivity } from '../lib/activity';
 import ContentEditor from './ContentEditor';
 import AuthorsPanel from './AuthorsPanel';
 import ActivityPanel from './ActivityPanel';
+import ManuscriptsPanel from './ManuscriptsPanel';
 
 interface Lead {
   id: string;
@@ -33,7 +34,7 @@ export default function AdminDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [leadsError, setLeadsError] = useState('');
-  const [tab, setTab] = useState<'leads' | 'authors' | 'activity' | 'content'>('leads');
+  const [tab, setTab] = useState<'leads' | 'manuscripts' | 'authors' | 'activity' | 'content'>('leads');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -235,6 +236,17 @@ export default function AdminDashboard() {
             <span>Leads</span>
           </button>
           <button
+            onClick={() => setTab('manuscripts')}
+            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+              tab === 'manuscripts'
+                ? 'border-amber-600 text-amber-700'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <BookText className="w-4 h-4" />
+            <span>Manuscripts</span>
+          </button>
+          <button
             onClick={() => setTab('authors')}
             className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
               tab === 'authors'
@@ -273,6 +285,8 @@ export default function AdminDashboard() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         {tab === 'content' ? (
           <ContentEditor />
+        ) : tab === 'manuscripts' ? (
+          <ManuscriptsPanel />
         ) : tab === 'authors' ? (
           <AuthorsPanel />
         ) : tab === 'activity' ? (

@@ -3,6 +3,7 @@ import { BookOpen, LogOut, Palette, Calculator, Home, Pencil } from 'lucide-reac
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import ProfileEditor from './ProfileEditor';
+import ManuscriptUpload from './ManuscriptUpload';
 
 interface Customization {
   id: string;
@@ -171,6 +172,8 @@ export default function AccountPage() {
             )}
           </div>
         )}
+
+        <ManuscriptUpload />
 
         <section>
           <div className="flex items-center space-x-2 mb-3">

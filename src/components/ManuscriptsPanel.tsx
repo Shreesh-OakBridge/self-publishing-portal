@@ -1,0 +1,179 @@
+import { useEffect, useState } from 'react';
+import { RefreshCw, AlertCircle, Download } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+
+interface Manuscript {
+  id: string;
+  user_id: string;
+  title: string;
+  genre: string | null;
+  file_path: string;
+  file_name: string | null;
+  file_size: number | null;
+  status: string;
+  created_at: string;
+}
+interface Author {
+  id: string;
+  email: string;
+  full_name: string | null;
+}
+
+const STATUSES = ['submitted', 'in_review', 'accepted', 'changes_requested'];
+const STATUS_LABEL: Record<string, string> = {
+  submitted: 'Submitted',
+  in_review: 'In Review',
+  accepted: 'Accepted',
+  changes_requested: 'Changes Requested',
+};
+const fmt = (d: string) =>
+  new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+const kb = (n: number | null) => (n ? `${Math.round(n / 1024)} KB` : '');
+
+export default function ManuscriptsPanel() {
+  const [items, setItems] = useState<Manuscript[]>([]);
+  const [authors, setAuthors] = useState<Record<string, Author>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const load = async () => {
+    setLoading(true);
+    setError('');
+    const [m, a] = await Promise.all([
+      supabase.from('manuscripts').select('*').order('created_at', { ascending: false }),
+      supabase.rpc('admin_authors'),
+    ]);
+    if (m.error) {
+      console.error(m.error, a.error);
+      setError('Could not load manuscripts. Make sure the manuscripts SQL has been run.');
+    } else {
+      setItems((m.data as Manuscript[]) ?? []);
+      const map: Record<string, Author> = {};
+      ((a.data as Author[]) ?? []).forEach((au) => (map[au.id] = au));
+      setAuthors(map);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const download = async (m: Manuscript) => {
+    const { data, error: err } = await supabase.storage
+      .from('manuscripts')
+      .createSignedUrl(m.file_path, 120);
+    if (err || !data) {
+      alert('Could not generate download link.');
+      return;
+    }
+    window.open(data.signedUrl, '_blank');
+  };
+
+  const setStatus = async (id: string, status: string) => {
+    setItems((prev) => prev.map((m) => (m.id === id ? { ...m, status } : m)));
+    const { error: err } = await supabase.from('manuscripts').update({ status }).eq('id', id);
+    if (err) {
+      console.error(err);
+      alert('Could not update status.');
+      load();
+    }
+  };
+
+  if (loading) return <div className="text-center text-gray-500 py-16">Loading manuscripts…</div>;
+  if (error)
+    return (
+      <div className="bg-red-50 border-2 border-red-300 text-red-800 p-4 rounded-xl flex items-center space-x-2">
+        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+        <span>{error}</span>
+      </div>
+    );
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-gray-600">
+          {items.length} {items.length === 1 ? 'manuscript' : 'manuscripts'}
+        </p>
+        <button
+          onClick={load}
+          className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+        >
+          <RefreshCw className="w-4 h-4" />
+          <span className="hidden sm:inline">Refresh</span>
+        </button>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="text-center text-gray-500 py-16 bg-white rounded-2xl border">
+          No manuscripts submitted yet.
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-500 border-b">
+                <th className="px-4 py-3 font-semibold">Date</th>
+                <th className="px-4 py-3 font-semibold">Author</th>
+                <th className="px-4 py-3 font-semibold">Title</th>
+                <th className="px-4 py-3 font-semibold">Genre</th>
+                <th className="px-4 py-3 font-semibold">File</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 font-semibold"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((m) => {
+                const au = authors[m.user_id];
+                return (
+                  <tr key={m.id} className="border-b last:border-0 align-top hover:bg-gray-50">
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmt(m.created_at)}</td>
+                    <td className="px-4 py-3 text-gray-700">
+                      {au ? (
+                        <>
+                          <div className="font-medium text-gray-900">{au.full_name || '—'}</div>
+                          <a href={`mailto:${au.email}`} className="text-amber-700 hover:underline">
+                            {au.email}
+                          </a>
+                        </>
+                      ) : (
+                        <span className="text-gray-400">unknown</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-gray-900">{m.title}</td>
+                    <td className="px-4 py-3 text-gray-600">{m.genre || '—'}</td>
+                    <td className="px-4 py-3 text-gray-600 max-w-[12rem] truncate">
+                      {m.file_name || '—'} <span className="text-gray-400">{kb(m.file_size)}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={m.status}
+                        onChange={(e) => setStatus(m.id, e.target.value)}
+                        className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:border-amber-500 outline-none"
+                      >
+                        {STATUSES.map((s) => (
+                          <option key={s} value={s}>
+                            {STATUS_LABEL[s]}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => download(m)}
+                        className="flex items-center gap-1 text-amber-700 hover:text-amber-900 font-semibold"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span className="hidden sm:inline">Download</span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+}
