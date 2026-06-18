@@ -6,18 +6,20 @@ import { useContent } from '../content/ContentProvider';
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
+  const [scrolled, setScrolled] = useState(false);
   const { user } = useAuth();
   const { branding } = useContent();
 
   const path = window.location.pathname.replace(/\/+$/, '');
   const isHome = path === '';
 
-  // Scroll-spy: highlight the nav item for the section currently under the nav.
+  // Scroll-spy + condensed-on-scroll styling.
   useEffect(() => {
-    if (!isHome) return;
-    const ids = ['home', 'about', 'process', 'submit', 'plans', 'contact'];
+    const ids = ['home', 'about', 'testimonials', 'plans', 'contact'];
     const onScroll = () => {
-      const offset = 120; // fixed-nav height + a little margin
+      setScrolled(window.scrollY > 8);
+      if (!isHome) return;
+      const offset = 120;
       let current = 'home';
       for (const id of ids) {
         const el = document.getElementById(id);
@@ -30,8 +32,6 @@ export default function Navigation() {
     return () => window.removeEventListener('scroll', onScroll);
   }, [isHome]);
 
-  // Scroll to a homepage section if we're on the homepage; otherwise navigate
-  // to the homepage with the section hash.
   const goToSection = (id: string) => {
     setIsMenuOpen(false);
     if (isHome) {
@@ -41,33 +41,48 @@ export default function Navigation() {
     }
   };
 
-  const goTo = (path: string) => {
+  const goTo = (p: string) => {
     setIsMenuOpen(false);
-    window.location.href = path;
+    window.location.href = p;
   };
 
-  const linkClass = 'text-gray-700 hover:text-amber-600 transition-colors font-medium';
-  const mobileLinkClass = 'block w-full text-left text-gray-700 hover:text-amber-600 py-2';
+  // Nav items for the public marketing header. `match` is the section the
+  // scroll-spy uses to highlight the item (Services maps to the offerings/about
+  // section until the dedicated Services page lands).
+  const items = [
+    { label: 'Home', section: 'home', match: 'home' },
+    { label: 'Services', section: 'about', match: 'about' },
+    { label: 'Testimonials', section: 'testimonials', match: 'testimonials' },
+    { label: 'Plans', section: 'plans', match: 'plans' },
+  ];
 
-  // Active (current-page) styling for the standalone page links.
-  const navClass = (active: boolean) =>
-    active ? 'text-amber-600 font-semibold transition-colors' : linkClass;
-  const mobileNavClass = (active: boolean) =>
-    active
-      ? 'block w-full text-left text-amber-600 font-semibold py-2'
-      : mobileLinkClass;
+  const isActive = (match: string) => isHome && activeSection === match;
+
+  const deskLink = (active: boolean) =>
+    `relative font-medium transition-colors ${
+      active ? 'text-amber-600' : 'text-gray-700 hover:text-amber-600'
+    } after:absolute after:-bottom-1.5 after:left-0 after:h-0.5 after:bg-amber-600 after:transition-all ${
+      active ? 'after:w-full' : 'after:w-0 hover:after:w-full'
+    }`;
+
+  const mobileLink = (active: boolean) =>
+    `block w-full text-left py-2 font-medium ${
+      active ? 'text-amber-600' : 'text-gray-700 hover:text-amber-600'
+    }`;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm shadow-md z-50">
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled || !isHome
+          ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100'
+          : 'bg-transparent'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <button onClick={() => goTo('/')} className="flex items-center space-x-3">
             {branding.logoUrl ? (
-              <img
-                src={branding.logoUrl}
-                alt="OakBridge Publishing"
-                className="h-10 w-auto object-contain"
-              />
+              <img src={branding.logoUrl} alt="OakBridge Publishing" className="h-10 w-auto object-contain" />
             ) : (
               <>
                 <BookOpen className="w-8 h-8 text-amber-600" />
@@ -79,61 +94,37 @@ export default function Navigation() {
             )}
           </button>
 
-          <div className="hidden md:flex items-center space-x-8">
-            <button
-              onClick={() => goToSection('home')}
-              className={navClass(isHome && activeSection === 'home')}
-            >
-              Home
-            </button>
-            <button
-              onClick={() => goToSection('about')}
-              className={navClass(isHome && activeSection === 'about')}
-            >
-              About
-            </button>
-            <button
-              onClick={() => goToSection('process')}
-              className={navClass(isHome && activeSection === 'process')}
-            >
-              Process
-            </button>
-            <button
-              onClick={() => goToSection('submit')}
-              className={navClass(isHome && activeSection === 'submit')}
-            >
-              Manuscript
-            </button>
-            <button
-              onClick={() => goToSection('plans')}
-              className={navClass(isHome && activeSection === 'plans')}
-            >
-              Plans
-            </button>
-            <button onClick={() => goTo('/customize')} className={navClass(path === '/customize')}>
-              Customize
-            </button>
-            <button
-              onClick={() => goTo('/royalty-calculator')}
-              className={navClass(path === '/royalty-calculator')}
-            >
-              Royalty Calculator
-            </button>
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center space-x-9">
+            {items.map((it) => (
+              <button key={it.label} onClick={() => goToSection(it.section)} className={deskLink(isActive(it.match))}>
+                {it.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Desktop CTA */}
+          <div className="hidden md:flex items-center space-x-3">
             {user ? (
               <button
                 onClick={() => goTo('/account')}
-                className="flex items-center space-x-2 bg-amber-600 text-white px-6 py-2 rounded-full hover:bg-amber-700 transition-colors font-medium"
+                className="flex items-center space-x-2 bg-amber-600 text-white px-5 py-2.5 rounded-full hover:bg-amber-700 transition-colors font-medium"
               >
                 <UserCircle className="w-5 h-5" />
                 <span>My Account</span>
               </button>
             ) : (
-              <button
-                onClick={() => goTo('/login')}
-                className="bg-amber-600 text-white px-6 py-2 rounded-full hover:bg-amber-700 transition-colors font-medium"
-              >
-                Login / Sign Up
-              </button>
+              <>
+                <button onClick={() => goTo('/login')} className="text-gray-700 hover:text-amber-600 font-medium transition-colors">
+                  Log In
+                </button>
+                <button
+                  onClick={() => goTo('/signup')}
+                  className="bg-amber-600 text-white px-6 py-2.5 rounded-full hover:bg-amber-700 transition-colors font-semibold shadow-sm"
+                >
+                  Get Started
+                </button>
+              </>
             )}
           </div>
 
@@ -143,63 +134,40 @@ export default function Navigation() {
         </div>
       </div>
 
+      {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-t">
-          <div className="px-4 py-4 space-y-3">
-            <button
-              onClick={() => goToSection('home')}
-              className={mobileNavClass(isHome && activeSection === 'home')}
-            >
-              Home
-            </button>
-            <button
-              onClick={() => goToSection('about')}
-              className={mobileNavClass(isHome && activeSection === 'about')}
-            >
-              About
-            </button>
-            <button
-              onClick={() => goToSection('process')}
-              className={mobileNavClass(isHome && activeSection === 'process')}
-            >
-              Process
-            </button>
-            <button
-              onClick={() => goToSection('submit')}
-              className={mobileNavClass(isHome && activeSection === 'submit')}
-            >
-              Manuscript
-            </button>
-            <button
-              onClick={() => goToSection('plans')}
-              className={mobileNavClass(isHome && activeSection === 'plans')}
-            >
-              Plans
-            </button>
-            <button onClick={() => goTo('/customize')} className={mobileNavClass(path === '/customize')}>
-              Customize
-            </button>
-            <button
-              onClick={() => goTo('/royalty-calculator')}
-              className={mobileNavClass(path === '/royalty-calculator')}
-            >
-              Royalty Calculator
-            </button>
-            {user ? (
-              <button
-                onClick={() => goTo('/account')}
-                className="block w-full text-center bg-amber-600 text-white px-6 py-2 rounded-full hover:bg-amber-700"
-              >
-                My Account
+        <div className="md:hidden bg-white border-t shadow-lg">
+          <div className="px-4 py-4 space-y-2">
+            {items.map((it) => (
+              <button key={it.label} onClick={() => goToSection(it.section)} className={mobileLink(isActive(it.match))}>
+                {it.label}
               </button>
-            ) : (
-              <button
-                onClick={() => goTo('/login')}
-                className="block w-full text-center bg-amber-600 text-white px-6 py-2 rounded-full hover:bg-amber-700"
-              >
-                Login / Sign Up
-              </button>
-            )}
+            ))}
+            <div className="pt-2 space-y-2">
+              {user ? (
+                <button
+                  onClick={() => goTo('/account')}
+                  className="block w-full text-center bg-amber-600 text-white px-6 py-2.5 rounded-full hover:bg-amber-700 font-medium"
+                >
+                  My Account
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => goTo('/login')}
+                    className="block w-full text-center border border-gray-300 text-gray-700 px-6 py-2.5 rounded-full hover:bg-gray-50 font-medium"
+                  >
+                    Log In
+                  </button>
+                  <button
+                    onClick={() => goTo('/signup')}
+                    className="block w-full text-center bg-amber-600 text-white px-6 py-2.5 rounded-full hover:bg-amber-700 font-semibold"
+                  >
+                    Get Started
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}

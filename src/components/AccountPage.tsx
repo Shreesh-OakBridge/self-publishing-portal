@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, LogOut, Palette, Calculator, Home, Pencil } from 'lucide-react';
+import { BookOpen, LogOut, Palette, Calculator, Home, Pencil, ShoppingBag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import ProfileEditor from './ProfileEditor';
@@ -27,6 +27,32 @@ interface Calculation {
   created_at: string;
 }
 
+interface Order {
+  id: string;
+  plan: string | null;
+  customization_id: string | null;
+  amount: number | null;
+  discount: number | null;
+  coupon_code: string | null;
+  status: string;
+  created_at: string;
+}
+
+const statusColor = (s: string) => {
+  switch (s) {
+    case 'completed':
+    case 'shipped':
+      return 'bg-green-100 text-green-800';
+    case 'cancelled':
+      return 'bg-red-100 text-red-700';
+    case 'confirmed':
+    case 'in_production':
+      return 'bg-blue-100 text-blue-700';
+    default:
+      return 'bg-amber-100 text-amber-800';
+  }
+};
+
 const inr = (n: number | null | undefined) =>
   `₹${Number(n ?? 0).toLocaleString('en-IN')}`;
 const fmtDate = (d: string) =>
@@ -36,6 +62,7 @@ export default function AccountPage() {
   const { user, loading, signOut } = useAuth();
   const [customizations, setCustomizations] = useState<Customization[]>([]);
   const [calculations, setCalculations] = useState<Calculation[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [editingProfile, setEditingProfile] = useState(false);
 
@@ -49,7 +76,7 @@ export default function AccountPage() {
     if (!user) return;
     (async () => {
       setLoadingData(true);
-      const [c, r] = await Promise.all([
+      const [c, r, o] = await Promise.all([
         supabase
           .from('book_customizations')
           .select('*')
@@ -60,9 +87,15 @@ export default function AccountPage() {
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false }),
+        supabase
+          .from('orders')
+          .select('id, plan, customization_id, amount, discount, coupon_code, status, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
       ]);
       if (c.data) setCustomizations(c.data as Customization[]);
       if (r.data) setCalculations(r.data as Calculation[]);
+      if (o.data) setOrders(o.data as Order[]);
       setLoadingData(false);
     })();
   }, [user]);
@@ -172,6 +205,66 @@ export default function AccountPage() {
             )}
           </div>
         )}
+
+        <section>
+          <div className="flex items-center space-x-2 mb-3">
+            <ShoppingBag className="w-5 h-5 text-amber-600" />
+            <h2 className="text-xl font-bold text-gray-900">My Orders</h2>
+          </div>
+          {loadingData ? (
+            <p className="text-gray-500">Loading…</p>
+          ) : orders.length === 0 ? (
+            <div className="bg-white rounded-2xl border p-6 text-gray-500">
+              No orders yet.{' '}
+              <a href="/#plans" className="text-amber-700 font-semibold hover:underline">
+                Explore publishing plans →
+              </a>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 border-b">
+                    <th className="px-4 py-3 font-semibold">Date</th>
+                    <th className="px-4 py-3 font-semibold">Order</th>
+                    <th className="px-4 py-3 font-semibold">Coupon</th>
+                    <th className="px-4 py-3 font-semibold">Amount</th>
+                    <th className="px-4 py-3 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((o) => (
+                    <tr key={o.id} className="border-b last:border-0 hover:bg-gray-50">
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(o.created_at)}</td>
+                      <td className="px-4 py-3 text-gray-700">
+                        {o.plan ? o.plan : o.customization_id ? 'Custom book' : '—'}
+                        {o.plan && o.customization_id && (
+                          <span className="text-xs text-gray-400"> + custom design</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {o.coupon_code ? (
+                          <span className="font-mono text-xs">
+                            {o.coupon_code}
+                            {o.discount ? ` (−${inr(o.discount)})` : ''}
+                          </span>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                      <td className="px-4 py-3 font-semibold">{inr(o.amount)}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold capitalize ${statusColor(o.status)}`}>
+                          {o.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
 
         <ManuscriptUpload />
 

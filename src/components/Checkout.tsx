@@ -51,7 +51,7 @@ export default function Checkout() {
 
   const [ship, setShip] = useState({ name: '', phone: '', address: '', city: '', state: '', pincode: '' });
   const [sameAsShip, setSameAsShip] = useState(true);
-  const [bill, setBill] = useState({ name: '', address: '', gst: '' });
+  const [bill, setBill] = useState({ name: '', address: '' });
 
   // Coupon
   const [couponInput, setCouponInput] = useState('');
@@ -97,7 +97,10 @@ export default function Checkout() {
   const custAmount = cust?.estimated_price || 0;
   const subtotal = planAmount + custAmount;
   const discount = applied ? Math.min(applied.discount, subtotal) : 0;
-  const total = Math.max(0, subtotal - discount);
+  const taxable = Math.max(0, subtotal - discount);
+  const GST_RATE = 0.18;
+  const gst = Math.round(taxable * GST_RATE);
+  const total = taxable + gst;
   const royaltyRate = planName ? PLAN_ROYALTY[planName] ?? null : null;
 
   // Map customization option ids to friendly names via CMS config.
@@ -142,8 +145,8 @@ export default function Checkout() {
     setPlacing(true);
     setError('');
     const billing = sameAsShip
-      ? { bill_name: ship.name, bill_address: ship.address, bill_gst: bill.gst }
-      : { bill_name: bill.name, bill_address: bill.address, bill_gst: bill.gst };
+      ? { bill_name: ship.name, bill_address: ship.address }
+      : { bill_name: bill.name, bill_address: bill.address };
     const { error: err } = await supabase.from('orders').insert({
       user_id: user.id,
       plan: planName,
@@ -200,6 +203,16 @@ export default function Checkout() {
           <span>− {inr(discount)}</span>
         </div>
       )}
+      {discount > 0 && (
+        <div className="flex justify-between text-gray-600">
+          <span>Taxable amount</span>
+          <span>{inr(taxable)}</span>
+        </div>
+      )}
+      <div className="flex justify-between text-gray-600">
+        <span>GST (18%)</span>
+        <span>{inr(gst)}</span>
+      </div>
       <div className="flex justify-between items-center pt-2 border-t mt-2">
         <span className="font-bold text-gray-900">Total</span>
         <span className="text-xl font-bold text-amber-600">{inr(total)}</span>
@@ -335,12 +348,11 @@ export default function Checkout() {
               <span>Same as shipping address</span>
             </label>
             {!sameAsShip && (
-              <div className="grid sm:grid-cols-2 gap-3 mb-3">
+              <div className="grid sm:grid-cols-2 gap-3">
                 <input className={field} placeholder="Billing name" value={bill.name} onChange={(e) => setBill({ ...bill, name: e.target.value })} />
                 <input className={field} placeholder="Billing address" value={bill.address} onChange={(e) => setBill({ ...bill, address: e.target.value })} />
               </div>
             )}
-            <input className={field} placeholder="GST number (optional)" value={bill.gst} onChange={(e) => setBill({ ...bill, gst: e.target.value })} />
           </div>
 
           {/* Payment placeholder */}
@@ -393,7 +405,7 @@ export default function Checkout() {
               {placing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
               <span>{placing ? 'Placing…' : 'Place Order'}</span>
             </button>
-            <p className="text-xs text-gray-400 mt-2 text-center">Taxes/shipping calculated at confirmation.</p>
+            <p className="text-xs text-gray-400 mt-2 text-center">Inclusive of 18% GST. Shipping calculated at confirmation.</p>
           </div>
         </div>
       </main>

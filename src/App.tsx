@@ -14,6 +14,7 @@ import AccountPage from './components/AccountPage';
 import ManuscriptEditor from './components/ManuscriptEditor';
 import Checkout from './components/Checkout';
 import HomeManuscriptSection from './components/HomeManuscriptSection';
+import Testimonials from './components/Testimonials';
 
 function HomePage() {
   // When arriving from another page with a hash (e.g. /#plans), scroll there.
@@ -33,6 +34,7 @@ function HomePage() {
       <ValueProposition />
       <VideoSection />
       <HomeManuscriptSection />
+      <Testimonials />
       <PricingPlans />
 
       <section id="contact" className="py-20 px-4 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50">

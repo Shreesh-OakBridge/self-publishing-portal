@@ -97,6 +97,14 @@ export default function Footer() {
                   Royalty Calculator
                 </a>
               </li>
+              <li>
+                <button
+                  onClick={() => goToSection('submit')}
+                  className="text-gray-400 hover:text-amber-500 transition-colors"
+                >
+                  Submit Manuscript
+                </button>
+              </li>
             </ul>
           </div>
 

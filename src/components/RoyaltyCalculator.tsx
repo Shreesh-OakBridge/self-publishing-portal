@@ -18,7 +18,13 @@ const planRoyalties = {
 };
 
 export default function RoyaltyCalculator() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  // Royalty Calculator is for logged-in authors only.
+  useEffect(() => {
+    if (!loading && !user) {
+      window.location.href = '/login';
+    }
+  }, [loading, user]);
   // Pre-load from query params when an author re-opens a saved projection.
   const [royaltyData, setRoyaltyData] = useState<RoyaltyData>(() => {
     const p = new URLSearchParams(window.location.search);
@@ -111,6 +117,12 @@ export default function RoyaltyCalculator() {
       setIsSaving(false);
     }
   };
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center text-gray-500">Loading…</div>
+    );
+  }
 
   return (
     <section id="calculator" className="py-20 px-4 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
