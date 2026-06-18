@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ShoppingCart, CheckCircle, AlertCircle, Loader2, Lock } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, CheckCircle, AlertCircle, Loader2, Lock, Tag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
@@ -7,35 +7,60 @@ import { useContent } from '../content/ContentProvider';
 const inr = (n: number) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const priceToNumber = (p: string) => Number((p || '').replace(/[^0-9.]/g, '')) || 0;
 
+// Royalty rate per plan (mirrors the Royalty Calculator).
+const PLAN_ROYALTY: Record<string, number> = {
+  Starter: 30,
+  Professional: 45,
+  Excellence: 55,
+  Elite: 60,
+};
+
 interface Customization {
   id: string;
   paper_type: string | null;
-  binding: string | null;
   interior_color: string | null;
+  binding: string | null;
+  cover_design: string | null;
+  layout_option: string | null;
   book_size: string | null;
   estimated_price: number | null;
+}
+interface RoyaltyCalc {
+  id: string;
+  plan_type: string | null;
+  book_price: number | null;
+  expected_sales: number | null;
+  estimated_royalty: number | null;
+  monthly_earnings: number | null;
 }
 
 export default function Checkout() {
   const { user, loading } = useAuth();
-  const { pricing } = useContent();
+  const { pricing, customizer } = useContent();
   const params = new URLSearchParams(window.location.search);
   const planName = params.get('plan');
   const customizationId = params.get('customization');
+  const royaltyId = params.get('royalty');
 
   const [cust, setCust] = useState<Customization | null>(null);
+  const [royalty, setRoyalty] = useState<RoyaltyCalc | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [placed, setPlaced] = useState(false);
   const [error, setError] = useState('');
 
-  // Shipping
-  const [ship, setShip] = useState({
-    name: '', phone: '', address: '', city: '', state: '', pincode: '',
-  });
-  // Billing
+  const [ship, setShip] = useState({ name: '', phone: '', address: '', city: '', state: '', pincode: '' });
   const [sameAsShip, setSameAsShip] = useState(true);
   const [bill, setBill] = useState({ name: '', address: '', gst: '' });
+
+  // Coupon
+  const [couponInput, setCouponInput] = useState('');
+  const [applied, setApplied] = useState<{ code: string; discount: number } | null>(null);
+  const [couponMsg, setCouponMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+
+  // Conflict: a plan AND a separate royalty selection can't be combined.
+  const conflict = !!planName && !!royaltyId;
 
   useEffect(() => {
     if (!loading && !user) window.location.href = '/login';
@@ -47,12 +72,19 @@ export default function Checkout() {
       if (customizationId) {
         const { data } = await supabase
           .from('book_customizations')
-          .select('id, paper_type, binding, interior_color, book_size, estimated_price')
+          .select('id, paper_type, interior_color, binding, cover_design, layout_option, book_size, estimated_price')
           .eq('id', customizationId)
           .maybeSingle();
         if (data) setCust(data as Customization);
       }
-      // Prefill name from profile
+      if (royaltyId) {
+        const { data } = await supabase
+          .from('royalty_calculations')
+          .select('id, plan_type, book_price, expected_sales, estimated_royalty, monthly_earnings')
+          .eq('id', royaltyId)
+          .maybeSingle();
+        if (data) setRoyalty(data as RoyaltyCalc);
+      }
       const fullName = (user.user_metadata?.full_name as string) || '';
       if (fullName) setShip((s) => ({ ...s, name: fullName }));
       setLoadingData(false);
@@ -63,10 +95,46 @@ export default function Checkout() {
   const plan = planName ? pricing.plans.find((p) => p.name === planName) : null;
   const planAmount = plan ? priceToNumber(plan.price) : 0;
   const custAmount = cust?.estimated_price || 0;
-  const total = planAmount + custAmount;
+  const subtotal = planAmount + custAmount;
+  const discount = applied ? Math.min(applied.discount, subtotal) : 0;
+  const total = Math.max(0, subtotal - discount);
+  const royaltyRate = planName ? PLAN_ROYALTY[planName] ?? null : null;
+
+  // Map customization option ids to friendly names via CMS config.
+  const optName = (list: { id: string; name: string }[], id: string | null | undefined) =>
+    list.find((o) => o.id === id)?.name || id || '—';
+  const combo = cust
+    ? [
+        ['Size', optName(customizer.bookSizes, cust.book_size)],
+        ['Binding', optName(customizer.bindingOptions, cust.binding)],
+        ['Interior', optName(customizer.colorOptions, cust.interior_color)],
+        ['Paper', optName(customizer.paperTypes, cust.paper_type)],
+        ['Cover', optName(customizer.coverDesigns, cust.cover_design)],
+        ['Layout', optName(customizer.layoutOptions, cust.layout_option)],
+      ]
+    : [];
+
+  const applyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setApplyingCoupon(true);
+    setCouponMsg(null);
+    const { data, error: err } = await supabase.rpc('validate_coupon', {
+      p_code: couponInput.trim(),
+      p_amount: subtotal,
+    });
+    setApplyingCoupon(false);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (err || !row || !row.valid) {
+      setApplied(null);
+      setCouponMsg({ type: 'err', text: row?.message || 'Could not apply coupon.' });
+      return;
+    }
+    setApplied({ code: couponInput.trim().toUpperCase(), discount: Number(row.discount) });
+    setCouponMsg({ type: 'ok', text: row.message || 'Coupon applied.' });
+  };
 
   const placeOrder = async () => {
-    if (!user) return;
+    if (!user || conflict) return;
     if (!ship.name.trim() || !ship.address.trim() || !ship.city.trim() || !ship.pincode.trim()) {
       setError('Please complete the required shipping fields (name, address, city, pincode).');
       return;
@@ -80,7 +148,11 @@ export default function Checkout() {
       user_id: user.id,
       plan: planName,
       customization_id: customizationId,
+      royalty_calculation_id: royaltyId,
+      royalty_rate: royaltyRate,
       amount: total,
+      discount,
+      coupon_code: applied?.code ?? null,
       status: 'pending',
       ship_name: ship.name,
       ship_phone: ship.phone,
@@ -97,29 +169,105 @@ export default function Checkout() {
       return;
     }
     setPlaced(true);
+    window.scrollTo({ top: 0 });
   };
 
   if (loading || loadingData) {
     return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500">Loading…</div>;
   }
 
+  const Breakup = () => (
+    <div className="space-y-2 text-sm">
+      {plan && (
+        <div className="flex justify-between">
+          <span className="text-gray-600">Plan: {plan.name}</span>
+          <span className="font-semibold">{inr(planAmount)}</span>
+        </div>
+      )}
+      {cust && (
+        <div className="flex justify-between">
+          <span className="text-gray-600">Customization add-ons</span>
+          <span className="font-semibold">{inr(custAmount)}</span>
+        </div>
+      )}
+      <div className="flex justify-between text-gray-600">
+        <span>Subtotal</span>
+        <span>{inr(subtotal)}</span>
+      </div>
+      {discount > 0 && (
+        <div className="flex justify-between text-green-700">
+          <span>Discount ({applied?.code})</span>
+          <span>− {inr(discount)}</span>
+        </div>
+      )}
+      <div className="flex justify-between items-center pt-2 border-t mt-2">
+        <span className="font-bold text-gray-900">Total</span>
+        <span className="text-xl font-bold text-amber-600">{inr(total)}</span>
+      </div>
+    </div>
+  );
+
+  const OrderDetails = () => (
+    <>
+      {plan && (
+        <p className="text-sm text-gray-700 mb-2">
+          <span className="font-semibold">Plan:</span> {plan.name}
+          {royaltyRate != null && <span className="text-gray-500"> · Royalty {royaltyRate}%</span>}
+        </p>
+      )}
+      {royalty && !plan && (
+        <p className="text-sm text-gray-700 mb-2">
+          <span className="font-semibold">Self-publishing royalty:</span> {royalty.plan_type || '—'} ·{' '}
+          {inr(royalty.estimated_royalty || 0)}/book
+        </p>
+      )}
+      {combo.length > 0 && (
+        <div className="text-sm text-gray-700">
+          <span className="font-semibold">Customization:</span>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1">
+            {combo.map(([k, v]) => (
+              <div key={k} className="flex justify-between">
+                <span className="text-gray-500">{k}</span>
+                <span className="text-gray-800">{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+
   if (placed) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="bg-white rounded-3xl border p-10 max-w-md text-center">
-          <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Order placed</h1>
-          <p className="text-gray-600 mb-6">
-            Your order has been recorded. Online payment is coming soon — our team will reach out to
-            confirm the next steps.
-          </p>
+      <div className="min-h-screen bg-gray-50">
+        <main className="max-w-2xl mx-auto px-4 py-12">
+          <div className="bg-white rounded-3xl border p-8 text-center mb-6">
+            <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Order confirmed</h1>
+            <p className="text-gray-600">
+              Online payment is coming soon — our team will reach out to confirm next steps.
+            </p>
+          </div>
+          <div className="bg-white rounded-2xl border p-6 mb-6">
+            <h2 className="font-bold text-gray-900 mb-3">Your order</h2>
+            <OrderDetails />
+          </div>
+          <div className="bg-white rounded-2xl border p-6 mb-6">
+            <h2 className="font-bold text-gray-900 mb-3">Price breakup</h2>
+            <Breakup />
+          </div>
+          <div className="bg-white rounded-2xl border p-6 mb-6 text-sm text-gray-700">
+            <h2 className="font-bold text-gray-900 mb-2">Shipping to</h2>
+            <p>{ship.name}{ship.phone ? ` · ${ship.phone}` : ''}</p>
+            <p>{[ship.address, ship.city, ship.state, ship.pincode].filter(Boolean).join(', ')}</p>
+          </div>
           <button
             onClick={() => (window.location.href = '/account')}
-            className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700"
+            className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700"
           >
             Go to My Account
           </button>
-        </div>
+        </main>
       </div>
     );
   }
@@ -142,12 +290,29 @@ export default function Checkout() {
 
       <main className="max-w-5xl mx-auto px-4 py-8 grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
+          {conflict && (
+            <div className="bg-red-50 border-2 border-red-300 text-red-800 p-4 rounded-xl text-sm flex items-start space-x-2">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <span>
+                You’ve selected both a <strong>plan</strong> and a separate <strong>royalty</strong>.
+                Please choose <strong>either a publishing plan</strong> or go through the
+                <strong> self-publishing flow</strong> — not both.
+              </span>
+            </div>
+          )}
           {error && (
             <div className="bg-red-50 border-2 border-red-300 text-red-800 p-3 rounded-xl text-sm flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
+
+          {/* Order details */}
+          <div className="bg-white rounded-2xl border p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Order details</h2>
+            <OrderDetails />
+            {!plan && !cust && !royalty && <p className="text-gray-500 text-sm">No item selected.</p>}
+          </div>
 
           {/* Shipping */}
           <div className="bg-white rounded-2xl border p-6">
@@ -192,37 +357,43 @@ export default function Checkout() {
         <div className="lg:col-span-1">
           <div className="bg-white rounded-2xl border p-6 sticky top-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Order summary</h2>
-            <div className="space-y-2 text-sm border-b pb-4 mb-4">
-              {plan && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Plan: {plan.name}</span>
-                  <span className="font-semibold">{inr(planAmount)}</span>
-                </div>
+            <Breakup />
+
+            {/* Coupon */}
+            <div className="mt-5 pt-5 border-t">
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Coupon code</label>
+              <div className="flex gap-2">
+                <input
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  placeholder="Enter code"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-amber-500 outline-none uppercase"
+                />
+                <button
+                  onClick={applyCoupon}
+                  disabled={applyingCoupon}
+                  className="flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-600 text-amber-700 text-sm font-semibold hover:bg-amber-50 disabled:opacity-50"
+                >
+                  {applyingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4" />}
+                  Apply
+                </button>
+              </div>
+              {couponMsg && (
+                <p className={`text-xs mt-1 ${couponMsg.type === 'ok' ? 'text-green-700' : 'text-red-600'}`}>
+                  {couponMsg.text}
+                </p>
               )}
-              {cust && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">
-                    Customization{cust.book_size ? ` (${cust.book_size}` : ''}
-                    {cust.binding ? `, ${cust.binding})` : cust.book_size ? ')' : ''}
-                  </span>
-                  <span className="font-semibold">{inr(custAmount)}</span>
-                </div>
-              )}
-              {!plan && !cust && <p className="text-gray-500">No item selected.</p>}
             </div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="font-bold text-gray-900">Total</span>
-              <span className="text-2xl font-bold text-amber-600">{inr(total)}</span>
-            </div>
-            <p className="text-xs text-gray-400 mb-6">Taxes/shipping calculated at confirmation.</p>
+
             <button
               onClick={placeOrder}
-              disabled={placing}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 disabled:opacity-50"
+              disabled={placing || conflict}
+              className="w-full mt-6 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 disabled:opacity-50"
             >
               {placing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
               <span>{placing ? 'Placing…' : 'Place Order'}</span>
             </button>
+            <p className="text-xs text-gray-400 mt-2 text-center">Taxes/shipping calculated at confirmation.</p>
           </div>
         </div>
       </main>
