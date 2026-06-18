@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText } from 'lucide-react';
+import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { logActivity } from '../lib/activity';
@@ -7,6 +7,7 @@ import ContentEditor from './ContentEditor';
 import AuthorsPanel from './AuthorsPanel';
 import ActivityPanel from './ActivityPanel';
 import ManuscriptsPanel from './ManuscriptsPanel';
+import OrdersPanel from './OrdersPanel';
 
 interface Lead {
   id: string;
@@ -34,7 +35,7 @@ export default function AdminDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [leadsError, setLeadsError] = useState('');
-  const [tab, setTab] = useState<'leads' | 'manuscripts' | 'authors' | 'activity' | 'content'>('leads');
+  const [tab, setTab] = useState<'leads' | 'orders' | 'manuscripts' | 'authors' | 'activity' | 'content'>('leads');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -247,6 +248,17 @@ export default function AdminDashboard() {
             <span>Manuscripts</span>
           </button>
           <button
+            onClick={() => setTab('orders')}
+            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+              tab === 'orders'
+                ? 'border-amber-600 text-amber-700'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <ShoppingBag className="w-4 h-4" />
+            <span>Orders</span>
+          </button>
+          <button
             onClick={() => setTab('authors')}
             className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
               tab === 'authors'
@@ -287,6 +299,8 @@ export default function AdminDashboard() {
           <ContentEditor />
         ) : tab === 'manuscripts' ? (
           <ManuscriptsPanel />
+        ) : tab === 'orders' ? (
+          <OrdersPanel />
         ) : tab === 'authors' ? (
           <AuthorsPanel />
         ) : tab === 'activity' ? (

@@ -86,7 +86,7 @@ export default function BookCustomizer() {
   const [estimatedPrice, setEstimatedPrice] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<'save' | 'quote' | null>(null);
+  const [pendingAction, setPendingAction] = useState<'save' | 'quote' | 'order' | null>(null);
 
   useEffect(() => {
     calculatePrice();
@@ -134,37 +134,61 @@ export default function BookCustomizer() {
     }
   };
 
+  const handleOrderClick = () => {
+    if (user) {
+      doOrder();
+    } else {
+      setPendingAction('order');
+      setAuthOpen(true);
+    }
+  };
+
+  // Insert the current configuration and return its new id.
+  const insertCustomization = async (): Promise<string | null> => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const uid = sessionData.session?.user?.id ?? null;
+    const { data, error } = await supabase
+      .from('book_customizations')
+      .insert([
+        {
+          session_id: `session_${Date.now()}`,
+          user_id: uid,
+          paper_type: customization.paperType,
+          interior_color: customization.interiorColor,
+          binding: customization.binding,
+          cover_design: customization.coverDesign,
+          layout_option: customization.layoutOption,
+          book_size: customization.bookSize,
+          estimated_price: estimatedPrice,
+        },
+      ])
+      .select('id')
+      .single();
+    if (error) throw error;
+    return data?.id ?? null;
+  };
+
   const doSaveCustomization = async () => {
     setIsSaving(true);
     try {
-      // Read the freshest session so saves right after login attach the user id.
-      const { data: sessionData } = await supabase.auth.getSession();
-      const uid = sessionData.session?.user?.id ?? null;
-      const sessionId = `session_${Date.now()}`;
-
-      const { error } = await supabase
-        .from('book_customizations')
-        .insert([
-          {
-            session_id: sessionId,
-            user_id: uid,
-            paper_type: customization.paperType,
-            interior_color: customization.interiorColor,
-            binding: customization.binding,
-            cover_design: customization.coverDesign,
-            layout_option: customization.layoutOption,
-            book_size: customization.bookSize,
-            estimated_price: estimatedPrice,
-          },
-        ]);
-
-      if (error) throw error;
-
+      await insertCustomization();
       alert('Book customization saved! You can view it anytime under My Account.');
     } catch (err) {
       console.error('Error saving customization:', err);
       alert('Error saving customization. Please try again.');
     } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const doOrder = async () => {
+    setIsSaving(true);
+    try {
+      const id = await insertCustomization();
+      if (id) window.location.href = `/checkout?customization=${id}`;
+    } catch (err) {
+      console.error('Error starting order:', err);
+      alert('Could not start your order. Please try again.');
       setIsSaving(false);
     }
   };
@@ -434,19 +458,27 @@ export default function BookCustomizer() {
                 </div>
 
                 <button
-                  onClick={handleSaveClick}
+                  onClick={handleOrderClick}
                   disabled={isSaving}
                   className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50"
                 >
                   <ShoppingCart className="w-5 h-5" />
-                  <span>{isSaving ? 'Saving...' : 'Save This Configuration'}</span>
+                  <span>{isSaving ? 'Please wait…' : 'Order This Design'}</span>
+                </button>
+
+                <button
+                  onClick={handleSaveClick}
+                  disabled={isSaving}
+                  className="w-full border-2 border-amber-600 text-amber-600 py-3 rounded-xl font-semibold hover:bg-amber-50 transition-colors mt-3 disabled:opacity-50"
+                >
+                  Save for Later
                 </button>
 
                 <button
                   onClick={handleQuoteClick}
-                  className="w-full border-2 border-amber-600 text-amber-600 py-3 rounded-xl font-semibold hover:bg-amber-50 transition-colors mt-3"
+                  className="w-full text-amber-700 hover:text-amber-900 py-2 text-sm font-semibold mt-2"
                 >
-                  Get Quote for This Design
+                  Get a quote instead
                 </button>
               </div>
             </div>
@@ -460,6 +492,7 @@ export default function BookCustomizer() {
         onAuthenticated={() => {
           if (pendingAction === 'save') doSaveCustomization();
           else if (pendingAction === 'quote') goToContact();
+          else if (pendingAction === 'order') doOrder();
           setPendingAction(null);
         }}
         heading="Log in or sign up to save your design"

@@ -143,29 +143,15 @@ export default function PricingPlans() {
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-  const scrollToContact = (plan: string) => {
-    const element = document.getElementById('contact');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setTimeout(() => {
-        const selectElement = document.querySelector('select[name="preferred_plan"]') as HTMLSelectElement;
-        if (selectElement) {
-          const nativeSetter = Object.getOwnPropertyDescriptor(
-            window.HTMLSelectElement.prototype,
-            'value'
-          )?.set;
-          nativeSetter?.call(selectElement, plan);
-          selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      }, 500);
-    }
+  const goToCheckout = (plan: string) => {
+    window.location.href = `/checkout?plan=${encodeURIComponent(plan)}`;
   };
 
-  // Logged-in authors go straight to the enquiry form; visitors must log in /
-  // sign up first via the popup, after which we continue to the chosen plan.
+  // Logged-in users go straight to checkout for the plan; visitors log in /
+  // sign up first, then continue to checkout for the chosen plan.
   const handleGetStarted = (plan: string) => {
     if (user) {
-      scrollToContact(plan);
+      goToCheckout(plan);
     } else {
       setPendingPlan(plan);
       setAuthOpen(true);
@@ -221,9 +207,9 @@ export default function PricingPlans() {
         open={authOpen}
         onClose={() => setAuthOpen(false)}
         onAuthenticated={() => {
-          if (pendingPlan) scrollToContact(pendingPlan);
+          if (pendingPlan) goToCheckout(pendingPlan);
         }}
-        heading="Please log in or sign up to get started"
+        heading="Please log in or sign up to continue"
       />
     </section>
   );
