@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library } from 'lucide-react';
+import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { logActivity } from '../lib/activity';
@@ -10,6 +10,7 @@ import ManuscriptsPanel from './ManuscriptsPanel';
 import OrdersPanel from './OrdersPanel';
 import CouponsPanel from './CouponsPanel';
 import BooksPanel from './BooksPanel';
+import LayoutEditor from './LayoutEditor';
 
 interface Lead {
   id: string;
@@ -37,7 +38,7 @@ export default function AdminDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [leadsError, setLeadsError] = useState('');
-  const [tab, setTab] = useState<'leads' | 'orders' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'content'>('leads');
+  const [tab, setTab] = useState<'leads' | 'orders' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'layout' | 'content'>('leads');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -305,6 +306,17 @@ export default function AdminDashboard() {
             <span>Activity</span>
           </button>
           <button
+            onClick={() => setTab('layout')}
+            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+              tab === 'layout'
+                ? 'border-amber-600 text-amber-700'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <LayoutTemplate className="w-4 h-4" />
+            <span>Layout</span>
+          </button>
+          <button
             onClick={() => setTab('content')}
             className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
               tab === 'content'
@@ -333,6 +345,8 @@ export default function AdminDashboard() {
           <CouponsPanel />
         ) : tab === 'activity' ? (
           <ActivityPanel />
+        ) : tab === 'layout' ? (
+          <LayoutEditor />
         ) : (
         <>
         <p className="text-gray-600 mb-4">

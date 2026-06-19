@@ -236,7 +236,11 @@ function Field({
 
 export default function ContentEditor() {
   const content = useContent();
-  const sections = useMemo(() => Object.keys(content) as (keyof SiteContent)[], [content]);
+  // `homeLayout` is managed in the dedicated Layout tab, not here.
+  const sections = useMemo(
+    () => (Object.keys(content) as (keyof SiteContent)[]).filter((k) => k !== 'homeLayout'),
+    [content]
+  );
   const [active, setActive] = useState<keyof SiteContent>(sections[0]);
   const [drafts, setDrafts] = useState<Record<string, Json>>(() => ({ ...content }));
   const [saving, setSaving] = useState(false);

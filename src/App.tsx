@@ -1,5 +1,7 @@
-import { useEffect, ReactNode } from 'react';
+import { useEffect, ReactNode, Fragment } from 'react';
 import { useAuth } from './lib/auth';
+import { useContent } from './content/ContentProvider';
+import { HOME_SECTIONS } from './content/defaults';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
 import AuthorDashboard from './components/AuthorDashboard';
@@ -26,6 +28,7 @@ import StaticPage from './components/StaticPage';
 
 function HomePage() {
   const { user, isAdmin } = useAuth();
+  const { homeLayout } = useContent();
 
   // When arriving from another page with a hash (e.g. /#plans), scroll there.
   useEffect(() => {
@@ -42,10 +45,12 @@ function HomePage() {
     ((user?.user_metadata?.full_name as string) || '').split(' ')[0] ||
     '';
 
-  return (
-    <div className="min-h-screen bg-white">
-      <Navigation />
-      {user && !isAdmin ? (
+  // Each reorderable homepage section keyed by id. The hero slot becomes the
+  // author dashboard for logged-in (non-admin) users; the confidence bar only
+  // shows to logged-out visitors.
+  const sectionRenderers: Record<string, () => ReactNode> = {
+    hero: () =>
+      user && !isAdmin ? (
         <section
           id="home"
           className="pt-28 pb-12 px-4 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50"
@@ -60,21 +65,45 @@ function HomePage() {
         </section>
       ) : (
         <Hero />
-      )}
-      {!user && <ConfidenceBar />}
-      <ValueProposition />
-      <VideoSection />
-      <HomeManuscriptSection />
-      <PortfolioSection />
-      <Testimonials />
-      <PricingPlans />
-
+      ),
+    confidenceBar: () => (!user ? <ConfidenceBar /> : null),
+    about: () => <ValueProposition />,
+    process: () => <VideoSection />,
+    submit: () => <HomeManuscriptSection />,
+    portfolio: () => <PortfolioSection />,
+    testimonials: () => <Testimonials />,
+    plans: () => <PricingPlans />,
+    contact: () => (
       <section id="contact" className="py-20 px-4 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50">
         <div className="max-w-4xl mx-auto">
           <ContactForm />
         </div>
       </section>
+    ),
+  };
 
+  // Start from the saved order, then append any known sections not yet listed
+  // (so newly added sections still appear even with an older saved layout).
+  const seen = new Set<string>();
+  const ordered = [
+    ...homeLayout.sections.filter((s) => {
+      if (sectionRenderers[s.key] && !seen.has(s.key)) {
+        seen.add(s.key);
+        return true;
+      }
+      return false;
+    }),
+    ...HOME_SECTIONS.filter((s) => !seen.has(s.key)).map((s) => ({ key: s.key, enabled: true })),
+  ];
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Navigation />
+      {ordered
+        .filter((s) => s.enabled)
+        .map((s) => (
+          <Fragment key={s.key}>{sectionRenderers[s.key]()}</Fragment>
+        ))}
       <Footer />
     </div>
   );

@@ -170,11 +170,35 @@ export interface PortfolioContent {
   items: PortfolioItem[];
 }
 
+export interface HomeLayoutSection {
+  key: string;
+  enabled: boolean;
+}
+
+export interface HomeLayoutContent {
+  sections: HomeLayoutSection[];
+}
+
+// Reorderable homepage sections (header/footer are fixed and not listed).
+// Shared by the renderer (App) and the admin Layout editor.
+export const HOME_SECTIONS: { key: string; label: string }[] = [
+  { key: 'hero', label: 'Hero / Welcome' },
+  { key: 'confidenceBar', label: 'Confidence Bar' },
+  { key: 'about', label: 'Value Proposition' },
+  { key: 'process', label: 'Process & Video' },
+  { key: 'submit', label: 'Manuscript Upload' },
+  { key: 'portfolio', label: 'Portfolio' },
+  { key: 'testimonials', label: 'Testimonials' },
+  { key: 'plans', label: 'Pricing Plans' },
+  { key: 'contact', label: 'Contact Form' },
+];
+
 export interface SiteContent {
   branding: BrandingContent;
   hero: HeroContent;
   valueProps: ValuePropsContent;
   video: VideoContent;
+  homeLayout: HomeLayoutContent;
   confidenceBar: ConfidenceBarContent;
   services: ServicesContent;
   portfolio: PortfolioContent;
@@ -415,6 +439,9 @@ export const defaultContent: SiteContent = {
     successTitle: 'Thank You!',
     successMessage:
       "We've received your information and are excited to learn more about your project. A member of our team will reach out to you within 24 hours to discuss your publishing journey.",
+  },
+  homeLayout: {
+    sections: HOME_SECTIONS.map((s) => ({ key: s.key, enabled: true })),
   },
   confidenceBar: {
     enabled: true,
