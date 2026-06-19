@@ -60,7 +60,7 @@ function HomePage() {
       ) : (
         <Hero />
       )}
-      <ConfidenceBar />
+      {!user && <ConfidenceBar />}
       <ValueProposition />
       <VideoSection />
       <HomeManuscriptSection />
