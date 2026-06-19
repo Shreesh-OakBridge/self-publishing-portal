@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag } from 'lucide-react';
+import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { logActivity } from '../lib/activity';
@@ -9,6 +9,7 @@ import ActivityPanel from './ActivityPanel';
 import ManuscriptsPanel from './ManuscriptsPanel';
 import OrdersPanel from './OrdersPanel';
 import CouponsPanel from './CouponsPanel';
+import BooksPanel from './BooksPanel';
 
 interface Lead {
   id: string;
@@ -36,7 +37,7 @@ export default function AdminDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [leadsError, setLeadsError] = useState('');
-  const [tab, setTab] = useState<'leads' | 'orders' | 'manuscripts' | 'authors' | 'promotions' | 'activity' | 'content'>('leads');
+  const [tab, setTab] = useState<'leads' | 'orders' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'content'>('leads');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -271,6 +272,17 @@ export default function AdminDashboard() {
             <span>Authors</span>
           </button>
           <button
+            onClick={() => setTab('books')}
+            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+              tab === 'books'
+                ? 'border-amber-600 text-amber-700'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <Library className="w-4 h-4" />
+            <span>Books</span>
+          </button>
+          <button
             onClick={() => setTab('promotions')}
             className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
               tab === 'promotions'
@@ -315,6 +327,8 @@ export default function AdminDashboard() {
           <OrdersPanel />
         ) : tab === 'authors' ? (
           <AuthorsPanel />
+        ) : tab === 'books' ? (
+          <BooksPanel />
         ) : tab === 'promotions' ? (
           <CouponsPanel />
         ) : tab === 'activity' ? (
