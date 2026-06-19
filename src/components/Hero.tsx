@@ -56,7 +56,7 @@ export default function Hero() {
         <img
           src={hero.imageUrl}
           alt=""
-          className="mt-12 w-full max-h-[34rem] object-cover shadow-2xl"
+          className="mt-12 w-full h-auto block"
         />
       )}
 
