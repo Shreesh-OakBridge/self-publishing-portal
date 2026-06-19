@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw, AlertCircle, Plus, Trash2, Tag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import ExportMenu from './ExportMenu';
+import type { Column } from '../lib/exporters';
 
 interface Coupon {
   code: string;
@@ -96,6 +98,18 @@ export default function CouponsPanel() {
     await supabase.from('coupons').delete().eq('code', c.code);
   };
 
+  const columns: Column<Coupon>[] = [
+    { header: 'Code', value: (c) => c.code },
+    { header: 'Type', value: (c) => c.type },
+    { header: 'Value', value: (c) => c.value },
+    { header: 'Restrict Email', value: (c) => c.restrict_email || '' },
+    { header: 'Min Order', value: (c) => c.min_order ?? 0 },
+    { header: 'Used', value: (c) => c.used_count },
+    { header: 'Max Uses', value: (c) => (c.max_uses ?? '') },
+    { header: 'Expires', value: (c) => (c.expires_at ? c.expires_at.slice(0, 10) : '') },
+    { header: 'Active', value: (c) => (c.active ? 'Yes' : 'No') },
+  ];
+
   const field = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-300 outline-none';
 
   return (
@@ -158,10 +172,13 @@ export default function CouponsPanel() {
 
       <div className="flex items-center justify-between mb-3">
         <p className="text-gray-600">{items.length} {items.length === 1 ? 'coupon' : 'coupons'}</p>
-        <button onClick={load} className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
-          <RefreshCw className="w-4 h-4" />
-          <span className="hidden sm:inline">Refresh</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportMenu baseName="coupons" title="Coupons" columns={columns} rows={items} />
+          <button onClick={load} className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+            <RefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+        </div>
       </div>
 
       {loading ? (

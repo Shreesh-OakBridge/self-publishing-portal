@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw, AlertCircle, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import ExportMenu from './ExportMenu';
+import type { Column } from '../lib/exporters';
 
 interface Manuscript {
   id: string;
@@ -81,6 +83,17 @@ export default function ManuscriptsPanel() {
     }
   };
 
+  const columns: Column<Manuscript>[] = [
+    { header: 'Date', value: (m) => fmt(m.created_at) },
+    { header: 'Author', value: (m) => authors[m.user_id]?.full_name || '' },
+    { header: 'Email', value: (m) => authors[m.user_id]?.email || '' },
+    { header: 'Title', value: (m) => m.title },
+    { header: 'Genre', value: (m) => m.genre || '' },
+    { header: 'Word Count', value: (m) => m.word_count ?? '' },
+    { header: 'File', value: (m) => m.file_name || '' },
+    { header: 'Status', value: (m) => STATUS_LABEL[m.status] ?? m.status },
+  ];
+
   if (loading) return <div className="text-center text-gray-500 py-16">Loading manuscripts…</div>;
   if (error)
     return (
@@ -96,13 +109,16 @@ export default function ManuscriptsPanel() {
         <p className="text-gray-600">
           {items.length} {items.length === 1 ? 'manuscript' : 'manuscripts'}
         </p>
-        <button
-          onClick={load}
-          className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
-        >
-          <RefreshCw className="w-4 h-4" />
-          <span className="hidden sm:inline">Refresh</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportMenu baseName="manuscripts" title="Manuscripts" columns={columns} rows={items} />
+          <button
+            onClick={load}
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+        </div>
       </div>
 
       {items.length === 0 ? (

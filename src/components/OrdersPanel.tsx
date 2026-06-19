@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import ExportMenu from './ExportMenu';
+import type { Column } from '../lib/exporters';
 
 interface Order {
   id: string;
@@ -8,6 +10,9 @@ interface Order {
   plan: string | null;
   customization_id: string | null;
   amount: number | null;
+  discount: number | null;
+  coupon_code: string | null;
+  royalty_rate: number | null;
   status: string;
   ship_name: string | null;
   ship_city: string | null;
@@ -66,6 +71,23 @@ export default function OrdersPanel() {
     }
   };
 
+  const columns: Column<Order>[] = [
+    { header: 'Date', value: (o) => fmt(o.created_at) },
+    { header: 'Customer', value: (o) => o.ship_name || authors[o.user_id]?.full_name || '' },
+    { header: 'Email', value: (o) => authors[o.user_id]?.email || '' },
+    { header: 'Plan', value: (o) => o.plan || '' },
+    { header: 'Custom Design', value: (o) => (o.customization_id ? 'Yes' : 'No') },
+    { header: 'Royalty %', value: (o) => (o.royalty_rate ?? '') },
+    { header: 'Coupon', value: (o) => o.coupon_code || '' },
+    { header: 'Discount', value: (o) => o.discount ?? 0 },
+    { header: 'Amount (INR)', value: (o) => o.amount ?? 0 },
+    { header: 'Status', value: (o) => o.status },
+    { header: 'Phone', value: (o) => o.ship_phone || '' },
+    { header: 'City', value: (o) => o.ship_city || '' },
+    { header: 'State', value: (o) => o.ship_state || '' },
+    { header: 'Pincode', value: (o) => o.ship_pincode || '' },
+  ];
+
   if (loading) return <div className="text-center text-gray-500 py-16">Loading orders…</div>;
   if (error)
     return (
@@ -81,13 +103,16 @@ export default function OrdersPanel() {
         <p className="text-gray-600">
           {items.length} {items.length === 1 ? 'order' : 'orders'}
         </p>
-        <button
-          onClick={load}
-          className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
-        >
-          <RefreshCw className="w-4 h-4" />
-          <span className="hidden sm:inline">Refresh</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportMenu baseName="orders" title="Orders" columns={columns} rows={items} />
+          <button
+            onClick={load}
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+        </div>
       </div>
 
       {items.length === 0 ? (

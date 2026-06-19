@@ -11,6 +11,20 @@ import OrdersPanel from './OrdersPanel';
 import CouponsPanel from './CouponsPanel';
 import BooksPanel from './BooksPanel';
 import LayoutEditor from './LayoutEditor';
+import ExportMenu from './ExportMenu';
+import type { Column } from '../lib/exporters';
+
+const leadColumns: Column<Lead>[] = [
+  { header: 'Date', value: (l) => new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) },
+  { header: 'Name', value: (l) => l.full_name },
+  { header: 'Email', value: (l) => l.email },
+  { header: 'Phone', value: (l) => l.phone || '' },
+  { header: 'Manuscript Title', value: (l) => l.manuscript_title || '' },
+  { header: 'Genre', value: (l) => l.genre || '' },
+  { header: 'Status', value: (l) => l.manuscript_status },
+  { header: 'Preferred Plan', value: (l) => l.preferred_plan || '' },
+  { header: 'Message', value: (l) => l.message || '' },
+];
 
 interface Lead {
   id: string;
@@ -349,9 +363,12 @@ export default function AdminDashboard() {
           <LayoutEditor />
         ) : (
         <>
-        <p className="text-gray-600 mb-4">
-          {leads.length} {leads.length === 1 ? 'lead' : 'leads'} total
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-gray-600">
+            {leads.length} {leads.length === 1 ? 'lead' : 'leads'} total
+          </p>
+          <ExportMenu baseName="leads" title="Leads" columns={leadColumns} rows={leads} />
+        </div>
 
         {leadsError && (
           <div className="bg-red-50 border-2 border-red-300 text-red-800 p-4 rounded-xl mb-6 flex items-center space-x-2">

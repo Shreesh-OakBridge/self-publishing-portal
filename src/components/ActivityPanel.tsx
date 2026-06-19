@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import ExportMenu from './ExportMenu';
+import type { Column } from '../lib/exporters';
 
 interface LogRow {
   id: string;
@@ -78,20 +80,31 @@ export default function ActivityPanel() {
     load();
   }, []);
 
+  const columns: Column<LogRow>[] = [
+    { header: 'When', value: (r) => fmt(r.created_at) },
+    { header: 'Who', value: (r) => r.actor_email || 'Guest' },
+    { header: 'Action', value: (r) => ACTION_LABELS[r.action] ?? r.action },
+    { header: 'Entity', value: (r) => r.entity || '' },
+    { header: 'Details', value: (r) => summarize(r.metadata) },
+  ];
+
   return (
     <>
       <div className="flex items-center justify-between mb-4">
         <p className="text-gray-600">
           {rows.length} {rows.length === 1 ? 'event' : 'events'} (latest 500)
         </p>
-        <button
-          onClick={load}
-          disabled={loading}
-          className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline">Refresh</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportMenu baseName="activity_log" title="Activity Log" columns={columns} rows={rows} />
+          <button
+            onClick={load}
+            disabled={loading}
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+        </div>
       </div>
 
       {error && (

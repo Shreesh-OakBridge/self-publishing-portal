@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw, Palette, Calculator, AlertCircle, BookUser } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import ExportMenu from './ExportMenu';
+import type { Column } from '../lib/exporters';
 
 interface Author {
   id: string;
@@ -64,6 +66,16 @@ export default function AuthorsPanel() {
     load();
   }, []);
 
+  const columns: Column<Author>[] = [
+    { header: 'Name', value: (a) => a.full_name || '' },
+    { header: 'Email', value: (a) => a.email },
+    { header: 'Bio', value: (a) => a.bio || '' },
+    { header: 'Book Scope', value: (a) => a.book_scope || '' },
+    { header: 'Joined', value: (a) => fmt(a.created_at) },
+    { header: 'Customizations', value: (a) => custs.filter((x) => x.user_id === a.id).length },
+    { header: 'Royalty Projections', value: (a) => calcs.filter((x) => x.user_id === a.id).length },
+  ];
+
   if (loading) {
     return <div className="text-center text-gray-500 py-16">Loading authors…</div>;
   }
@@ -82,13 +94,16 @@ export default function AuthorsPanel() {
         <p className="text-gray-600">
           {authors.length} {authors.length === 1 ? 'author' : 'authors'}
         </p>
-        <button
-          onClick={load}
-          className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
-        >
-          <RefreshCw className="w-4 h-4" />
-          <span className="hidden sm:inline">Refresh</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportMenu baseName="authors" title="Authors" columns={columns} rows={authors} />
+          <button
+            onClick={load}
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+        </div>
       </div>
 
       {authors.length === 0 ? (

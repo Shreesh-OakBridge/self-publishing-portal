@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw, AlertCircle, Plus, Trash2, Save, BookText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import ExportMenu from './ExportMenu';
+import type { Column } from '../lib/exporters';
 
 interface Book {
   id: string;
@@ -126,6 +128,20 @@ export default function BooksPanel() {
     await supabase.from('author_books').delete().eq('id', b.id);
   };
 
+  const columns: Column<Book>[] = [
+    { header: 'Author', value: (b) => authorName(b.user_id) },
+    { header: 'Title', value: (b) => b.title },
+    { header: 'Status', value: (b) => b.status.replace('_', ' ') },
+    { header: 'Publish Date', value: (b) => (b.publish_date ? b.publish_date.slice(0, 10) : '') },
+    { header: 'Copies Sold', value: (b) => b.copies_sold || 0 },
+    { header: 'Book Price (INR)', value: (b) => b.book_price || 0 },
+    { header: 'Royalty %', value: (b) => b.royalty_rate || 0 },
+    {
+      header: 'Earnings (INR)',
+      value: (b) => Math.round((b.copies_sold || 0) * (b.book_price || 0) * (b.royalty_rate || 0) / 100),
+    },
+  ];
+
   const field = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-300 outline-none';
   const cell = 'px-2 py-1 border border-gray-200 rounded text-sm w-full focus:border-amber-500 outline-none';
 
@@ -199,10 +215,13 @@ export default function BooksPanel() {
         <p className="text-gray-600">
           {items.length} {items.length === 1 ? 'book' : 'books'}
         </p>
-        <button onClick={load} className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
-          <RefreshCw className="w-4 h-4" />
-          <span className="hidden sm:inline">Refresh</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportMenu baseName="books" title="Books" columns={columns} rows={items} />
+          <button onClick={load} className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+            <RefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+        </div>
       </div>
 
       {loading ? (

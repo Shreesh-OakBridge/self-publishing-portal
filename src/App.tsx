@@ -1,4 +1,4 @@
-import { useEffect, ReactNode, Fragment } from 'react';
+import { useEffect, useState, ReactNode, Fragment } from 'react';
 import { useAuth } from './lib/auth';
 import { useContent } from './content/ContentProvider';
 import { HOME_SECTIONS } from './content/defaults';
@@ -18,6 +18,7 @@ import AccountPage from './components/AccountPage';
 import ManuscriptEditor from './components/ManuscriptEditor';
 import Checkout from './components/Checkout';
 import HomeManuscriptSection from './components/HomeManuscriptSection';
+import WelcomeScreen from './components/WelcomeScreen';
 import Testimonials from './components/Testimonials';
 import ConfidenceBar from './components/ConfidenceBar';
 import PortfolioSection from './components/PortfolioSection';
@@ -29,6 +30,24 @@ import StaticPage from './components/StaticPage';
 function HomePage() {
   const { user, isAdmin } = useAuth();
   const { homeLayout } = useContent();
+
+  // Immersive welcome overlay — shown once per browser session, and never when
+  // arriving deep-linked to a specific section (e.g. /#plans).
+  const [showWelcome, setShowWelcome] = useState(() => {
+    try {
+      return !window.location.hash && sessionStorage.getItem('ob_welcomed') !== '1';
+    } catch {
+      return !window.location.hash;
+    }
+  });
+  const dismissWelcome = () => {
+    try {
+      sessionStorage.setItem('ob_welcomed', '1');
+    } catch {
+      /* ignore */
+    }
+    setShowWelcome(false);
+  };
 
   // When arriving from another page with a hash (e.g. /#plans), scroll there.
   useEffect(() => {
@@ -98,6 +117,7 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {showWelcome && <WelcomeScreen onEnter={dismissWelcome} />}
       <Navigation />
       {ordered
         .filter((s) => s.enabled)
