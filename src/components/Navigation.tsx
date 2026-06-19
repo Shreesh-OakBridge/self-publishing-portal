@@ -10,6 +10,17 @@ export default function Navigation() {
   const { user, isAdmin } = useAuth();
   const { branding, services } = useContent();
 
+  // First letter of the author's name (falls back to email) for the avatar.
+  const accountInitial = (
+    (user?.user_metadata?.first_name as string) ||
+    (user?.user_metadata?.full_name as string) ||
+    user?.email ||
+    ''
+  )
+    .trim()
+    .charAt(0)
+    .toUpperCase();
+
   const path = window.location.pathname.replace(/\/+$/, '');
   const isHome = path === '';
 
@@ -141,9 +152,11 @@ export default function Navigation() {
             ) : user ? (
               <button
                 onClick={() => goTo('/account')}
-                className="flex items-center space-x-2 bg-amber-600 text-white px-5 py-2.5 rounded-full hover:bg-amber-700 transition-colors font-medium"
+                className="flex items-center space-x-2 bg-amber-600 text-white pl-2 pr-5 py-1.5 rounded-full hover:bg-amber-700 transition-colors font-medium"
               >
-                <UserCircle className="w-5 h-5" />
+                <span className="w-7 h-7 rounded-full bg-white/25 flex items-center justify-center text-sm font-bold">
+                  {accountInitial || <UserCircle className="w-5 h-5" />}
+                </span>
                 <span>My Account</span>
               </button>
             ) : (
