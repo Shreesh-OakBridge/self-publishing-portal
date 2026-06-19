@@ -97,11 +97,6 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="/portfolio" className="text-gray-400 hover:text-amber-500 transition-colors">
-                  Portfolio
-                </a>
-              </li>
-              <li>
                 <button
                   onClick={() => goToSection('submit')}
                   className="text-gray-400 hover:text-amber-500 transition-colors"

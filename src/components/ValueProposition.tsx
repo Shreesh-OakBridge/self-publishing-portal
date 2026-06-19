@@ -42,7 +42,7 @@ export default function ValueProposition() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {v.cards.map((card, index) => {
             const Icon = cardIcons[index % cardIcons.length];
             return (

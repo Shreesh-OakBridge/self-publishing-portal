@@ -37,11 +37,11 @@ export default function Testimonials() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="flex md:grid md:grid-cols-3 gap-5 md:gap-8 overflow-x-auto md:overflow-visible snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
           {TESTIMONIALS.map((t) => (
             <div
               key={t.name}
-              className="relative bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-8 flex flex-col"
+              className="relative bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-8 flex flex-col shrink-0 w-[83%] snap-start md:w-auto md:shrink"
             >
               <Quote className="w-9 h-9 text-amber-400 mb-4" />
               <div className="flex mb-4">

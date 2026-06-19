@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Check, Crown, Zap, Rocket, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, Crown, Zap, Rocket, Sparkles, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import type { PricingPlan } from '../content/defaults';
 import { useAuth } from '../lib/auth';
@@ -15,6 +15,25 @@ const planColors = [
 
 // Number of features shown before the list collapses.
 const COLLAPSED_COUNT = 5;
+
+const IMPRINTS = [
+  {
+    name: 'OakBridge Classics (Starter Plan)',
+    desc: 'Our foundational imprint for emerging authors. Perfect for traditional fiction, memoirs, and first-time publications that will be printed with our classic, timeless aesthetic.',
+  },
+  {
+    name: 'OakBridge Imprint Series (Professional Plan)',
+    desc: 'For authors building their brand and creating professional, market-competitive titles across all genres. This imprint signifies quality and editorial excellence.',
+  },
+  {
+    name: 'OakBridge Prestige (Excellence Plan)',
+    desc: 'Reserved for authors published at the highest standards. Your imprint will feature on premium-quality books with exclusive design elements and premium distribution.',
+  },
+  {
+    name: 'OakBridge Signature (Elite Plan)',
+    desc: "Our most exclusive imprint featuring the author's biography and signature edition mark. Only for authors receiving our white-glove publishing service with guaranteed visibility.",
+  },
+];
 
 function PlanCard({
   plan,
@@ -142,6 +161,7 @@ export default function PricingPlans() {
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [detailPlan, setDetailPlan] = useState<PricingPlan | null>(null);
 
   const goToCheckout = (plan: string) => {
     window.location.href = `/checkout?plan=${encodeURIComponent(plan)}`;
@@ -166,7 +186,8 @@ export default function PricingPlans() {
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">{pricing.subheading}</p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
+        {/* Desktop / tablet: full cards */}
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
           {pricing.plans.map((plan, planIndex) => (
             <PlanCard
               key={plan.name}
@@ -180,28 +201,124 @@ export default function PricingPlans() {
           ))}
         </div>
 
-        <div className="mt-12 bg-white rounded-2xl shadow-lg p-8 max-w-4xl mx-auto">
+        {/* Mobile: compact 2×2 grid; tap a tile for full details */}
+        <div className="grid grid-cols-2 gap-4 md:hidden">
+          {pricing.plans.map((plan, i) => {
+            const Icon = planIcons[i % planIcons.length];
+            const color = planColors[i % planColors.length];
+            return (
+              <button
+                key={plan.name}
+                onClick={() => setDetailPlan(plan)}
+                className="relative bg-white rounded-2xl shadow-lg p-4 text-left flex flex-col hover:shadow-xl transition-shadow"
+              >
+                {plan.popular && (
+                  <span className="absolute top-2 right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    POPULAR
+                  </span>
+                )}
+                <div className={`w-10 h-10 bg-gradient-to-br ${color} rounded-xl flex items-center justify-center mb-3`}>
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
+                <div className="mt-1 flex items-baseline gap-1 flex-wrap">
+                  <span className="text-xl font-bold text-gray-900">{plan.price}</span>
+                  <span className="text-xs text-gray-500">one-time</span>
+                </div>
+                <span className="mt-3 text-xs font-semibold text-amber-700">View details →</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-12 bg-white rounded-2xl shadow-lg p-6 sm:p-8 max-w-4xl mx-auto">
           <h3 className="text-2xl font-bold text-gray-900 mb-4">About Our Imprints</h3>
-          <div className="space-y-4 text-gray-700">
-            <div>
-              <h4 className="font-bold text-lg text-amber-600 mb-2">OakBridge Classics (Starter Plan)</h4>
-              <p>Our foundational imprint for emerging authors. Perfect for traditional fiction, memoirs, and first-time publications that will be printed with our classic, timeless aesthetic.</p>
-            </div>
-            <div>
-              <h4 className="font-bold text-lg text-amber-600 mb-2">OakBridge Imprint Series (Professional Plan)</h4>
-              <p>For authors building their brand and creating professional, market-competitive titles across all genres. This imprint signifies quality and editorial excellence.</p>
-            </div>
-            <div>
-              <h4 className="font-bold text-lg text-amber-600 mb-2">OakBridge Prestige (Excellence Plan)</h4>
-              <p>Reserved for authors published at the highest standards. Your imprint will feature on premium-quality books with exclusive design elements and premium distribution.</p>
-            </div>
-            <div>
-              <h4 className="font-bold text-lg text-amber-600 mb-2">OakBridge Signature (Elite Plan)</h4>
-              <p>Our most exclusive imprint featuring the author's biography and signature edition mark. Only for authors receiving our white-glove publishing service with guaranteed visibility.</p>
-            </div>
+
+          {/* Desktop: full descriptions */}
+          <div className="hidden md:block space-y-4 text-gray-700">
+            {IMPRINTS.map((im) => (
+              <div key={im.name}>
+                <h4 className="font-bold text-lg text-amber-600 mb-2">{im.name}</h4>
+                <p>{im.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile: tap-to-expand accordion */}
+          <div className="md:hidden divide-y">
+            {IMPRINTS.map((im) => (
+              <details key={im.name} className="group">
+                <summary className="flex items-center justify-between gap-3 py-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                  <span className="font-bold text-amber-600">{im.name}</span>
+                  <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 group-open:rotate-180 transition-transform" />
+                </summary>
+                <p className="pb-3 text-gray-700 text-sm">{im.desc}</p>
+              </details>
+            ))}
           </div>
         </div>
       </div>
+
+      {/* Mobile plan details popup */}
+      {detailPlan && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:hidden"
+          onClick={() => setDetailPlan(null)}
+        >
+          <div
+            className="bg-white w-full rounded-t-3xl max-h-[88vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className={`relative px-6 pt-6 pb-5 text-white bg-gradient-to-r ${
+                planColors[pricing.plans.indexOf(detailPlan) % planColors.length]
+              }`}
+            >
+              <button
+                onClick={() => setDetailPlan(null)}
+                className="absolute top-4 right-4 text-white/90 hover:text-white"
+                aria-label="Close"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              {detailPlan.popular && (
+                <span className="inline-block bg-white/25 text-white text-xs font-bold px-2 py-0.5 rounded-full mb-2">
+                  MOST POPULAR
+                </span>
+              )}
+              <h3 className="text-2xl font-bold">{detailPlan.name}</h3>
+              <p className="text-white/90 text-sm mt-1">{detailPlan.tagline}</p>
+              <div className="mt-3 flex items-baseline gap-2">
+                <span className="text-3xl font-bold">{detailPlan.price}</span>
+                <span className="text-sm text-white/80">one-time</span>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <h4 className="font-bold text-gray-900 mb-3 border-b pb-2">What’s Included:</h4>
+              <div className="space-y-3">
+                {detailPlan.features.map((feature, i) => (
+                  <div key={i} className="flex items-start space-x-3">
+                    <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700 text-sm">{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => {
+                  const name = detailPlan.name;
+                  setDetailPlan(null);
+                  handleGetStarted(name);
+                }}
+                className="w-full mt-6 bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700"
+              >
+                Get Started
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AuthModal
         open={authOpen}

@@ -18,6 +18,7 @@ import Checkout from './components/Checkout';
 import HomeManuscriptSection from './components/HomeManuscriptSection';
 import Testimonials from './components/Testimonials';
 import ConfidenceBar from './components/ConfidenceBar';
+import PortfolioSection from './components/PortfolioSection';
 import ServicesPage from './components/ServicesPage';
 import PortfolioPage from './components/PortfolioPage';
 import FaqPage from './components/FaqPage';
@@ -64,6 +65,7 @@ function HomePage() {
       <ValueProposition />
       <VideoSection />
       <HomeManuscriptSection />
+      <PortfolioSection />
       <Testimonials />
       <PricingPlans />
 

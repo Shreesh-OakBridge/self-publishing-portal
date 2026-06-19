@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide horizontal scrollbars on mobile carousels (still scrollable/swipeable) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Confidence bar marquee */
 @keyframes marquee {
   from { transform: translateX(0); }

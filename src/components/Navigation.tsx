@@ -134,6 +134,9 @@ export default function Navigation() {
             <button onClick={() => goToSection('testimonials')} className={deskLink(isActive('testimonials'))}>
               Testimonials
             </button>
+            <button onClick={() => goTo('/portfolio')} className={deskLink(path === '/portfolio')}>
+              Portfolio
+            </button>
             <button onClick={() => goToSection('plans')} className={deskLink(isActive('plans'))}>
               Plans
             </button>
@@ -192,6 +195,9 @@ export default function Navigation() {
             </button>
             <button onClick={() => goToSection('testimonials')} className={mobileLink(isActive('testimonials'))}>
               Testimonials
+            </button>
+            <button onClick={() => goTo('/portfolio')} className={mobileLink(path === '/portfolio')}>
+              Portfolio
             </button>
             <button onClick={() => goToSection('plans')} className={mobileLink(isActive('plans'))}>
               Plans
