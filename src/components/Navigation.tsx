@@ -1,4 +1,4 @@
-import { BookOpen, Menu, X, UserCircle, ChevronDown } from 'lucide-react';
+import { BookOpen, Menu, X, UserCircle, ChevronDown, Shield } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
@@ -7,7 +7,7 @@ export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [scrolled, setScrolled] = useState(false);
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { branding, services } = useContent();
 
   const path = window.location.pathname.replace(/\/+$/, '');
@@ -130,7 +130,15 @@ export default function Navigation() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-3">
-            {user ? (
+            {isAdmin ? (
+              <button
+                onClick={() => goTo('/admin')}
+                className="flex items-center space-x-2 bg-gray-900 text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition-colors font-medium"
+              >
+                <Shield className="w-5 h-5" />
+                <span>Admin</span>
+              </button>
+            ) : user ? (
               <button
                 onClick={() => goTo('/account')}
                 className="flex items-center space-x-2 bg-amber-600 text-white px-5 py-2.5 rounded-full hover:bg-amber-700 transition-colors font-medium"
@@ -176,7 +184,14 @@ export default function Navigation() {
               Plans
             </button>
             <div className="pt-2 space-y-2">
-              {user ? (
+              {isAdmin ? (
+                <button
+                  onClick={() => goTo('/admin')}
+                  className="block w-full text-center bg-gray-900 text-white px-6 py-2.5 rounded-full hover:bg-gray-800 font-medium"
+                >
+                  Admin
+                </button>
+              ) : user ? (
                 <button
                   onClick={() => goTo('/account')}
                   className="block w-full text-center bg-amber-600 text-white px-6 py-2.5 rounded-full hover:bg-amber-700 font-medium"

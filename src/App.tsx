@@ -24,7 +24,7 @@ import FaqPage from './components/FaqPage';
 import StaticPage from './components/StaticPage';
 
 function HomePage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   // When arriving from another page with a hash (e.g. /#plans), scroll there.
   useEffect(() => {
@@ -44,7 +44,7 @@ function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
-      {user ? (
+      {user && !isAdmin ? (
         <section
           id="home"
           className="pt-28 pb-12 px-4 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50"
