@@ -147,8 +147,9 @@
   animation-delay: inherit;
 }
 @keyframes ob-leaf {
-  from { transform: rotateY(0deg); }
-  to { transform: rotateY(-172deg); }
+  0% { transform: rotateY(0deg); opacity: 1; }
+  82% { opacity: 1; }
+  100% { transform: rotateY(-172deg); opacity: 0; }
 }
 @keyframes ob-leaf-sheen {
   0% { opacity: 0; }
@@ -166,14 +167,22 @@
   animation: ob-write 0.5s ease forwards;
 }
 @keyframes ob-quill {
-  0%, 100% { transform: translate(0, 0) rotate(20deg); }
-  50% { transform: translate(2px, -1px) rotate(16deg); }
+  0%, 100% { transform: translate(0, 0) rotate(-10deg); }
+  50% { transform: translate(1px, -1px) rotate(-13deg); }
 }
-.ob-quill { animation: ob-quill 2.4s ease-in-out 3.2s infinite; }
+@keyframes ob-quill-in {
+  from { opacity: 0; transform: scale(0.6) rotate(-10deg); }
+  to { opacity: 1; transform: scale(1) rotate(-10deg); }
+}
+/* Hidden during the page-flip; fades in once the pages settle, then bobs. */
+.ob-quill {
+  opacity: 0;
+  animation: ob-quill-in 0.5s ease 2.3s forwards, ob-quill 2.4s ease-in-out 3.4s infinite;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .ob-anim, .ob-cta, .ob-book { animation: none; opacity: 1; }
-  .ob-particle, .ob-orb, .ob-leaf, .ob-leaf::after, .ob-quill { animation: none; }
+  .ob-anim, .ob-cta, .ob-book, .ob-quill { animation: none; opacity: 1; }
+  .ob-particle, .ob-orb, .ob-leaf, .ob-leaf::after { animation: none; }
   .ob-writeline { animation: none; transform: scaleX(1); }
   .ob-leaf, .ob-exit { display: none; }
 }

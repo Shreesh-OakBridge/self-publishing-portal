@@ -101,32 +101,34 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
         {/* Flip-book */}
         <div className="ob-book mb-6">
           <div className="ob-spread">
-            {/* Left page: faint lines of text already written */}
+            {/* Left page: a quill above fresh lines (fully inside the page) */}
             <div className="ob-half ob-half--left">
+              <div className="relative h-full">
+                <Feather
+                  className="ob-quill absolute text-amber-600 drop-shadow-sm"
+                  style={{ width: 30, height: 30, top: 10, right: 14, transform: 'rotate(-10deg)' }}
+                />
+                <div className="absolute inset-0 flex flex-col justify-center gap-[7px] pl-6 pr-4">
+                  {[88, 78, 84, 68, 58].map((w, i) => (
+                    <div
+                      key={i}
+                      className="ob-writeline h-[3px] rounded-full bg-amber-900/30"
+                      style={{ width: `${w}%`, animationDelay: `${2.5 + i * 0.3}s` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+            {/* Right page: faint lines already written */}
+            <div className="ob-half">
               <div className="h-full flex flex-col justify-center gap-[7px] px-5">
-                {[88, 80, 84, 72, 62].map((w, i) => (
+                {[84, 76, 80, 70, 60].map((w, i) => (
                   <div
                     key={i}
-                    className="h-[3px] rounded-full bg-amber-900/12"
+                    className="h-[3px] rounded-full bg-amber-900/20"
                     style={{ width: `${w}%` }}
                   />
                 ))}
-              </div>
-            </div>
-            {/* Right page: a quill writing fresh lines */}
-            <div className="ob-half">
-              <div className="relative h-full flex flex-col justify-center gap-[7px] px-5">
-                {[92, 82, 88, 70].map((w, i) => (
-                  <div
-                    key={i}
-                    className="ob-writeline h-[3px] rounded-full bg-amber-900/30"
-                    style={{ width: `${w}%`, animationDelay: `${2.5 + i * 0.3}s` }}
-                  />
-                ))}
-                <Feather
-                  className="ob-quill absolute text-amber-600 drop-shadow-sm"
-                  style={{ width: 38, height: 38, right: 4, top: -14, transform: 'rotate(20deg)' }}
-                />
               </div>
             </div>
           </div>
