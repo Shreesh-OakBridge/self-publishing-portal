@@ -10,7 +10,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import { useContent } from '../content/ContentProvider';
 import { defaultContent, HOME_SECTIONS, HomeLayoutSection } from '../content/defaults';
 

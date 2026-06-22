@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw, AlertCircle, Plus, Trash2, ShieldCheck, Lock } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 
 interface AdminUser {
   email: string;

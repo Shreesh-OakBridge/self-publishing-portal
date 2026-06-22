@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Save, RotateCcw, Plus, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import { useContent } from '../content/ContentProvider';
 import { defaultContent, SiteContent } from '../content/defaults';
 import MediaUploadField from './MediaUploadField';

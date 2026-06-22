@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { UploadCloud, CheckCircle, AlertCircle, Loader2, X } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 
 const BUCKET = 'site-media';
 

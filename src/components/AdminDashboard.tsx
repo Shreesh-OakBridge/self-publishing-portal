@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate, ShieldCheck } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import { logActivity } from '../lib/activity';
 import ContentEditor from './ContentEditor';
 import AuthorsPanel from './AuthorsPanel';
@@ -137,14 +137,14 @@ export default function AdminDashboard() {
       const { data: ok } = await supabase.rpc('is_admin');
       if (ok) {
         await supabase.rpc('touch_admin_login');
-        await logActivity('admin.login');
+        await logActivity('admin.login', {}, supabase);
       }
     }
     setSigningIn(false);
   };
 
   const handleSignOut = async () => {
-    await logActivity('admin.logout');
+    await logActivity('admin.logout', {}, supabase);
     await supabase.auth.signOut();
     setLeads([]);
   };

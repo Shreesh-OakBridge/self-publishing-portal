@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw, AlertCircle, Download, UserCheck, X, Loader2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
