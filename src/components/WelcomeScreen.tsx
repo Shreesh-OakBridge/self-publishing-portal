@@ -101,8 +101,34 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
         {/* Flip-book */}
         <div className="ob-book mb-6">
           <div className="ob-spread">
-            <div className="ob-half ob-half--left" />
-            <div className="ob-half" />
+            {/* Left page: faint lines of text already written */}
+            <div className="ob-half ob-half--left">
+              <div className="h-full flex flex-col justify-center gap-[7px] px-5">
+                {[88, 80, 84, 72, 62].map((w, i) => (
+                  <div
+                    key={i}
+                    className="h-[3px] rounded-full bg-amber-900/12"
+                    style={{ width: `${w}%` }}
+                  />
+                ))}
+              </div>
+            </div>
+            {/* Right page: a quill writing fresh lines */}
+            <div className="ob-half">
+              <div className="relative h-full flex flex-col justify-center gap-[7px] px-5">
+                {[92, 82, 88, 70].map((w, i) => (
+                  <div
+                    key={i}
+                    className="ob-writeline h-[3px] rounded-full bg-amber-900/30"
+                    style={{ width: `${w}%`, animationDelay: `${2.5 + i * 0.3}s` }}
+                  />
+                ))}
+                <Feather
+                  className="ob-quill absolute text-amber-600 drop-shadow-sm"
+                  style={{ width: 38, height: 38, right: 4, top: -14, transform: 'rotate(20deg)' }}
+                />
+              </div>
+            </div>
           </div>
           {Array.from({ length: LEAVES }).map((_, i) => (
             <div

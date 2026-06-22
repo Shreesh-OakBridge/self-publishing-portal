@@ -162,6 +162,7 @@ export default function Checkout() {
       : { bill_name: bill.name, bill_address: bill.address };
     const { error: err } = await supabase.from('orders').insert({
       user_id: user.id,
+      email: user.email,
       plan: planName,
       customization_id: customizationId,
       royalty_calculation_id: royaltyId,

@@ -98,9 +98,9 @@
 /* ── Flip-book ──────────────────────────────────────────────────────── */
 .ob-book {
   position: relative;
-  width: 230px;
-  height: 158px;
-  max-width: 64vw;
+  width: 260px;
+  height: 176px;
+  max-width: 70vw;
   perspective: 1800px;
   opacity: 0;
   animation: ob-fade-up 0.6s ease forwards;
@@ -155,10 +155,26 @@
   40% { opacity: 0.8; }
   100% { opacity: 0; }
 }
+/* Quill "writing" — ink lines draw left-to-right after the pages settle */
+@keyframes ob-write {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.ob-writeline {
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: ob-write 0.5s ease forwards;
+}
+@keyframes ob-quill {
+  0%, 100% { transform: translate(0, 0) rotate(20deg); }
+  50% { transform: translate(2px, -1px) rotate(16deg); }
+}
+.ob-quill { animation: ob-quill 2.4s ease-in-out 3.2s infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   .ob-anim, .ob-cta, .ob-book { animation: none; opacity: 1; }
-  .ob-particle, .ob-orb, .ob-leaf, .ob-leaf::after { animation: none; }
+  .ob-particle, .ob-orb, .ob-leaf, .ob-leaf::after, .ob-quill { animation: none; }
+  .ob-writeline { animation: none; transform: scaleX(1); }
   .ob-leaf, .ob-exit { display: none; }
 }
 
