@@ -13,6 +13,7 @@ import BooksPanel from './BooksPanel';
 import LayoutEditor from './LayoutEditor';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
+import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
 
 const leadColumns: Column<Lead>[] = [
   { header: 'Date', value: (l) => new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) },
@@ -52,7 +53,9 @@ export default function AdminDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [leadsError, setLeadsError] = useState('');
+  const [leadRange, setLeadRange] = useState<DateRange>(emptyRange);
   const [tab, setTab] = useState<'leads' | 'orders' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'layout' | 'content'>('leads');
+  const filteredLeads = filterByRange(leads, leadRange, (l) => l.created_at);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -363,11 +366,15 @@ export default function AdminDashboard() {
           <LayoutEditor />
         ) : (
         <>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
           <p className="text-gray-600">
-            {leads.length} {leads.length === 1 ? 'lead' : 'leads'} total
+            {filteredLeads.length} {filteredLeads.length === 1 ? 'lead' : 'leads'}
+            {leadRange.from || leadRange.to ? ' in range' : ' total'}
           </p>
-          <ExportMenu baseName="leads" title="Leads" columns={leadColumns} rows={leads} />
+          <div className="flex items-center gap-2 flex-wrap">
+            <DateRangeFilter range={leadRange} onChange={setLeadRange} />
+            <ExportMenu baseName="leads" title="Leads" columns={leadColumns} rows={filteredLeads} />
+          </div>
         </div>
 
         {leadsError && (
@@ -379,9 +386,11 @@ export default function AdminDashboard() {
 
         {loadingLeads && leads.length === 0 ? (
           <div className="text-center text-gray-500 py-16">Loading leads…</div>
-        ) : leads.length === 0 ? (
+        ) : filteredLeads.length === 0 ? (
           <div className="text-center text-gray-500 py-16 bg-white rounded-2xl border">
-            No leads yet. Submissions from the contact form will appear here.
+            {leads.length === 0
+              ? 'No leads yet. Submissions from the contact form will appear here.'
+              : 'No leads in the selected date range.'}
           </div>
         ) : (
           <div className="bg-white rounded-2xl border overflow-x-auto">
@@ -398,7 +407,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {leads.map((lead) => (
+                {filteredLeads.map((lead) => (
                   <tr key={lead.id} className="border-b last:border-0 align-top hover:bg-gray-50">
                     <td className="px-4 py-3 whitespace-nowrap text-gray-500">
                       {new Date(lead.created_at).toLocaleDateString('en-IN', {

@@ -3,6 +3,7 @@ import { RefreshCw, Palette, Calculator, AlertCircle, BookUser } from 'lucide-re
 import { supabase } from '../lib/supabase';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
+import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
 
 interface Author {
   id: string;
@@ -42,6 +43,7 @@ export default function AuthorsPanel() {
   const [calcs, setCalcs] = useState<Calc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [range, setRange] = useState<DateRange>(emptyRange);
 
   const load = async () => {
     setLoading(true);
@@ -65,6 +67,8 @@ export default function AuthorsPanel() {
   useEffect(() => {
     load();
   }, []);
+
+  const filtered = filterByRange(authors, range, (a) => a.created_at);
 
   const columns: Column<Author>[] = [
     { header: 'Name', value: (a) => a.full_name || '' },
@@ -90,12 +94,14 @@ export default function AuthorsPanel() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <p className="text-gray-600">
-          {authors.length} {authors.length === 1 ? 'author' : 'authors'}
+          {filtered.length} {filtered.length === 1 ? 'author' : 'authors'}
+          {(range.from || range.to) && <span className="text-gray-400"> in range</span>}
         </p>
-        <div className="flex items-center gap-2">
-          <ExportMenu baseName="authors" title="Authors" columns={columns} rows={authors} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <DateRangeFilter range={range} onChange={setRange} />
+          <ExportMenu baseName="authors" title="Authors" columns={columns} rows={filtered} />
           <button
             onClick={load}
             className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -106,13 +112,13 @@ export default function AuthorsPanel() {
         </div>
       </div>
 
-      {authors.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="text-center text-gray-500 py-16 bg-white rounded-2xl border">
-          No authors have signed up yet.
+          {authors.length === 0 ? 'No authors have signed up yet.' : 'No authors in the selected date range.'}
         </div>
       ) : (
         <div className="space-y-5">
-          {authors.map((au) => {
+          {filtered.map((au) => {
             const ac = custs.filter((x) => x.user_id === au.id);
             const ar = calcs.filter((x) => x.user_id === au.id);
             return (

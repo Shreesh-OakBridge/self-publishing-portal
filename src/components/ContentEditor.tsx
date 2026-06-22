@@ -9,12 +9,15 @@ type Json = unknown;
 
 const SECTION_LABELS: Record<string, string> = {
   branding: 'Logo & Branding',
+  welcome: 'Welcome Screen (intro)',
+  getStarted: 'Get Started (funnel)',
   hero: 'Hero / Banner',
   valueProps: 'Value Proposition',
   video: 'Process & Video',
   confidenceBar: 'Confidence Bar',
   services: 'Services',
   portfolio: 'Portfolio',
+  testimonials: 'Testimonials',
   pricing: 'Pricing Plans',
   customizer: 'Book Customizer',
   contact: 'Contact Section',

@@ -168,7 +168,7 @@ export default function Navigation() {
                   Log In
                 </button>
                 <button
-                  onClick={() => goTo('/signup')}
+                  onClick={() => goTo('/get-started')}
                   className="bg-amber-600 text-white px-6 py-2.5 rounded-full hover:bg-amber-700 transition-colors font-semibold shadow-sm"
                 >
                   Get Started
@@ -226,7 +226,7 @@ export default function Navigation() {
                     Log In
                   </button>
                   <button
-                    onClick={() => goTo('/signup')}
+                    onClick={() => goTo('/get-started')}
                     className="block w-full text-center bg-amber-600 text-white px-6 py-2.5 rounded-full hover:bg-amber-700 font-semibold"
                   >
                     Get Started

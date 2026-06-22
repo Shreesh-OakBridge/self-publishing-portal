@@ -3,6 +3,7 @@ import { RefreshCw, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
+import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
 
 interface Order {
   id: string;
@@ -13,6 +14,9 @@ interface Order {
   discount: number | null;
   coupon_code: string | null;
   royalty_rate: number | null;
+  publish_path: string | null;
+  language: string | null;
+  manuscript_status: string | null;
   status: string;
   ship_name: string | null;
   ship_city: string | null;
@@ -37,6 +41,8 @@ export default function OrdersPanel() {
   const [authors, setAuthors] = useState<Record<string, Author>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [range, setRange] = useState<DateRange>(emptyRange);
+  const filtered = filterByRange(items, range, (o) => o.created_at);
 
   const load = async () => {
     setLoading(true);
@@ -75,6 +81,9 @@ export default function OrdersPanel() {
     { header: 'Date', value: (o) => fmt(o.created_at) },
     { header: 'Customer', value: (o) => o.ship_name || authors[o.user_id]?.full_name || '' },
     { header: 'Email', value: (o) => authors[o.user_id]?.email || '' },
+    { header: 'Path', value: (o) => (o.publish_path === 'expert' ? 'Expert' : o.publish_path === 'self' ? 'Self' : '') },
+    { header: 'Language', value: (o) => o.language || '' },
+    { header: 'Manuscript Status', value: (o) => o.manuscript_status || '' },
     { header: 'Plan', value: (o) => o.plan || '' },
     { header: 'Custom Design', value: (o) => (o.customization_id ? 'Yes' : 'No') },
     { header: 'Royalty %', value: (o) => (o.royalty_rate ?? '') },
@@ -99,12 +108,14 @@ export default function OrdersPanel() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <p className="text-gray-600">
-          {items.length} {items.length === 1 ? 'order' : 'orders'}
+          {filtered.length} {filtered.length === 1 ? 'order' : 'orders'}
+          {(range.from || range.to) && <span className="text-gray-400"> in range</span>}
         </p>
-        <div className="flex items-center gap-2">
-          <ExportMenu baseName="orders" title="Orders" columns={columns} rows={items} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <DateRangeFilter range={range} onChange={setRange} />
+          <ExportMenu baseName="orders" title="Orders" columns={columns} rows={filtered} />
           <button
             onClick={load}
             className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -115,9 +126,9 @@ export default function OrdersPanel() {
         </div>
       </div>
 
-      {items.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="text-center text-gray-500 py-16 bg-white rounded-2xl border">
-          No orders yet.
+          {items.length === 0 ? 'No orders yet.' : 'No orders in the selected date range.'}
         </div>
       ) : (
         <div className="bg-white rounded-2xl border overflow-x-auto">
@@ -133,7 +144,7 @@ export default function OrdersPanel() {
               </tr>
             </thead>
             <tbody>
-              {items.map((o) => {
+              {filtered.map((o) => {
                 const au = authors[o.user_id];
                 return (
                   <tr key={o.id} className="border-b last:border-0 align-top hover:bg-gray-50">

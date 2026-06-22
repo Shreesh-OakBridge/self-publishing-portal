@@ -42,6 +42,19 @@ export default function Checkout() {
   const customizationId = params.get('customization');
   const royaltyId = params.get('royalty');
 
+  // Get Started funnel selections (carried via sessionStorage).
+  const [onboarding] = useState<{
+    language?: string;
+    manuscript_status?: string;
+    publish_path?: string;
+  } | null>(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem('ob_onboarding') || 'null');
+    } catch {
+      return null;
+    }
+  });
+
   const [cust, setCust] = useState<Customization | null>(null);
   const [royalty, setRoyalty] = useState<RoyaltyCalc | null>(null);
   const [loadingData, setLoadingData] = useState(true);
@@ -156,6 +169,9 @@ export default function Checkout() {
       amount: total,
       discount,
       coupon_code: applied?.code ?? null,
+      publish_path: onboarding?.publish_path ?? null,
+      language: onboarding?.language ?? null,
+      manuscript_status: onboarding?.manuscript_status ?? null,
       status: 'pending',
       ship_name: ship.name,
       ship_phone: ship.phone,
@@ -170,6 +186,11 @@ export default function Checkout() {
       console.error(err);
       setError('Could not place the order. Please try again.');
       return;
+    }
+    try {
+      sessionStorage.removeItem('ob_onboarding');
+    } catch {
+      /* ignore */
     }
     setPlaced(true);
     window.scrollTo({ top: 0 });
@@ -222,6 +243,19 @@ export default function Checkout() {
 
   const OrderDetails = () => (
     <>
+      {onboarding && (onboarding.publish_path || onboarding.language || onboarding.manuscript_status) && (
+        <p className="text-sm text-gray-700 mb-2">
+          {onboarding.publish_path && (
+            <span className="font-semibold capitalize">
+              {onboarding.publish_path === 'expert' ? 'Expert Publishing' : 'Self-Publishing'}
+            </span>
+          )}
+          {onboarding.language && <span className="text-gray-500"> · {onboarding.language}</span>}
+          {onboarding.manuscript_status && (
+            <span className="text-gray-500"> · {onboarding.manuscript_status}</span>
+          )}
+        </p>
+      )}
       {plan && (
         <p className="text-sm text-gray-700 mb-2">
           <span className="font-semibold">Plan:</span> {plan.name}

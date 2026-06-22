@@ -4,7 +4,6 @@ import { useContent } from './content/ContentProvider';
 import { HOME_SECTIONS } from './content/defaults';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
-import AuthorDashboard from './components/AuthorDashboard';
 import ValueProposition from './components/ValueProposition';
 import VideoSection from './components/VideoSection';
 import PricingPlans from './components/PricingPlans';
@@ -14,11 +13,11 @@ import ContactForm from './components/ContactForm';
 import Footer from './components/Footer';
 import AdminDashboard from './components/AdminDashboard';
 import AuthPage from './components/AuthPage';
+import ResetPassword from './components/ResetPassword';
 import AccountPage from './components/AccountPage';
 import ManuscriptEditor from './components/ManuscriptEditor';
 import Checkout from './components/Checkout';
 import HomeManuscriptSection from './components/HomeManuscriptSection';
-import WelcomeScreen from './components/WelcomeScreen';
 import Testimonials from './components/Testimonials';
 import ConfidenceBar from './components/ConfidenceBar';
 import PortfolioSection from './components/PortfolioSection';
@@ -26,10 +25,13 @@ import ServicesPage from './components/ServicesPage';
 import PortfolioPage from './components/PortfolioPage';
 import FaqPage from './components/FaqPage';
 import StaticPage from './components/StaticPage';
+import GetStarted from './components/GetStarted';
+import AuthorDashboard from './components/AuthorDashboard';
+import WelcomeScreen from './components/WelcomeScreen';
 
 function HomePage() {
   const { user, isAdmin } = useAuth();
-  const { homeLayout } = useContent();
+  const { homeLayout, welcome } = useContent();
 
   // Immersive welcome overlay — shown once per browser session, and never when
   // arriving deep-linked to a specific section (e.g. /#plans).
@@ -117,7 +119,7 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {showWelcome && <WelcomeScreen onEnter={dismissWelcome} />}
+      {showWelcome && welcome.enabled && <WelcomeScreen onEnter={dismissWelcome} />}
       <Navigation />
       {ordered
         .filter((s) => s.enabled)
@@ -147,6 +149,7 @@ function App() {
 
   if (path === '/admin') return <AdminDashboard />;
   if (path === '/login' || path === '/signup') return <AuthPage />;
+  if (path === '/reset-password') return <ResetPassword />;
   if (path === '/account') return <AccountPage />;
   if (path === '/manuscript') return <ManuscriptEditor />;
   if (path === '/checkout') return <Checkout />;
@@ -160,6 +163,12 @@ function App() {
     return (
       <SubPage>
         <RoyaltyCalculator />
+      </SubPage>
+    );
+  if (path === '/get-started')
+    return (
+      <SubPage>
+        <GetStarted />
       </SubPage>
     );
   if (path === '/services')

@@ -566,3 +566,8 @@ CREATE POLICY "Admins update books"
 DROP POLICY IF EXISTS "Admins delete books" ON author_books;
 CREATE POLICY "Admins delete books"
   ON author_books FOR DELETE TO authenticated USING (is_admin());
+
+-- Onboarding selections captured on each order (Get Started funnel)
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS publish_path text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS language text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS manuscript_status text;

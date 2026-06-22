@@ -3,7 +3,7 @@ import { BookOpen, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { logActivity } from '../lib/activity';
 
-type Mode = 'login' | 'signup';
+type Mode = 'login' | 'signup' | 'forgot';
 
 interface AuthFormProps {
   // Called after a successful login (or signup that returns an active session).
@@ -26,6 +26,26 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login' }: Aut
     if (busy) return;
     setError('');
     setInfo('');
+
+    if (mode === 'forgot') {
+      if (!email.trim()) {
+        setError('Please enter your email address.');
+        return;
+      }
+      setBusy(true);
+      try {
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (resetError) throw resetError;
+        setInfo('If an account exists for that email, a password reset link is on its way.');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not send the reset email.');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
 
     if (mode === 'signup' && !firstName.trim()) {
       setError('First name is required.');
@@ -81,7 +101,7 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login' }: Aut
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {mode === 'login' ? 'Welcome back' : 'Create your account'}
+            {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create your account' : 'Reset your password'}
           </h1>
           <p className="text-sm text-gray-500">OakBridge author portal</p>
         </div>
@@ -140,39 +160,88 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login' }: Aut
         />
       </div>
 
-      <div className="mb-6">
-        <label className="block text-gray-700 font-semibold mb-2">Password</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
-          placeholder="••••••••"
-        />
-      </div>
+      {mode !== 'forgot' && (
+        <div className="mb-2">
+          <label className="block text-gray-700 font-semibold mb-2">Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
+            placeholder="••••••••"
+          />
+        </div>
+      )}
+
+      {mode === 'login' && (
+        <div className="text-right mb-5">
+          <button
+            type="button"
+            onClick={() => {
+              setMode('forgot');
+              setError('');
+              setInfo('');
+            }}
+            className="text-sm text-amber-700 hover:underline"
+          >
+            Forgot password?
+          </button>
+        </div>
+      )}
+
+      {mode === 'forgot' && (
+        <p className="text-sm text-gray-500 mb-5 -mt-1">
+          Enter your account email and we’ll send you a link to reset your password.
+        </p>
+      )}
 
       <button
         type="submit"
         disabled={busy}
         className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {busy ? 'Please wait…' : mode === 'login' ? 'Log In' : 'Sign Up'}
+        {busy
+          ? 'Please wait…'
+          : mode === 'login'
+          ? 'Log In'
+          : mode === 'signup'
+          ? 'Sign Up'
+          : 'Send reset link'}
       </button>
 
       <p className="text-center text-sm text-gray-600 mt-6">
-        {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
-        <button
-          type="button"
-          onClick={() => {
-            setMode(mode === 'login' ? 'signup' : 'login');
-            setError('');
-            setInfo('');
-          }}
-          className="text-amber-700 font-semibold hover:underline"
-        >
-          {mode === 'login' ? 'Sign up' : 'Log in'}
-        </button>
+        {mode === 'forgot' ? (
+          <>
+            Remembered your password?{' '}
+            <button
+              type="button"
+              onClick={() => {
+                setMode('login');
+                setError('');
+                setInfo('');
+              }}
+              className="text-amber-700 font-semibold hover:underline"
+            >
+              Back to log in
+            </button>
+          </>
+        ) : (
+          <>
+            {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === 'login' ? 'signup' : 'login');
+                setError('');
+                setInfo('');
+              }}
+              className="text-amber-700 font-semibold hover:underline"
+            >
+              {mode === 'login' ? 'Sign up' : 'Log in'}
+            </button>
+          </>
+        )}
       </p>
     </form>
   );

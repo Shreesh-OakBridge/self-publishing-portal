@@ -3,6 +3,7 @@ import { RefreshCw, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
+import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
 
 interface LogRow {
   id: string;
@@ -58,6 +59,7 @@ export default function ActivityPanel() {
   const [rows, setRows] = useState<LogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [range, setRange] = useState<DateRange>(emptyRange);
 
   const load = async () => {
     setLoading(true);
@@ -80,6 +82,8 @@ export default function ActivityPanel() {
     load();
   }, []);
 
+  const filtered = filterByRange(rows, range, (r) => r.created_at);
+
   const columns: Column<LogRow>[] = [
     { header: 'When', value: (r) => fmt(r.created_at) },
     { header: 'Who', value: (r) => r.actor_email || 'Guest' },
@@ -90,12 +94,14 @@ export default function ActivityPanel() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <p className="text-gray-600">
-          {rows.length} {rows.length === 1 ? 'event' : 'events'} (latest 500)
+          {filtered.length} {filtered.length === 1 ? 'event' : 'events'}
+          {range.from || range.to ? ' in range' : ' (latest 500)'}
         </p>
-        <div className="flex items-center gap-2">
-          <ExportMenu baseName="activity_log" title="Activity Log" columns={columns} rows={rows} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <DateRangeFilter range={range} onChange={setRange} />
+          <ExportMenu baseName="activity_log" title="Activity Log" columns={columns} rows={filtered} />
           <button
             onClick={load}
             disabled={loading}
@@ -116,9 +122,9 @@ export default function ActivityPanel() {
 
       {loading && rows.length === 0 ? (
         <div className="text-center text-gray-500 py-16">Loading activity…</div>
-      ) : rows.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="text-center text-gray-500 py-16 bg-white rounded-2xl border">
-          No activity recorded yet.
+          {rows.length === 0 ? 'No activity recorded yet.' : 'No activity in the selected date range.'}
         </div>
       ) : (
         <div className="bg-white rounded-2xl border overflow-x-auto">
@@ -132,7 +138,7 @@ export default function ActivityPanel() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {filtered.map((r) => (
                 <tr key={r.id} className="border-b last:border-0 align-top hover:bg-gray-50">
                   <td className="px-4 py-3 whitespace-nowrap text-gray-500">{fmt(r.created_at)}</td>
                   <td className="px-4 py-3 text-gray-700">{r.actor_email || 'Guest'}</td>

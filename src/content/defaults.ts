@@ -170,6 +170,46 @@ export interface PortfolioContent {
   items: PortfolioItem[];
 }
 
+export interface TestimonialItem {
+  quote: string;
+  name: string;
+  role: string;
+  rating: number;
+}
+
+export interface TestimonialsContent {
+  heading: string;
+  subheading: string;
+  items: TestimonialItem[];
+}
+
+export interface GetStartedContent {
+  heading: string;
+  subheading: string;
+  languageHeading: string;
+  languages: string[];
+  statusHeading: string;
+  statuses: string[];
+  methodHeading: string;
+  expertTitle: string;
+  expertTagline: string;
+  expertPoints: string[];
+  selfTitle: string;
+  selfTagline: string;
+  selfPoints: string[];
+  ctaLabel: string;
+}
+
+export interface WelcomeContent {
+  enabled: boolean;
+  eyebrow: string;
+  headlineLine1: string;
+  headlineLine2: string;
+  subheading: string;
+  ctaLabel: string;
+  skipLabel: string;
+}
+
 export interface HomeLayoutSection {
   key: string;
   enabled: boolean;
@@ -195,6 +235,8 @@ export const HOME_SECTIONS: { key: string; label: string }[] = [
 
 export interface SiteContent {
   branding: BrandingContent;
+  welcome: WelcomeContent;
+  getStarted: GetStartedContent;
   hero: HeroContent;
   valueProps: ValuePropsContent;
   video: VideoContent;
@@ -202,6 +244,7 @@ export interface SiteContent {
   confidenceBar: ConfidenceBarContent;
   services: ServicesContent;
   portfolio: PortfolioContent;
+  testimonials: TestimonialsContent;
   pricing: PricingContent;
   customizer: CustomizerContent;
   contact: ContactContent;
@@ -213,6 +256,49 @@ export interface SiteContent {
 export const defaultContent: SiteContent = {
   branding: {
     logoUrl: '',
+  },
+  getStarted: {
+    heading: 'Start your publishing journey',
+    subheading: 'Tell us a little about your book and how you’d like to publish.',
+    languageHeading: 'Which language is your book written in?',
+    languages: [
+      'English', 'Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Bengali', 'Marathi', 'Kannada', 'Gujarati',
+    ],
+    statusHeading: 'What is the status of your manuscript?',
+    statuses: [
+      'I have a book idea',
+      'I am still writing',
+      'Finished writing, adding final touches',
+      'Finished writing, ready to publish',
+    ],
+    methodHeading: 'How do you want to publish your book?',
+    expertTitle: 'Expert Publishing',
+    expertTagline: 'Get your own expert publishing team',
+    expertPoints: [
+      'Dedicated team for editing, design & marketing',
+      'Get published in 30 days',
+      'End-to-end guidance from our experts',
+      'Choose from our curated publishing packages',
+    ],
+    selfTitle: 'Publish on your own',
+    selfTagline: 'Use our online tools to design & publish',
+    selfPoints: [
+      'Design your book with our customizer',
+      'Transparent, itemised pricing',
+      'Publish print & eBook',
+      'Sell across 150+ countries and 20,000+ stores',
+    ],
+    ctaLabel: 'Continue',
+  },
+  welcome: {
+    enabled: true,
+    eyebrow: 'OakBridge Publishing',
+    headlineLine1: 'Your story deserves',
+    headlineLine2: 'to be told.',
+    subheading:
+      'From manuscript to masterpiece — begin a publishing journey crafted around your vision, with the people who’ve guided hundreds of authors before you.',
+    ctaLabel: 'Begin Your Publishing Journey',
+    skipLabel: 'Skip intro',
   },
   hero: {
     badge: 'Premium Self-Publishing Excellence',
@@ -292,6 +378,33 @@ export const defaultContent: SiteContent = {
     partnershipTitle: 'Ongoing Partnership',
     partnershipText:
       "We don't abandon you after publication. You'll have continued access to our expertise and support as your book grows its audience.",
+  },
+  testimonials: {
+    heading: 'Loved by authors',
+    subheading: 'Writers across the country trust OakBridge to bring their stories to readers.',
+    items: [
+      {
+        quote:
+          'OakBridge made publishing my first novel effortless. From editing to the cover design, every step felt guided and professional. My book was on shelves in weeks.',
+        name: 'Ananya Sharma',
+        role: 'Author, “Threads of Dawn”',
+        rating: 5,
+      },
+      {
+        quote:
+          'The royalty terms were the most transparent I found anywhere in India. I always know exactly what I earn per copy, and payouts are right on time.',
+        name: 'Rajat Mehta',
+        role: 'Author, “The Quiet Quarter”',
+        rating: 5,
+      },
+      {
+        quote:
+          'I came in with just a manuscript and a lot of doubts. Their team handled the production beautifully and kept me involved through every decision.',
+        name: 'Fatima Qureshi',
+        role: 'Poet & Author',
+        rating: 5,
+      },
+    ],
   },
   pricing: {
     heading: 'Publishing Plans for Every Author',

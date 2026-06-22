@@ -3,6 +3,7 @@ import { RefreshCw, AlertCircle, Plus, Trash2, Tag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
+import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
 
 interface Coupon {
   code: string;
@@ -25,6 +26,7 @@ export default function CouponsPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [range, setRange] = useState<DateRange>(emptyRange);
 
   // create form
   const [code, setCode] = useState('');
@@ -110,6 +112,8 @@ export default function CouponsPanel() {
     { header: 'Active', value: (c) => (c.active ? 'Yes' : 'No') },
   ];
 
+  const filtered = filterByRange(items, range, (c) => c.created_at);
+
   const field = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-300 outline-none';
 
   return (
@@ -170,10 +174,14 @@ export default function CouponsPanel() {
         </button>
       </form>
 
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-gray-600">{items.length} {items.length === 1 ? 'coupon' : 'coupons'}</p>
-        <div className="flex items-center gap-2">
-          <ExportMenu baseName="coupons" title="Coupons" columns={columns} rows={items} />
+      <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+        <p className="text-gray-600">
+          {filtered.length} {filtered.length === 1 ? 'coupon' : 'coupons'}
+          {(range.from || range.to) && <span className="text-gray-400"> in range</span>}
+        </p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <DateRangeFilter range={range} onChange={setRange} />
+          <ExportMenu baseName="coupons" title="Coupons" columns={columns} rows={filtered} />
           <button onClick={load} className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
             <RefreshCw className="w-4 h-4" />
             <span className="hidden sm:inline">Refresh</span>
@@ -183,8 +191,10 @@ export default function CouponsPanel() {
 
       {loading ? (
         <div className="text-center text-gray-500 py-12">Loading…</div>
-      ) : items.length === 0 ? (
-        <div className="text-center text-gray-500 py-12 bg-white rounded-2xl border">No coupons yet.</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center text-gray-500 py-12 bg-white rounded-2xl border">
+          {items.length === 0 ? 'No coupons yet.' : 'No coupons in the selected date range.'}
+        </div>
       ) : (
         <div className="bg-white rounded-2xl border overflow-x-auto">
           <table className="w-full text-sm">
@@ -200,7 +210,7 @@ export default function CouponsPanel() {
               </tr>
             </thead>
             <tbody>
-              {items.map((c) => (
+              {filtered.map((c) => (
                 <tr key={c.code} className="border-b last:border-0 hover:bg-gray-50">
                   <td className="px-4 py-3 font-mono font-semibold text-gray-900 flex items-center gap-1">
                     <Tag className="w-3.5 h-3.5 text-amber-600" /> {c.code}

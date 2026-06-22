@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BookOpen, Feather, Sparkles, ArrowRight } from 'lucide-react';
+import { useContent } from '../content/ContentProvider';
 
 // Floating particles drifting upward behind the content.
 const PARTICLES = Array.from({ length: 14 }).map((_, i) => {
@@ -28,6 +29,7 @@ const EXIT_PAGES = [
 ];
 
 export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
+  const { welcome } = useContent();
   const [phase, setPhase] = useState<'intro' | 'exit'>('intro');
 
   // Lock background scroll while the intro/transition is visible.
@@ -113,39 +115,48 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
           <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[3px] bg-amber-900/30" style={{ zIndex: LEAVES + 1 }} />
         </div>
 
-        <p className="ob-anim ob-d1 text-amber-300/90 font-semibold tracking-[0.28em] uppercase text-[10px] sm:text-xs mb-2.5">
-          OakBridge Publishing
-        </p>
+        {welcome.eyebrow && (
+          <p className="ob-anim ob-d1 text-amber-300/90 font-semibold tracking-[0.28em] uppercase text-[10px] sm:text-xs mb-2.5">
+            {welcome.eyebrow}
+          </p>
+        )}
 
         <h1 className="ob-anim ob-d2 text-3xl sm:text-5xl font-bold text-white leading-tight mb-3">
-          Your story deserves
-          <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400">
-            to be told.
-          </span>
+          {welcome.headlineLine1}
+          {welcome.headlineLine2 && (
+            <>
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400">
+                {welcome.headlineLine2}
+              </span>
+            </>
+          )}
         </h1>
 
-        <p className="ob-anim ob-d3 text-sm sm:text-base text-amber-100/70 max-w-lg mx-auto mb-7">
-          From manuscript to masterpiece — begin a publishing journey crafted around your vision,
-          with the people who’ve guided hundreds of authors before you.
-        </p>
+        {welcome.subheading && (
+          <p className="ob-anim ob-d3 text-sm sm:text-base text-amber-100/70 max-w-lg mx-auto mb-7">
+            {welcome.subheading}
+          </p>
+        )}
 
         <button
           onClick={enter}
           className="ob-cta group inline-flex items-center gap-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-3.5 rounded-full text-base sm:text-lg font-semibold hover:from-amber-400 hover:to-orange-500 transition-colors"
         >
-          Begin Your Publishing Journey
+          {welcome.ctaLabel}
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </button>
 
-        <div className="ob-anim ob-d5 mt-5">
-          <button
-            onClick={enter}
-            className="text-amber-200/50 hover:text-amber-200/90 text-sm transition-colors"
-          >
-            Skip intro
-          </button>
-        </div>
+        {welcome.skipLabel && (
+          <div className="ob-anim ob-d5 mt-5">
+            <button
+              onClick={enter}
+              className="text-amber-200/50 hover:text-amber-200/90 text-sm transition-colors"
+            >
+              {welcome.skipLabel}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
