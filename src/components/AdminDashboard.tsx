@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate, ShieldCheck } from 'lucide-react';
+import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate, ShieldCheck, Menu } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import { logActivity } from '../lib/activity';
@@ -71,6 +71,7 @@ export default function AdminDashboard() {
   const [leadRange, setLeadRange] = useState<DateRange>(emptyRange);
   const [tab, setTab] = useState<'leads' | 'orders' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'layout' | 'content' | 'admins'>('leads');
   const [adminRole, setAdminRole] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const role = adminRole ?? 'admin';
   const filteredLeads = filterByRange(leads, leadRange, (l) => l.created_at);
 
@@ -246,61 +247,93 @@ export default function AdminDashboard() {
     );
   }
 
+  const activeTab = TABS.find((t) => t.key === tab);
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-              <Inbox className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Cursive Admin</h1>
-              <p className="text-xs text-gray-500">
-                {session.user.email}
-                {adminRole && <span className="ml-1.5 capitalize text-amber-700 font-semibold">· {adminRole}</span>}
-              </p>
-            </div>
+      {/* Mobile top bar */}
+      <div className="md:hidden sticky top-0 z-30 bg-white border-b flex items-center justify-between px-4 py-3">
+        <button onClick={() => setSidebarOpen(true)} className="text-gray-700">
+          <Menu className="w-6 h-6" />
+        </button>
+        <span className="font-bold text-gray-900">{activeTab?.label}</span>
+        <button onClick={handleSignOut} className="text-gray-700">
+          <LogOut className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Backdrop (mobile) */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 w-60 bg-white border-r z-40 flex flex-col transform transition-transform duration-200 md:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="p-5 border-b flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+            <Inbox className="w-5 h-5 text-white" />
           </div>
-          <div className="flex items-center space-x-2">
-            {tab === 'leads' && (
-              <button
-                onClick={fetchLeads}
-                disabled={loadingLeads}
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={`w-4 h-4 ${loadingLeads ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Refresh</span>
-              </button>
-            )}
-            <button
-              onClick={handleSignOut}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Sign Out</span>
-            </button>
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold text-gray-900 leading-tight">Cursive Admin</h1>
+            <p className="text-xs text-gray-500 truncate">
+              {session.user.email}
+              {adminRole && <span className="block capitalize text-amber-700 font-semibold">{adminRole}</span>}
+            </p>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-4 flex space-x-1 overflow-x-auto">
+
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {TABS.filter((t) => (t.roles as readonly string[]).includes(role)).map((t) => (
             <button
               key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap ${
+              onClick={() => {
+                setTab(t.key);
+                setSidebarOpen(false);
+              }}
+              className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                 tab === t.key
-                  ? 'border-amber-600 text-amber-700'
-                  : 'border-transparent text-gray-500 hover:text-gray-800'
+                  ? 'bg-amber-50 text-amber-700'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
             >
-              <t.Icon className="w-4 h-4" />
+              <t.Icon className="w-4 h-4 flex-shrink-0" />
               <span>{t.label}</span>
             </button>
           ))}
-        </div>
-      </header>
+        </nav>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+        <div className="p-3 border-t">
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg bg-gray-900 text-white hover:bg-gray-800 text-sm font-semibold"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Content */}
+      <div className="md:ml-60">
+        <div className="hidden md:flex items-center justify-between px-6 py-4 border-b bg-white sticky top-0 z-20">
+          <h2 className="text-lg font-bold text-gray-900">{activeTab?.label}</h2>
+          {tab === 'leads' && (
+            <button
+              onClick={fetchLeads}
+              disabled={loadingLeads}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingLeads ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+          )}
+        </div>
+
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {tab === 'content' ? (
           <ContentEditor />
         ) : tab === 'manuscripts' ? (
@@ -401,7 +434,8 @@ export default function AdminDashboard() {
         )}
         </>
         )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
