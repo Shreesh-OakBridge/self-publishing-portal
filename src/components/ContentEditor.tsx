@@ -20,6 +20,8 @@ const SECTION_LABELS: Record<string, string> = {
   testimonials: 'Testimonials',
   pricing: 'Pricing Plans',
   customizer: 'Book Customizer',
+  manuscript: 'Manuscript Section',
+  royaltyCalc: 'Royalty Calculator',
   contact: 'Contact Section',
   faq: 'FAQ',
   pages: 'Static Pages (About / Terms / Privacy)',

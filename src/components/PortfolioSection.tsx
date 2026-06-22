@@ -1,5 +1,6 @@
 import { BookOpen, ArrowRight } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
+import { withBase } from '../lib/basePath';
 
 // Homepage portfolio preview: grid on desktop, 2.5-tile swipe carousel on
 // mobile. "View all" links to the full /portfolio page.
@@ -37,7 +38,7 @@ export default function PortfolioSection() {
 
         <div className="text-center mt-10">
           <a
-            href="/portfolio"
+            href={withBase('/portfolio')}
             className="inline-flex items-center gap-2 bg-amber-600 text-white px-7 py-3 rounded-full font-semibold hover:bg-amber-700 transition-colors"
           >
             View Full Portfolio <ArrowRight className="w-4 h-4" />

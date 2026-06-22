@@ -1,5 +1,6 @@
 import { Feather, Sparkles, BookOpen } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
+import { go } from '../lib/basePath';
 
 const cardIcons = [Feather, Sparkles, BookOpen];
 const cardGradients = [
@@ -12,7 +13,7 @@ export default function Hero() {
   const { hero } = useContent();
 
   const goToGetStarted = () => {
-    window.location.href = '/get-started';
+    go('/get-started');
   };
 
   return (

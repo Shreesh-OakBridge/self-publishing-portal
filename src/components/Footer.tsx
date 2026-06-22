@@ -1,14 +1,15 @@
-import { BookOpen, Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
+import { go, withBase, stripBase } from '../lib/basePath';
 
 export default function Footer() {
   const { footer, branding } = useContent();
 
   const goToSection = (id: string) => {
-    if (window.location.pathname.replace(/\/+$/, '') === '') {
+    if (stripBase(window.location.pathname) === '') {
       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     } else {
-      window.location.href = `/#${id}`;
+      go(`/#${id}`);
     }
   };
 
@@ -17,22 +18,17 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row lg:justify-between gap-10 lg:gap-24 mb-12">
           <div className="lg:max-w-xs">
-            <div className="flex items-center space-x-3 mb-4">
-              {branding.logoUrl ? (
-                <img
-                  src={branding.logoUrl}
-                  alt="OakBridge Publishing"
-                  className="h-10 w-auto object-contain"
-                />
-              ) : (
-                <>
-                  <BookOpen className="w-8 h-8 text-amber-500" />
-                  <div>
-                    <h3 className="text-xl font-bold">OakBridge</h3>
-                    <p className="text-sm text-amber-500">Publishing</p>
-                  </div>
-                </>
-              )}
+            <div className="flex items-center gap-3 mb-4">
+              <img
+                src={withBase(branding.logoUrl || '/logo.svg')}
+                alt="Cursive"
+                className="h-10 w-auto object-contain"
+              />
+              <span className="text-[11px] font-semibold text-amber-500 leading-tight">
+                An Imprint
+                <br />
+                of OakBridge
+              </span>
             </div>
             <p className="text-gray-400 leading-relaxed">{footer.tagline}</p>
           </div>
@@ -42,12 +38,12 @@ export default function Footer() {
             <h4 className="text-lg font-bold mb-4">Company</h4>
             <ul className="space-y-2">
               <li>
-                <a href="/about" className="text-gray-400 hover:text-amber-500 transition-colors">
+                <a href={withBase('/about')} className="text-gray-400 hover:text-amber-500 transition-colors">
                   About Us
                 </a>
               </li>
               <li>
-                <a href="/services" className="text-gray-400 hover:text-amber-500 transition-colors">
+                <a href={withBase('/services')} className="text-gray-400 hover:text-amber-500 transition-colors">
                   Services
                 </a>
               </li>
@@ -60,7 +56,7 @@ export default function Footer() {
                 </button>
               </li>
               <li>
-                <a href="/faq" className="text-gray-400 hover:text-amber-500 transition-colors">
+                <a href={withBase('/faq')} className="text-gray-400 hover:text-amber-500 transition-colors">
                   FAQ
                 </a>
               </li>
@@ -87,12 +83,12 @@ export default function Footer() {
                 </button>
               </li>
               <li>
-                <a href="/customize" className="text-gray-400 hover:text-amber-500 transition-colors">
+                <a href={withBase('/customize')} className="text-gray-400 hover:text-amber-500 transition-colors">
                   Customize a Book
                 </a>
               </li>
               <li>
-                <a href="/royalty-calculator" className="text-gray-400 hover:text-amber-500 transition-colors">
+                <a href={withBase('/royalty-calculator')} className="text-gray-400 hover:text-amber-500 transition-colors">
                   Royalty Calculator
                 </a>
               </li>
@@ -129,11 +125,11 @@ export default function Footer() {
 
         <div className="border-t border-gray-800 pt-8 text-center">
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mb-4 text-sm">
-            <a href="/terms" className="text-gray-400 hover:text-amber-500 transition-colors">
+            <a href={withBase('/terms')} className="text-gray-400 hover:text-amber-500 transition-colors">
               Terms &amp; Conditions
             </a>
             <span className="text-gray-700">|</span>
-            <a href="/privacy" className="text-gray-400 hover:text-amber-500 transition-colors">
+            <a href={withBase('/privacy')} className="text-gray-400 hover:text-amber-500 transition-colors">
               Privacy Policy
             </a>
           </div>

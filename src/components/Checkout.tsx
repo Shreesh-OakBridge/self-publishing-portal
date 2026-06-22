@@ -3,12 +3,13 @@ import { ArrowLeft, ShoppingCart, CheckCircle, AlertCircle, Loader2, Lock, Tag }
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
+import { go } from '../lib/basePath';
 
 const inr = (n: number) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const priceToNumber = (p: string) => Number((p || '').replace(/[^0-9.]/g, '')) || 0;
 
-// Royalty rate per plan (mirrors the Royalty Calculator).
-const PLAN_ROYALTY: Record<string, number> = {
+// Fallback royalty rates by plan, used only if a CMS plan is missing its rate.
+const PLAN_ROYALTY_FALLBACK: Record<string, number> = {
   Starter: 30,
   Professional: 45,
   Excellence: 55,
@@ -76,7 +77,7 @@ export default function Checkout() {
   const conflict = !!planName && !!royaltyId;
 
   useEffect(() => {
-    if (!loading && !user) window.location.href = '/login';
+    if (!loading && !user) go('/login');
   }, [loading, user]);
 
   useEffect(() => {
@@ -114,7 +115,9 @@ export default function Checkout() {
   const GST_RATE = 0.18;
   const gst = Math.round(taxable * GST_RATE);
   const total = taxable + gst;
-  const royaltyRate = planName ? PLAN_ROYALTY[planName] ?? null : null;
+  const royaltyRate = planName
+    ? plan?.royaltyRate ?? PLAN_ROYALTY_FALLBACK[planName] ?? null
+    : null;
 
   // Map customization option ids to friendly names via CMS config.
   const optName = (list: { id: string; name: string }[], id: string | null | undefined) =>
@@ -310,7 +313,7 @@ export default function Checkout() {
             <p>{[ship.address, ship.city, ship.state, ship.pincode].filter(Boolean).join(', ')}</p>
           </div>
           <button
-            onClick={() => (window.location.href = '/account')}
+            onClick={() => go('/account')}
             className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700"
           >
             Go to My Account
@@ -326,7 +329,7 @@ export default function Checkout() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button onClick={() => (window.location.href = '/')} className="flex items-center space-x-2 text-gray-600 hover:text-amber-700 text-sm">
+          <button onClick={() => go('/')} className="flex items-center space-x-2 text-gray-600 hover:text-amber-700 text-sm">
             <ArrowLeft className="w-4 h-4" />
             <span>Continue browsing</span>
           </button>

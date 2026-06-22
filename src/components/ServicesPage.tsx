@@ -1,5 +1,6 @@
 import { PenTool, Palette, LayoutGrid, ShieldCheck, Globe, Megaphone, BookOpen } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
+import { withBase } from '../lib/basePath';
 
 // A rotating set of icons so each service card gets a distinct visual without
 // requiring icon config in the CMS.
@@ -36,7 +37,7 @@ export default function ServicesPage() {
 
         <div className="text-center mt-12">
           <a
-            href="/#plans"
+            href={withBase('/#plans')}
             className="inline-block bg-amber-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-amber-700 transition-colors"
           >
             View Publishing Plans

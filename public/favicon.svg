@@ -1,12 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f59e0b"/>
-      <stop offset="1" stop-color="#ea580c"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="14" fill="url(#g)"/>
-  <path d="M16 20c5-2.4 11-2.4 16 0v26c-5-2.4-11-2.4-16 0V20Z" fill="#fff" opacity="0.95"/>
-  <path d="M48 20c-5-2.4-11-2.4-16 0v26c5-2.4 11-2.4 16 0V20Z" fill="#fff" opacity="0.8"/>
-  <line x1="32" y1="20" x2="32" y2="46" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round"/>
+  <rect width="64" height="64" rx="12" fill="#dc1f26"/>
+  <text x="32" y="47" text-anchor="middle" font-family="'Brush Script MT','Segoe Script','Apple Chancery',cursive" font-size="46" font-style="italic" fill="#ffffff">C</text>
 </svg>

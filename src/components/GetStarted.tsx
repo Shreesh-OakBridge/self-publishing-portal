@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Check, Users, Laptop, ArrowRight } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
+import { go } from '../lib/basePath';
 
 // Onboarding funnel: language → manuscript status → publish method.
 // Selections are stashed in sessionStorage so checkout can record them.
@@ -23,7 +24,7 @@ export default function GetStarted() {
       /* ignore */
     }
     // Expert → choose a package (tiers); Self → customizer.
-    window.location.href = method === 'expert' ? '/#plans' : '/customize';
+    go(method === 'expert' ? '/#plans' : '/customize');
   };
 
   const Radio = ({

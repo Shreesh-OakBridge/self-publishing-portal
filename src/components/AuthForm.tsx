@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BookOpen, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { logActivity } from '../lib/activity';
+import { withBase } from '../lib/basePath';
 
 type Mode = 'login' | 'signup' | 'forgot';
 
@@ -35,7 +36,7 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login' }: Aut
       setBusy(true);
       try {
         const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: `${window.location.origin}/reset-password`,
+          redirectTo: `${window.location.origin}${withBase('/reset-password')}`,
         });
         if (resetError) throw resetError;
         setInfo('If an account exists for that email, a password reset link is on its way.');
@@ -103,7 +104,7 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login' }: Aut
           <h1 className="text-2xl font-bold text-gray-900">
             {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create your account' : 'Reset your password'}
           </h1>
-          <p className="text-sm text-gray-500">OakBridge author portal</p>
+          <p className="text-sm text-gray-500">Cursive author portal</p>
         </div>
       </div>
 

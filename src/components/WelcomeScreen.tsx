@@ -113,7 +113,7 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
                     <div
                       key={i}
                       className="ob-writeline h-[3px] rounded-full bg-amber-900/30"
-                      style={{ width: `${w}%`, animationDelay: `${2.5 + i * 0.3}s` }}
+                      style={{ width: `${w}%`, animationDelay: `${2.0 + i * 0.25}s` }}
                     />
                   ))}
                 </div>
@@ -136,7 +136,7 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
             <div
               key={i}
               className="ob-leaf"
-              style={{ animationDelay: `${i * 0.28}s`, zIndex: LEAVES - i }}
+              style={{ animationDelay: `${i * 0.22}s`, zIndex: LEAVES - i }}
             />
           ))}
           {/* spine highlight */}
@@ -144,10 +144,13 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
         </div>
 
         {welcome.eyebrow && (
-          <p className="ob-anim ob-d1 text-amber-300/90 font-semibold tracking-[0.28em] uppercase text-[10px] sm:text-xs mb-2.5">
+          <p className="ob-anim ob-d1 text-amber-300/90 font-semibold tracking-[0.28em] uppercase text-[10px] sm:text-xs mb-1">
             {welcome.eyebrow}
           </p>
         )}
+        <p className="ob-anim ob-d1 text-amber-200/50 text-[10px] tracking-wide mb-2.5">
+          An Imprint of OakBridge
+        </p>
 
         <h1 className="ob-anim ob-d2 text-3xl sm:text-5xl font-bold text-white leading-tight mb-3">
           {welcome.headlineLine1}
@@ -174,17 +177,6 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
           {welcome.ctaLabel}
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </button>
-
-        {welcome.skipLabel && (
-          <div className="ob-anim ob-d5 mt-5">
-            <button
-              onClick={enter}
-              className="text-amber-200/50 hover:text-amber-200/90 text-sm transition-colors"
-            >
-              {welcome.skipLabel}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

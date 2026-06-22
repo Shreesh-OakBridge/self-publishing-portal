@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
 import type { CustomizerSize } from '../content/defaults';
 import AuthModal from './AuthModal';
+import { go } from '../lib/basePath';
 
 interface CustomizationData {
   paperType: string;
@@ -110,7 +111,7 @@ export default function BookCustomizer() {
     if (window.location.pathname.replace(/\/+$/, '') === '') {
       document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
     } else {
-      window.location.href = '/#contact';
+      go('/#contact');
     }
   };
 
@@ -185,7 +186,7 @@ export default function BookCustomizer() {
     setIsSaving(true);
     try {
       const id = await insertCustomization();
-      if (id) window.location.href = `/checkout?customization=${id}`;
+      if (id) go(`/checkout?customization=${id}`);
     } catch (err) {
       console.error('Error starting order:', err);
       alert('Could not start your order. Please try again.');

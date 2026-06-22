@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate } from 'lucide-react';
+import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate, ShieldCheck } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { logActivity } from '../lib/activity';
@@ -11,8 +11,23 @@ import OrdersPanel from './OrdersPanel';
 import CouponsPanel from './CouponsPanel';
 import BooksPanel from './BooksPanel';
 import LayoutEditor from './LayoutEditor';
+import AdminsPanel from './AdminsPanel';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
+
+// Tabs and which roles may see them. Editors are limited to leads + content.
+const TABS = [
+  { key: 'leads', label: 'Leads', Icon: Inbox, roles: ['owner', 'admin', 'editor'] },
+  { key: 'manuscripts', label: 'Manuscripts', Icon: BookText, roles: ['owner', 'admin'] },
+  { key: 'orders', label: 'Orders', Icon: ShoppingBag, roles: ['owner', 'admin'] },
+  { key: 'authors', label: 'Authors', Icon: Users, roles: ['owner', 'admin'] },
+  { key: 'books', label: 'Books', Icon: Library, roles: ['owner', 'admin'] },
+  { key: 'promotions', label: 'Promotions', Icon: Tag, roles: ['owner', 'admin'] },
+  { key: 'activity', label: 'Activity', Icon: Activity, roles: ['owner', 'admin'] },
+  { key: 'layout', label: 'Layout', Icon: LayoutTemplate, roles: ['owner', 'admin', 'editor'] },
+  { key: 'content', label: 'Site Content', Icon: FileText, roles: ['owner', 'admin', 'editor'] },
+  { key: 'admins', label: 'Admins', Icon: ShieldCheck, roles: ['owner'] },
+] as const;
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
 
 const leadColumns: Column<Lead>[] = [
@@ -54,7 +69,9 @@ export default function AdminDashboard() {
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [leadsError, setLeadsError] = useState('');
   const [leadRange, setLeadRange] = useState<DateRange>(emptyRange);
-  const [tab, setTab] = useState<'leads' | 'orders' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'layout' | 'content'>('leads');
+  const [tab, setTab] = useState<'leads' | 'orders' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'layout' | 'content' | 'admins'>('leads');
+  const [adminRole, setAdminRole] = useState<string | null>(null);
+  const role = adminRole ?? 'admin';
   const filteredLeads = filterByRange(leads, leadRange, (l) => l.created_at);
 
   useEffect(() => {
@@ -88,10 +105,21 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!session) {
       setIsAdmin(null);
+      setAdminRole(null);
       return;
     }
     supabase.rpc('is_admin').then(({ data }) => setIsAdmin(data === true));
+    supabase.rpc('admin_role').then(({ data }) => setAdminRole((data as string) ?? null));
   }, [session]);
+
+  // If the current tab isn't allowed for this role, fall back to Leads.
+  useEffect(() => {
+    if (adminRole) {
+      const allowed = (TABS.find((t) => t.key === tab)?.roles as readonly string[] | undefined)?.includes(adminRole);
+      if (!allowed) setTab('leads');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminRole]);
 
   useEffect(() => {
     if (session && isAdmin) fetchLeads();
@@ -104,12 +132,19 @@ export default function AdminDashboard() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setAuthError('Invalid email or password.');
+    } else {
+      // Stamp + log the admin login (no-op for non-admins).
+      const { data: ok } = await supabase.rpc('is_admin');
+      if (ok) {
+        await supabase.rpc('touch_admin_login');
+        await logActivity('admin.login');
+      }
     }
     setSigningIn(false);
   };
 
   const handleSignOut = async () => {
-    await logActivity('auth.logout');
+    await logActivity('admin.logout');
     await supabase.auth.signOut();
     setLeads([]);
   };
@@ -135,7 +170,7 @@ export default function AdminDashboard() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin Login</h1>
-              <p className="text-sm text-gray-500">OakBridge leads dashboard</p>
+              <p className="text-sm text-gray-500">Cursive leads dashboard</p>
             </div>
           </div>
 
@@ -220,8 +255,11 @@ export default function AdminDashboard() {
               <Inbox className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">OakBridge Admin</h1>
-              <p className="text-xs text-gray-500">{session.user.email}</p>
+              <h1 className="text-xl font-bold text-gray-900">Cursive Admin</h1>
+              <p className="text-xs text-gray-500">
+                {session.user.email}
+                {adminRole && <span className="ml-1.5 capitalize text-amber-700 font-semibold">· {adminRole}</span>}
+              </p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -244,106 +282,21 @@ export default function AdminDashboard() {
             </button>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-4 flex space-x-1">
-          <button
-            onClick={() => setTab('leads')}
-            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === 'leads'
-                ? 'border-amber-600 text-amber-700'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <Inbox className="w-4 h-4" />
-            <span>Leads</span>
-          </button>
-          <button
-            onClick={() => setTab('manuscripts')}
-            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === 'manuscripts'
-                ? 'border-amber-600 text-amber-700'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <BookText className="w-4 h-4" />
-            <span>Manuscripts</span>
-          </button>
-          <button
-            onClick={() => setTab('orders')}
-            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === 'orders'
-                ? 'border-amber-600 text-amber-700'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <ShoppingBag className="w-4 h-4" />
-            <span>Orders</span>
-          </button>
-          <button
-            onClick={() => setTab('authors')}
-            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === 'authors'
-                ? 'border-amber-600 text-amber-700'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Authors</span>
-          </button>
-          <button
-            onClick={() => setTab('books')}
-            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === 'books'
-                ? 'border-amber-600 text-amber-700'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <Library className="w-4 h-4" />
-            <span>Books</span>
-          </button>
-          <button
-            onClick={() => setTab('promotions')}
-            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === 'promotions'
-                ? 'border-amber-600 text-amber-700'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <Tag className="w-4 h-4" />
-            <span>Promotions</span>
-          </button>
-          <button
-            onClick={() => setTab('activity')}
-            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === 'activity'
-                ? 'border-amber-600 text-amber-700'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <Activity className="w-4 h-4" />
-            <span>Activity</span>
-          </button>
-          <button
-            onClick={() => setTab('layout')}
-            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === 'layout'
-                ? 'border-amber-600 text-amber-700'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <LayoutTemplate className="w-4 h-4" />
-            <span>Layout</span>
-          </button>
-          <button
-            onClick={() => setTab('content')}
-            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === 'content'
-                ? 'border-amber-600 text-amber-700'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span>Site Content</span>
-          </button>
+        <div className="max-w-7xl mx-auto px-4 flex space-x-1 overflow-x-auto">
+          {TABS.filter((t) => (t.roles as readonly string[]).includes(role)).map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap ${
+                tab === t.key
+                  ? 'border-amber-600 text-amber-700'
+                  : 'border-transparent text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              <t.Icon className="w-4 h-4" />
+              <span>{t.label}</span>
+            </button>
+          ))}
         </div>
       </header>
 
@@ -364,6 +317,8 @@ export default function AdminDashboard() {
           <ActivityPanel />
         ) : tab === 'layout' ? (
           <LayoutEditor />
+        ) : tab === 'admins' ? (
+          <AdminsPanel isOwner={role === 'owner'} currentEmail={session?.user?.email ?? ''} />
         ) : (
         <>
         <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">

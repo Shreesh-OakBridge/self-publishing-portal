@@ -4,6 +4,10 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
+    { "source": "/cursive/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/cursive/(favicon.svg|robots.txt|sitemap.xml|og-image.png)", "destination": "/$1" },
+    { "source": "/cursive", "destination": "/index.html" },
+    { "source": "/cursive/((?!.*\\..*).*)", "destination": "/index.html" },
     { "source": "/((?!.*\\..*).*)", "destination": "/index.html" }
   ],
   "headers": [

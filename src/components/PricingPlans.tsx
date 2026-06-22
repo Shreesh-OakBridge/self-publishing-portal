@@ -3,6 +3,7 @@ import { Check, Crown, Zap, Rocket, Sparkles, ChevronDown, ChevronUp, X, Users, 
 import { useContent } from '../content/ContentProvider';
 import type { PricingPlan } from '../content/defaults';
 import { useAuth } from '../lib/auth';
+import { go } from '../lib/basePath';
 import AuthModal from './AuthModal';
 
 const planIcons = [Zap, Rocket, Crown, Sparkles];
@@ -16,24 +17,6 @@ const planColors = [
 // Number of features shown before the list collapses.
 const COLLAPSED_COUNT = 5;
 
-const IMPRINTS = [
-  {
-    name: 'OakBridge Classics (Starter Plan)',
-    desc: 'Our foundational imprint for emerging authors. Perfect for traditional fiction, memoirs, and first-time publications that will be printed with our classic, timeless aesthetic.',
-  },
-  {
-    name: 'OakBridge Imprint Series (Professional Plan)',
-    desc: 'For authors building their brand and creating professional, market-competitive titles across all genres. This imprint signifies quality and editorial excellence.',
-  },
-  {
-    name: 'OakBridge Prestige (Excellence Plan)',
-    desc: 'Reserved for authors published at the highest standards. Your imprint will feature on premium-quality books with exclusive design elements and premium distribution.',
-  },
-  {
-    name: 'OakBridge Signature (Elite Plan)',
-    desc: "Our most exclusive imprint featuring the author's biography and signature edition mark. Only for authors receiving our white-glove publishing service with guaranteed visibility.",
-  },
-];
 
 function PlanCard({
   plan,
@@ -174,7 +157,7 @@ export default function PricingPlans() {
   });
 
   const goToCheckout = (plan: string) => {
-    window.location.href = `/checkout?plan=${encodeURIComponent(plan)}`;
+    go(`/checkout?plan=${encodeURIComponent(plan)}`);
   };
 
   // Logged-in users go straight to checkout for the plan; visitors log in /
@@ -236,7 +219,7 @@ export default function PricingPlans() {
               ))}
             </ul>
             <button
-              onClick={() => (window.location.href = '/customize')}
+              onClick={() => go('/customize')}
               className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-8 py-3.5 rounded-full text-lg font-semibold hover:from-amber-700 hover:to-orange-700 transition-all"
             >
               Start designing your book
@@ -292,11 +275,11 @@ export default function PricingPlans() {
         </div>
 
         <div className="mt-12 bg-white rounded-2xl shadow-lg p-6 sm:p-8 max-w-4xl mx-auto">
-          <h3 className="text-2xl font-bold text-gray-900 mb-4">About Our Imprints</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">{pricing.imprintsHeading}</h3>
 
           {/* Desktop: full descriptions */}
           <div className="hidden md:block space-y-4 text-gray-700">
-            {IMPRINTS.map((im) => (
+            {pricing.imprints.map((im) => (
               <div key={im.name}>
                 <h4 className="font-bold text-lg text-amber-600 mb-2">{im.name}</h4>
                 <p>{im.desc}</p>
@@ -306,7 +289,7 @@ export default function PricingPlans() {
 
           {/* Mobile: tap-to-expand accordion */}
           <div className="md:hidden divide-y">
-            {IMPRINTS.map((im) => (
+            {pricing.imprints.map((im) => (
               <details key={im.name} className="group">
                 <summary className="flex items-center justify-between gap-3 py-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                   <span className="font-bold text-amber-600">{im.name}</span>

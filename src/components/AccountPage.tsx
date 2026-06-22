@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import ProfileEditor from './ProfileEditor';
 import ManuscriptUpload from './ManuscriptUpload';
+import { go, withBase } from '../lib/basePath';
 
 interface Customization {
   id: string;
@@ -68,7 +69,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      window.location.href = '/login';
+      go('/login');
     }
   }, [loading, user]);
 
@@ -122,7 +123,7 @@ export default function AccountPage() {
       layout: c.layout_option ?? '',
       size: c.book_size ?? '',
     });
-    window.location.href = `/customize?${params.toString()}`;
+    go(`/customize?${params.toString()}`);
   };
 
   const openCalculation = (r: Calculation) => {
@@ -131,7 +132,7 @@ export default function AccountPage() {
       sales: String(r.expected_sales ?? ''),
       plan: r.plan_type ?? '',
     });
-    window.location.href = `/royalty-calculator?${params.toString()}`;
+    go(`/royalty-calculator?${params.toString()}`);
   };
 
   return (
@@ -139,15 +140,15 @@ export default function AccountPage() {
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
-            onClick={() => (window.location.href = '/')}
+            onClick={() => go('/')}
             className="flex items-center space-x-3"
           >
             <BookOpen className="w-7 h-7 text-amber-600" />
-            <span className="text-lg font-bold text-gray-900">OakBridge</span>
+            <span className="text-lg font-bold text-gray-900">Cursive</span>
           </button>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => (window.location.href = '/')}
+              onClick={() => go('/')}
               className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               <Home className="w-4 h-4" />
@@ -156,7 +157,7 @@ export default function AccountPage() {
             <button
               onClick={async () => {
                 await signOut();
-                window.location.href = '/';
+                go('/');
               }}
               className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800"
             >
@@ -216,7 +217,7 @@ export default function AccountPage() {
           ) : orders.length === 0 ? (
             <div className="bg-white rounded-2xl border p-6 text-gray-500">
               No orders yet.{' '}
-              <a href="/#plans" className="text-amber-700 font-semibold hover:underline">
+              <a href={withBase('/#plans')} className="text-amber-700 font-semibold hover:underline">
                 Explore publishing plans →
               </a>
             </div>
@@ -278,7 +279,7 @@ export default function AccountPage() {
           ) : customizations.length === 0 ? (
             <div className="bg-white rounded-2xl border p-6 text-gray-500">
               No saved customizations yet.{' '}
-              <a href="/customize" className="text-amber-700 font-semibold hover:underline">
+              <a href={withBase('/customize')} className="text-amber-700 font-semibold hover:underline">
                 Customize a book →
               </a>
             </div>
@@ -327,7 +328,7 @@ export default function AccountPage() {
           ) : calculations.length === 0 ? (
             <div className="bg-white rounded-2xl border p-6 text-gray-500">
               No saved calculations yet.{' '}
-              <a href="/royalty-calculator" className="text-amber-700 font-semibold hover:underline">
+              <a href={withBase('/royalty-calculator')} className="text-amber-700 font-semibold hover:underline">
                 Try the calculator →
               </a>
             </div>

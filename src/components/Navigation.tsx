@@ -1,7 +1,8 @@
-import { BookOpen, Menu, X, UserCircle, ChevronDown, Shield } from 'lucide-react';
+import { Menu, X, UserCircle, ChevronDown, Shield } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
+import { go, stripBase, withBase } from '../lib/basePath';
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,7 +22,7 @@ export default function Navigation() {
     .charAt(0)
     .toUpperCase();
 
-  const path = window.location.pathname.replace(/\/+$/, '');
+  const path = stripBase(window.location.pathname);
   const isHome = path === '';
 
   // Scroll-spy + condensed-on-scroll styling.
@@ -48,13 +49,13 @@ export default function Navigation() {
     if (isHome) {
       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     } else {
-      window.location.href = `/#${id}`;
+      go(`/#${id}`);
     }
   };
 
   const goTo = (p: string) => {
     setIsMenuOpen(false);
-    window.location.href = p;
+    go(p);
   };
 
   const isActive = (match: string) => isHome && activeSection === match;
@@ -81,18 +82,17 @@ export default function Navigation() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          <button onClick={() => goTo('/')} className="flex items-center space-x-3">
-            {branding.logoUrl ? (
-              <img src={branding.logoUrl} alt="OakBridge Publishing" className="h-10 w-auto object-contain" />
-            ) : (
-              <>
-                <BookOpen className="w-8 h-8 text-amber-600" />
-                <div className="text-left">
-                  <h1 className="text-2xl font-bold text-gray-900">OakBridge</h1>
-                  <p className="text-xs text-amber-600 font-semibold">Publishing</p>
-                </div>
-              </>
-            )}
+          <button onClick={() => goTo('/')} className="flex items-center gap-2.5">
+            <img
+              src={withBase(branding.logoUrl || '/logo.svg')}
+              alt="Cursive"
+              className="h-9 sm:h-10 w-auto object-contain"
+            />
+            <span className="hidden sm:block text-[10px] font-semibold text-amber-600 leading-tight text-left">
+              An Imprint
+              <br />
+              of OakBridge
+            </span>
           </button>
 
           {/* Desktop nav */}

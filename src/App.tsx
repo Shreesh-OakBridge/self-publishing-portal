@@ -2,6 +2,7 @@ import { useEffect, useState, ReactNode, Fragment } from 'react';
 import { useAuth } from './lib/auth';
 import { useContent } from './content/ContentProvider';
 import { HOME_SECTIONS } from './content/defaults';
+import { stripBase } from './lib/basePath';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
 import ValueProposition from './components/ValueProposition';
@@ -143,8 +144,9 @@ function SubPage({ children }: { children: ReactNode }) {
 
 function App() {
   // Lightweight path-based routing — no router dependency. The SPA rewrite in
-  // vercel.json ensures these paths serve index.html in production.
-  const path = window.location.pathname.replace(/\/+$/, '');
+  // vercel.json ensures these paths serve index.html in production. stripBase
+  // removes the "/cursive" prefix so matches stay simple.
+  const path = stripBase(window.location.pathname);
 
   if (path === '/admin') return <AdminDashboard />;
   if (path === '/login' || path === '/signup') return <AuthPage />;

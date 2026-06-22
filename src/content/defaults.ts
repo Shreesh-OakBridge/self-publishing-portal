@@ -53,13 +53,21 @@ export interface PricingPlan {
   price: string;
   tagline: string;
   popular: boolean;
+  royaltyRate: number;
   features: string[];
+}
+
+export interface ImprintItem {
+  name: string;
+  desc: string;
 }
 
 export interface PricingContent {
   heading: string;
   subheading: string;
   plans: PricingPlan[];
+  imprintsHeading: string;
+  imprints: ImprintItem[];
 }
 
 export interface ContactContent {
@@ -67,6 +75,19 @@ export interface ContactContent {
   subheading: string;
   successTitle: string;
   successMessage: string;
+}
+
+export interface ManuscriptSectionContent {
+  heading: string;
+  subheading: string;
+  loggedOutTitle: string;
+  loggedOutText: string;
+  loggedOutCta: string;
+}
+
+export interface RoyaltyCalcContent {
+  heading: string;
+  subheading: string;
 }
 
 export interface FooterContent {
@@ -247,6 +268,8 @@ export interface SiteContent {
   testimonials: TestimonialsContent;
   pricing: PricingContent;
   customizer: CustomizerContent;
+  manuscript: ManuscriptSectionContent;
+  royaltyCalc: RoyaltyCalcContent;
   contact: ContactContent;
   faq: FaqContent;
   pages: PagesContent;
@@ -292,7 +315,7 @@ export const defaultContent: SiteContent = {
   },
   welcome: {
     enabled: true,
-    eyebrow: 'OakBridge Publishing',
+    eyebrow: 'Cursive Publishing',
     headlineLine1: 'Your story deserves',
     headlineLine2: 'to be told.',
     subheading:
@@ -305,7 +328,7 @@ export const defaultContent: SiteContent = {
     headlineLine1: 'Your Story,',
     headlineLine2: 'Beautifully Published',
     subheading:
-      "OakBridge Publishing brings your literary dreams to life with 30+ years of industry expertise. We're not just a publishing service—we're your partner in creating lasting impact.",
+      "Cursive Publishing brings your literary dreams to life with 30+ years of industry expertise. We're not just a publishing service—we're your partner in creating lasting impact.",
     primaryCta: 'Start Your Journey',
     secondaryCta: 'View Plans',
     imageUrl: '',
@@ -353,12 +376,12 @@ export const defaultContent: SiteContent = {
   video: {
     heading: 'Our Publishing Process',
     subheading:
-      'Watch how OakBridge Publishing transforms your manuscript into a professional, market-ready book with our proven process.',
+      'Watch how Cursive Publishing transforms your manuscript into a professional, market-ready book with our proven process.',
     videoUrl: '',
     posterUrl: '',
-    overlayTitle: 'From Manuscript to Masterpiece: The OakBridge Way',
+    overlayTitle: 'From Manuscript to Masterpiece: The Cursive Way',
     overlaySubtitle: 'See how our 30+ years of experience makes the difference',
-    apartHeading: 'What Sets OakBridge Apart',
+    apartHeading: 'What Sets Cursive Apart',
     apartItems: [
       { title: 'Veteran Leadership', description: "Founded by industry veterans with over 30 years of combined publishing experience, we've guided hundreds of authors to success." },
       { title: 'Personalized Attention', description: 'Unlike cookie-cutter publishing mills, we treat each manuscript as a unique project deserving individual care and expertise.' },
@@ -381,11 +404,11 @@ export const defaultContent: SiteContent = {
   },
   testimonials: {
     heading: 'Loved by authors',
-    subheading: 'Writers across the country trust OakBridge to bring their stories to readers.',
+    subheading: 'Writers across the country trust Cursive to bring their stories to readers.',
     items: [
       {
         quote:
-          'OakBridge made publishing my first novel effortless. From editing to the cover design, every step felt guided and professional. My book was on shelves in weeks.',
+          'Cursive made publishing my first novel effortless. From editing to the cover design, every step felt guided and professional. My book was on shelves in weeks.',
         name: 'Ananya Sharma',
         role: 'Author, “Threads of Dawn”',
         rating: 5,
@@ -416,6 +439,7 @@ export const defaultContent: SiteContent = {
         price: '₹29,999',
         tagline: 'Perfect for first-time authors',
         popular: false,
+        royaltyRate: 30,
         features: [
           'Professional copyediting (up to 50,000 words)',
           'Basic proofreading',
@@ -427,7 +451,7 @@ export const defaultContent: SiteContent = {
           'Author copies (5 paperback copies)',
           'Basic book description optimization',
           'Email support',
-          'OakBridge Classics imprint',
+          'Cursive Classics imprint',
         ],
       },
       {
@@ -435,6 +459,7 @@ export const defaultContent: SiteContent = {
         price: '₹79,999',
         tagline: 'For authors ready to build a brand',
         popular: true,
+        royaltyRate: 45,
         features: [
           'Comprehensive developmental editing',
           'Professional copyediting (up to 100,000 words)',
@@ -450,7 +475,7 @@ export const defaultContent: SiteContent = {
           'Marketing toolkit (social media graphics, bookmarks)',
           'Author website (single page)',
           'Launch strategy consultation',
-          'OakBridge Imprint Series imprint',
+          'Cursive Imprint Series imprint',
           'Priority support (phone & email)',
         ],
       },
@@ -459,6 +484,7 @@ export const defaultContent: SiteContent = {
         price: '₹1,59,999',
         tagline: 'Premium publishing with full support',
         popular: false,
+        royaltyRate: 55,
         features: [
           'Comprehensive developmental editing',
           'Professional copyediting (unlimited words)',
@@ -478,7 +504,7 @@ export const defaultContent: SiteContent = {
           'Audiobook production (50% discounted rate)',
           'Launch campaign management (3 months)',
           'Amazon & Flipkart Ads setup',
-          'OakBridge Prestige imprint',
+          'Cursive Prestige imprint',
           'Dedicated account manager',
           'Priority support (24/7 access)',
         ],
@@ -488,6 +514,7 @@ export const defaultContent: SiteContent = {
         price: '₹2,99,999',
         tagline: 'The ultimate publishing experience',
         popular: false,
+        royaltyRate: 60,
         features: [
           'Full developmental & structural editing',
           'Professional copyediting (unlimited, multiple revisions)',
@@ -497,6 +524,25 @@ export const defaultContent: SiteContent = {
           'Multiple ISBNs (all formats)',
           'Full copyright & trademark protection',
         ],
+      },
+    ],
+    imprintsHeading: 'About Our Imprints',
+    imprints: [
+      {
+        name: 'Cursive Classics (Starter Plan)',
+        desc: 'Our foundational imprint for emerging authors. Perfect for traditional fiction, memoirs, and first-time publications that will be printed with our classic, timeless aesthetic.',
+      },
+      {
+        name: 'Cursive Imprint Series (Professional Plan)',
+        desc: 'For authors building their brand and creating professional, market-competitive titles across all genres. This imprint signifies quality and editorial excellence.',
+      },
+      {
+        name: 'Cursive Prestige (Excellence Plan)',
+        desc: 'Reserved for authors published at the highest standards. Your imprint will feature on premium-quality books with exclusive design elements and premium distribution.',
+      },
+      {
+        name: 'Cursive Signature (Elite Plan)',
+        desc: "Our most exclusive imprint featuring the author's biography and signature edition mark. Only for authors receiving our white-glove publishing service with guaranteed visibility.",
       },
     ],
   },
@@ -544,6 +590,19 @@ export const defaultContent: SiteContent = {
       { id: 'doubledemy', name: 'Double Demy', desc: 'Coffee-table / photo books', price: 0,
         pb: { w: 215, l: 280, win: 8.5, lin: 11 }, hb: { w: 220, l: 285, win: 8.7, lin: 11.25 } },
     ],
+  },
+  manuscript: {
+    heading: 'Submit Your Manuscript',
+    subheading:
+      'Upload your manuscript to begin your publishing journey. Your file stays private — visible only to you and our editorial team.',
+    loggedOutTitle: 'Ready to publish your book?',
+    loggedOutText: 'Log in or create a free account to upload your manuscript and track its progress.',
+    loggedOutCta: 'Log in / Sign up to upload',
+  },
+  royaltyCalc: {
+    heading: 'Estimate Your Royalties',
+    subheading:
+      'See how much you could earn. Adjust your book price and expected monthly sales to project your royalty income across our plans.',
   },
   contact: {
     heading: 'Start Your Publishing Journey',
@@ -630,7 +689,7 @@ export const defaultContent: SiteContent = {
       {
         question: 'Who owns the rights to my book?',
         answer:
-          'You do. OakBridge authors retain 100% of their rights and creative control. We publish on your behalf—we never take ownership of your work.',
+          'You do. Cursive authors retain 100% of their rights and creative control. We publish on your behalf—we never take ownership of your work.',
       },
       {
         question: 'How long does the publishing process take?',
@@ -656,19 +715,19 @@ export const defaultContent: SiteContent = {
   },
   pages: {
     about: {
-      title: 'About OakBridge Publishing',
+      title: 'About Cursive Publishing',
       body:
-        'OakBridge Publishing is a premium self-publishing partner dedicated to helping authors bring their stories to readers. Founded by industry veterans with over 30 years of combined experience, we combine traditional publishing craft with modern, author-first technology.\n\nWe believe a book is more than words on a page—it is a legacy. That is why we treat every manuscript as a unique project, offering personalised attention through editing, design, production, distribution, and marketing.\n\nUnlike many services, our authors retain full ownership and creative control of their work. Our role is to serve your vision, not to dictate it. From your first consultation to long after your launch, we remain your partner in building a lasting readership.',
+        'Cursive Publishing is a premium self-publishing partner dedicated to helping authors bring their stories to readers. Founded by industry veterans with over 30 years of combined experience, we combine traditional publishing craft with modern, author-first technology.\n\nWe believe a book is more than words on a page—it is a legacy. That is why we treat every manuscript as a unique project, offering personalised attention through editing, design, production, distribution, and marketing.\n\nUnlike many services, our authors retain full ownership and creative control of their work. Our role is to serve your vision, not to dictate it. From your first consultation to long after your launch, we remain your partner in building a lasting readership.',
     },
     terms: {
       title: 'Terms & Conditions',
       body:
-        'These Terms & Conditions govern your use of the OakBridge Publishing website and services. By accessing our site or engaging our services, you agree to these terms.\n\n1. Services. OakBridge provides self-publishing services including editing, design, production, distribution, and related support as described in your selected plan.\n\n2. Author Rights. Authors retain ownership of their intellectual property. OakBridge is granted a limited licence solely to provide the contracted services.\n\n3. Payments. Fees are as set out in your chosen plan or quotation. Applicable taxes, including 18% GST, are added at checkout.\n\n4. Refunds. Refund eligibility depends on the stage of work completed and is handled on a case-by-case basis.\n\n5. Liability. OakBridge is not liable for indirect or consequential losses arising from use of our services to the extent permitted by law.\n\nThis is placeholder text. Please replace it with your final legal terms before going live.',
+        'These Terms & Conditions govern your use of the Cursive Publishing website and services. By accessing our site or engaging our services, you agree to these terms.\n\n1. Services. Cursive provides self-publishing services including editing, design, production, distribution, and related support as described in your selected plan.\n\n2. Author Rights. Authors retain ownership of their intellectual property. Cursive is granted a limited licence solely to provide the contracted services.\n\n3. Payments. Fees are as set out in your chosen plan or quotation. Applicable taxes, including 18% GST, are added at checkout.\n\n4. Refunds. Refund eligibility depends on the stage of work completed and is handled on a case-by-case basis.\n\n5. Liability. Cursive is not liable for indirect or consequential losses arising from use of our services to the extent permitted by law.\n\nThis is placeholder text. Please replace it with your final legal terms before going live.',
     },
     privacy: {
       title: 'Privacy Policy',
       body:
-        'This Privacy Policy explains how OakBridge Publishing collects, uses, and protects your personal information.\n\n1. Information We Collect. We collect information you provide directly—such as your name, email, phone number, and manuscript details—and limited technical information when you use our site.\n\n2. How We Use It. We use your information to provide and improve our services, communicate with you, process orders, and meet legal obligations.\n\n3. Sharing. We do not sell your personal information. We share it only with service providers who help us operate, and where required by law.\n\n4. Security. We take reasonable measures to protect your data, but no method of transmission or storage is completely secure.\n\n5. Your Rights. You may request access to, correction of, or deletion of your personal information by contacting us.\n\nThis is placeholder text. Please replace it with your final privacy policy before going live.',
+        'This Privacy Policy explains how Cursive Publishing collects, uses, and protects your personal information.\n\n1. Information We Collect. We collect information you provide directly—such as your name, email, phone number, and manuscript details—and limited technical information when you use our site.\n\n2. How We Use It. We use your information to provide and improve our services, communicate with you, process orders, and meet legal obligations.\n\n3. Sharing. We do not sell your personal information. We share it only with service providers who help us operate, and where required by law.\n\n4. Security. We take reasonable measures to protect your data, but no method of transmission or storage is completely secure.\n\n5. Your Rights. You may request access to, correction of, or deletion of your personal information by contacting us.\n\nThis is placeholder text. Please replace it with your final privacy policy before going live.',
     },
   },
   footer: {
@@ -677,7 +736,7 @@ export const defaultContent: SiteContent = {
     email: 'info@oakbridge.in',
     phone: '+91 00000 00000',
     location: 'India',
-    copyrightName: 'OakBridge Publishing',
+    copyrightName: 'Cursive Publishing',
   },
 };
 // End of default site content.

@@ -17,6 +17,8 @@ interface LogRow {
 const ACTION_LABELS: Record<string, string> = {
   'auth.login': 'Logged in',
   'auth.logout': 'Logged out',
+  'admin.login': 'Admin logged in',
+  'admin.logout': 'Admin logged out',
   'user.signup': 'Signed up',
   'profile.updated': 'Updated profile',
   'lead.created': 'Submitted enquiry',
@@ -29,6 +31,8 @@ const ACTION_LABELS: Record<string, string> = {
 const ACTION_COLOR: Record<string, string> = {
   'auth.login': 'bg-blue-100 text-blue-800',
   'auth.logout': 'bg-gray-100 text-gray-700',
+  'admin.login': 'bg-purple-100 text-purple-800',
+  'admin.logout': 'bg-gray-100 text-gray-700',
   'user.signup': 'bg-green-100 text-green-800',
   'profile.updated': 'bg-purple-100 text-purple-800',
   'lead.created': 'bg-amber-100 text-amber-800',

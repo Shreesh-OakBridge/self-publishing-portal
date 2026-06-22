@@ -29,17 +29,17 @@
   to { opacity: 0; transform: scale(1.06); filter: blur(6px); visibility: hidden; }
 }
 
-/* Content fades up after the pages have flipped through (~2.2s). */
-.ob-anim { opacity: 0; animation: ob-fade-up 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) forwards; }
-.ob-d1 { animation-delay: 1.9s; }
-.ob-d2 { animation-delay: 2.1s; }
-.ob-d3 { animation-delay: 2.3s; }
-.ob-d4 { animation-delay: 2.5s; }
-.ob-d5 { animation-delay: 2.9s; }
+/* Content fades up after the pages have flipped through (~1.8s). */
+.ob-anim { opacity: 0; animation: ob-fade-up 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) forwards; }
+.ob-d1 { animation-delay: 1.5s; }
+.ob-d2 { animation-delay: 1.7s; }
+.ob-d3 { animation-delay: 1.9s; }
+.ob-d4 { animation-delay: 2.1s; }
+.ob-d5 { animation-delay: 2.4s; }
 .ob-cta {
   opacity: 0;
-  animation: ob-fade-up 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) 2.5s forwards,
-    ob-glow 2.8s ease-in-out 3.4s infinite;
+  animation: ob-fade-up 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) 2.1s forwards,
+    ob-glow 2.8s ease-in-out 3.0s infinite;
 }
 .ob-particle { position: absolute; bottom: -48px; animation: ob-float-up linear infinite; }
 .ob-orb { animation: ob-orb 9s ease-in-out infinite; }
@@ -133,7 +133,7 @@
   background: linear-gradient(110deg, #fffaf2 0%, #f0ddbc 100%);
   box-shadow: 6px 0 16px -6px rgba(80, 45, 10, 0.4);
   transform: rotateY(0deg);
-  animation: ob-leaf 0.85s cubic-bezier(0.45, 0.05, 0.3, 1) forwards;
+  animation: ob-leaf 0.7s cubic-bezier(0.45, 0.05, 0.3, 1) forwards;
 }
 .ob-leaf::after {
   /* travelling sheen as the page turns */
@@ -143,7 +143,7 @@
   border-radius: inherit;
   background: linear-gradient(110deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 55%);
   opacity: 0;
-  animation: ob-leaf-sheen 0.85s ease forwards;
+  animation: ob-leaf-sheen 0.7s ease forwards;
   animation-delay: inherit;
 }
 @keyframes ob-leaf {
@@ -177,7 +177,7 @@
 /* Hidden during the page-flip; fades in once the pages settle, then bobs. */
 .ob-quill {
   opacity: 0;
-  animation: ob-quill-in 0.5s ease 2.3s forwards, ob-quill 2.4s ease-in-out 3.4s infinite;
+  animation: ob-quill-in 0.5s ease 1.9s forwards, ob-quill 2.4s ease-in-out 2.9s infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

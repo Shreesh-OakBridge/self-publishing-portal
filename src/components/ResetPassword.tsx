@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BookOpen, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { go, withBase } from '../lib/basePath';
 
 // Landing page for the password-reset email link. supabase-js parses the
 // recovery token from the URL and establishes a temporary session; the user
@@ -45,7 +46,7 @@ export default function ResetPassword() {
     }
     setDone(true);
     setTimeout(() => {
-      window.location.href = '/account';
+      go('/account');
     }, 1600);
   };
 
@@ -62,7 +63,7 @@ export default function ResetPassword() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Set a new password</h1>
-              <p className="text-sm text-gray-500">OakBridge author portal</p>
+              <p className="text-sm text-gray-500">Cursive author portal</p>
             </div>
           </div>
 
@@ -83,7 +84,7 @@ export default function ResetPassword() {
                 </span>
               </div>
               <a
-                href="/login"
+                href={withBase('/login')}
                 className="block w-full text-center bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700"
               >
                 Back to login

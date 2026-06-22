@@ -18,23 +18,52 @@ CREATE TABLE IF NOT EXISTS admin_users (
   email text PRIMARY KEY,
   created_at timestamptz DEFAULT now()
 );
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS full_name text;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'admin';
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS last_login_at timestamptz;
+DO $$ BEGIN
+  ALTER TABLE admin_users ADD CONSTRAINT admin_users_role_chk CHECK (role IN ('owner', 'admin', 'editor'));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
--- No client policies: only is_admin() (security definer) reads this table.
 
 CREATE OR REPLACE FUNCTION is_admin()
-  RETURNS boolean
-  LANGUAGE sql
-  SECURITY DEFINER
-  STABLE
-  SET search_path = public
+  RETURNS boolean LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public
 AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM admin_users WHERE email = (auth.jwt() ->> 'email')
-  );
+  SELECT EXISTS (SELECT 1 FROM admin_users WHERE lower(email) = lower(auth.jwt() ->> 'email'));
 $$;
-
 GRANT EXECUTE ON FUNCTION is_admin() TO authenticated, anon;
+
+CREATE OR REPLACE FUNCTION admin_role()
+  RETURNS text LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public
+AS $$
+  SELECT role FROM admin_users WHERE lower(email) = lower(auth.jwt() ->> 'email') LIMIT 1;
+$$;
+GRANT EXECUTE ON FUNCTION admin_role() TO authenticated;
+
+CREATE OR REPLACE FUNCTION is_owner()
+  RETURNS boolean LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public
+AS $$
+  SELECT EXISTS (SELECT 1 FROM admin_users WHERE lower(email) = lower(auth.jwt() ->> 'email') AND role = 'owner');
+$$;
+GRANT EXECUTE ON FUNCTION is_owner() TO authenticated;
+
+CREATE OR REPLACE FUNCTION touch_admin_login()
+  RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path = public
+AS $$
+  UPDATE admin_users SET last_login_at = now() WHERE lower(email) = lower(auth.jwt() ->> 'email');
+$$;
+GRANT EXECUTE ON FUNCTION touch_admin_login() TO authenticated;
+
+-- Admins read the list; only owners manage it.
+DROP POLICY IF EXISTS "Admins read admin_users" ON admin_users;
+CREATE POLICY "Admins read admin_users" ON admin_users FOR SELECT TO authenticated USING (is_admin());
+DROP POLICY IF EXISTS "Owners insert admin_users" ON admin_users;
+CREATE POLICY "Owners insert admin_users" ON admin_users FOR INSERT TO authenticated WITH CHECK (is_owner());
+DROP POLICY IF EXISTS "Owners update admin_users" ON admin_users;
+CREATE POLICY "Owners update admin_users" ON admin_users FOR UPDATE TO authenticated USING (is_owner()) WITH CHECK (is_owner());
+DROP POLICY IF EXISTS "Owners delete admin_users" ON admin_users;
+CREATE POLICY "Owners delete admin_users" ON admin_users FOR DELETE TO authenticated USING (is_owner());
 
 -- ============================================================
 -- 1. publishing_leads (contact form submissions)
@@ -298,9 +327,10 @@ CREATE TRIGGER trg_log_auth_update AFTER UPDATE ON auth.users
 -- ============================================================
 -- 7. Seed your admin email  (EDIT THIS to your admin's email)
 -- ============================================================
-INSERT INTO admin_users (email)
-VALUES ('info@oakbridge.in')
+INSERT INTO admin_users (email, role)
+VALUES ('info@oakbridge.in', 'owner')
 ON CONFLICT (email) DO NOTHING;
+UPDATE admin_users SET role = 'owner' WHERE lower(email) = 'info@oakbridge.in';
 
 -- ============================================================
 -- 8. Manuscripts (author submissions) — private bucket + table
