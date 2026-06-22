@@ -44,13 +44,6 @@ export default function HomeManuscriptSection() {
             </button>
           </div>
         )}
-
-        <p className="text-center text-gray-600 mt-6">
-          Prefer to write directly?{' '}
-          <a href="/manuscript" className="text-amber-700 font-semibold hover:underline">
-            Open the online editor →
-          </a>
-        </p>
       </div>
 
       <AuthModal

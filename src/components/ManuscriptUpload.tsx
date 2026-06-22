@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import { FileText, UploadCloud, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useEffect, useState, Fragment } from 'react';
+import { FileText, UploadCloud, Loader2, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
+import EditorialReview from './EditorialReview';
 
 const BUCKET = 'manuscripts';
 const ACCEPT = '.doc,.docx,.pdf,.rtf,.odt,.epub';
@@ -13,6 +14,9 @@ interface Manuscript {
   file_name: string | null;
   word_count: number | null;
   status: string;
+  content: string | null;
+  expert_review_status: string | null;
+  expert_review_feedback: string | null;
   created_at: string;
 }
 
@@ -40,25 +44,31 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
   const [genre, setGenre] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [wordCount, setWordCount] = useState<number | null>(null);
+  const [extractedText, setExtractedText] = useState('');
   const [counting, setCounting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Auto-detect word count: native for text files, mammoth for .docx.
   const handleFile = async (f: File | null) => {
     setFile(f);
     setWordCount(null);
+    setExtractedText('');
     if (!f) return;
     const ext = f.name.split('.').pop()?.toLowerCase() || '';
     setCounting(true);
     try {
       if (['txt', 'md', 'rtf', 'csv'].includes(ext)) {
-        setWordCount(countWords(await f.text()));
+        const raw = await f.text();
+        setExtractedText(raw);
+        setWordCount(countWords(raw));
       } else if (ext === 'docx') {
         const arrayBuffer = await f.arrayBuffer();
         const mod: any = await import('mammoth');
         const mammoth = mod.default ?? mod;
         const res = await mammoth.extractRawText({ arrayBuffer });
+        setExtractedText(res.value || '');
         setWordCount(countWords(res.value || ''));
       } else {
         setWordCount(null); // pdf/doc/odt/epub — author enters manually
@@ -75,7 +85,7 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
     if (!user) return;
     const { data } = await supabase
       .from('manuscripts')
-      .select('id, title, genre, file_name, word_count, status, created_at')
+      .select('id, title, genre, file_name, word_count, status, content, expert_review_status, expert_review_feedback, created_at')
       .order('created_at', { ascending: false });
     setItems((data as Manuscript[]) ?? []);
   };
@@ -114,6 +124,7 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
         file_name: file.name,
         file_size: file.size,
         word_count: wordCount,
+        content: extractedText || null,
       });
       if (insErr) throw insErr;
 
@@ -122,6 +133,7 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
       setGenre('');
       setFile(null);
       setWordCount(null);
+      setExtractedText('');
       load();
     } catch (err) {
       console.error('Manuscript upload failed:', err);
@@ -254,32 +266,47 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
             </thead>
             <tbody>
               {items.map((m) => (
-                <tr key={m.id} className="border-b last:border-0 hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmt(m.created_at)}</td>
-                  <td className="px-4 py-3 font-medium text-gray-900">{m.title}</td>
-                  <td className="px-4 py-3 text-gray-600">{m.genre || '—'}</td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                    {m.word_count != null ? m.word_count.toLocaleString('en-IN') : '—'}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 max-w-[14rem] truncate">{m.file_name || '—'}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-block px-2 py-1 rounded-full text-xs ${
-                        STATUS_COLOR[m.status] ?? 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      {STATUS_LABEL[m.status] ?? m.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <a
-                      href={`/manuscript?id=${m.id}`}
-                      className="text-sm font-semibold text-amber-700 hover:text-amber-900 whitespace-nowrap"
-                    >
-                      Review &amp; Edit ›
-                    </a>
-                  </td>
-                </tr>
+                <Fragment key={m.id}>
+                  <tr className="border-b last:border-0 hover:bg-gray-50">
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmt(m.created_at)}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900">{m.title}</td>
+                    <td className="px-4 py-3 text-gray-600">{m.genre || '—'}</td>
+                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                      {m.word_count != null ? m.word_count.toLocaleString('en-IN') : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 max-w-[14rem] truncate">{m.file_name || '—'}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-block px-2 py-1 rounded-full text-xs ${
+                          STATUS_COLOR[m.status] ?? 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {STATUS_LABEL[m.status] ?? m.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => setExpandedId(expandedId === m.id ? null : m.id)}
+                        className="inline-flex items-center gap-1 text-sm font-semibold text-amber-700 hover:text-amber-900 whitespace-nowrap"
+                      >
+                        Editorial review
+                        <ChevronDown className={`w-4 h-4 transition-transform ${expandedId === m.id ? 'rotate-180' : ''}`} />
+                      </button>
+                    </td>
+                  </tr>
+                  {expandedId === m.id && (
+                    <tr className="bg-gray-50/60">
+                      <td colSpan={7} className="px-4 py-5">
+                        <EditorialReview
+                          manuscriptId={m.id}
+                          text={m.content || ''}
+                          reviewStatus={m.expert_review_status}
+                          reviewFeedback={m.expert_review_feedback}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>

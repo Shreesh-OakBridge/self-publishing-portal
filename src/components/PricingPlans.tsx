@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Check, Crown, Zap, Rocket, Sparkles, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Check, Crown, Zap, Rocket, Sparkles, ChevronDown, ChevronUp, X, Users, Laptop, ArrowRight } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import type { PricingPlan } from '../content/defaults';
 import { useAuth } from '../lib/auth';
@@ -156,12 +156,22 @@ function PlanCard({
 }
 
 export default function PricingPlans() {
-  const { pricing } = useContent();
+  const { pricing, getStarted: g } = useContent();
   const { user } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [detailPlan, setDetailPlan] = useState<PricingPlan | null>(null);
+  // Two-plan model: Expert Publishing (packages) vs Publish on your own (self).
+  // Default to the path chosen in the Get Started funnel, if any.
+  const [view, setView] = useState<'expert' | 'self'>(() => {
+    try {
+      const o = JSON.parse(sessionStorage.getItem('ob_onboarding') || 'null');
+      return o?.publish_path === 'self' ? 'self' : 'expert';
+    } catch {
+      return 'expert';
+    }
+  });
 
   const goToCheckout = (plan: string) => {
     window.location.href = `/checkout?plan=${encodeURIComponent(plan)}`;
@@ -181,11 +191,61 @@ export default function PricingPlans() {
   return (
     <section id="plans" className="py-20 px-4 bg-gradient-to-br from-gray-50 to-slate-100">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">{pricing.heading}</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">{pricing.subheading}</p>
         </div>
 
+        {/* Two-plan toggle */}
+        <div className="flex justify-center mb-12">
+          <div className="inline-flex bg-white border rounded-full p-1 shadow-sm">
+            <button
+              onClick={() => setView('expert')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors ${
+                view === 'expert' ? 'bg-amber-600 text-white' : 'text-gray-600 hover:text-amber-700'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              {g.expertTitle}
+            </button>
+            <button
+              onClick={() => setView('self')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors ${
+                view === 'self' ? 'bg-amber-600 text-white' : 'text-gray-600 hover:text-amber-700'
+              }`}
+            >
+              <Laptop className="w-4 h-4" />
+              {g.selfTitle}
+            </button>
+          </div>
+        </div>
+
+        {view === 'self' ? (
+          <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl p-8 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mx-auto mb-4">
+              <Laptop className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">{g.selfTitle}</h3>
+            <p className="text-gray-500 mb-6">{g.selfTagline}</p>
+            <ul className="space-y-3 text-left max-w-md mx-auto mb-8">
+              {g.selfPoints.map((p, i) => (
+                <li key={i} className="flex items-start gap-2 text-gray-700">
+                  <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  {p}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => (window.location.href = '/customize')}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-8 py-3.5 rounded-full text-lg font-semibold hover:from-amber-700 hover:to-orange-700 transition-all"
+            >
+              Start designing your book
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            <p className="text-sm text-gray-400 mt-3">Transparent, itemised pricing — pay only for what you choose.</p>
+          </div>
+        ) : (
+        <>
         {/* Desktop / tablet: full cards */}
         <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
           {pricing.plans.map((plan, planIndex) => (
@@ -257,6 +317,8 @@ export default function PricingPlans() {
             ))}
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* Mobile plan details popup */}
