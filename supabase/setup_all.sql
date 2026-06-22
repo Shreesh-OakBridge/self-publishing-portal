@@ -320,6 +320,9 @@ CREATE TABLE IF NOT EXISTS manuscripts (
 );
 ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS word_count integer;
 ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS content text;
+ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS expert_review_status text;
+ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS expert_review_feedback text;
+ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS expert_review_at timestamptz;
 ALTER TABLE manuscripts ALTER COLUMN file_path DROP NOT NULL;
 ALTER TABLE manuscripts ENABLE ROW LEVEL SECURITY;
 

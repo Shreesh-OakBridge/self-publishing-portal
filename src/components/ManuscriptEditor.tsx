@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import RichTextEditor from './RichTextEditor';
 import AuthModal from './AuthModal';
+import EditorialReview from './EditorialReview';
 
 const countWords = (t: string) => t.trim().match(/\S+/g)?.length ?? 0;
 const stripHtml = (html: string) => {
@@ -25,6 +26,8 @@ interface ManuscriptRow {
   file_name: string | null;
   content: string | null;
   status: string;
+  expert_review_status: string | null;
+  expert_review_feedback: string | null;
 }
 
 export default function ManuscriptEditor() {
@@ -53,7 +56,7 @@ export default function ManuscriptEditor() {
     (async () => {
       const { data, error } = await supabase
         .from('manuscripts')
-        .select('id, title, file_path, file_name, content, status')
+        .select('id, title, file_path, file_name, content, status, expert_review_status, expert_review_feedback')
         .eq('id', id)
         .maybeSingle();
       if (error || !data) {
@@ -242,6 +245,18 @@ export default function ManuscriptEditor() {
           <p className="text-xs text-gray-500 mt-3">
             You can write freely here — you’ll be asked to log in or sign up when you Save.
           </p>
+        )}
+
+        {row && (
+          <div className="mt-10">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Editorial Review</h2>
+            <EditorialReview
+              manuscriptId={row.id}
+              text={text}
+              reviewStatus={row.expert_review_status}
+              reviewFeedback={row.expert_review_feedback}
+            />
+          </div>
         )}
       </main>
 
