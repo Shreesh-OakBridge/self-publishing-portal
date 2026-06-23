@@ -145,11 +145,8 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
 
         {welcome.eyebrow && (
           <p
-            className="ob-anim ob-d1 text-amber-300 text-4xl sm:text-5xl leading-none mb-1 drop-shadow"
-            style={{
-              fontFamily: "'Brush Script MT','Segoe Script','Apple Chancery','Snell Roundhand',cursive",
-              fontStyle: 'italic',
-            }}
+            className="ob-anim ob-d1 text-amber-300 text-5xl sm:text-6xl leading-none mb-1 drop-shadow"
+            style={{ fontFamily: "'Edwardian Script ITC','Pinyon Script',cursive" }}
           >
             {welcome.eyebrow}
           </p>
