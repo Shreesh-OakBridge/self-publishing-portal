@@ -3,6 +3,7 @@ import { useAuth } from './lib/auth';
 import { useContent } from './content/ContentProvider';
 import { HOME_SECTIONS } from './content/defaults';
 import { stripBase } from './lib/basePath';
+import { useSeo } from './lib/seo';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
 import ValueProposition from './components/ValueProposition';
@@ -144,6 +145,8 @@ function SubPage({ children }: { children: ReactNode }) {
 }
 
 function App() {
+  // Per-route SEO (title, meta, canonical, OG, JSON-LD).
+  useSeo();
   // Lightweight path-based routing — no router dependency. The SPA rewrite in
   // vercel.json ensures these paths serve index.html in production. stripBase
   // removes the "/cursive" prefix so matches stay simple.

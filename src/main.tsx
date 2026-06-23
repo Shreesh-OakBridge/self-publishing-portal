@@ -5,6 +5,7 @@ import './index.css';
 import { ContentProvider } from './content/ContentProvider';
 import { AuthProvider } from './lib/auth';
 import ErrorBoundary from './components/ErrorBoundary';
+import CookieConsent from './components/CookieConsent';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -12,6 +13,7 @@ createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <ContentProvider>
           <App />
+          <CookieConsent />
         </ContentProvider>
       </AuthProvider>
     </ErrorBoundary>
