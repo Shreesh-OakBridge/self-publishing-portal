@@ -50,7 +50,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
               merged = {
                 ...merged,
                 [row.key]: deepMerge(
-                  (merged as Record<string, unknown>)[row.key],
+                  (merged as unknown as Record<string, unknown>)[row.key],
                   row.value
                 ),
               };

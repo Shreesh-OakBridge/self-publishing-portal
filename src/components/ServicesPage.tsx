@@ -1,10 +1,6 @@
-import { PenTool, Palette, LayoutGrid, ShieldCheck, Globe, Megaphone, BookOpen } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import { withBase } from '../lib/basePath';
-
-// A rotating set of icons so each service card gets a distinct visual without
-// requiring icon config in the CMS.
-const ICONS = [PenTool, Palette, LayoutGrid, ShieldCheck, Globe, Megaphone, BookOpen];
+import { resolveServiceIcon } from '../lib/serviceIcons';
 
 export default function ServicesPage() {
   const { services } = useContent();
@@ -19,7 +15,7 @@ export default function ServicesPage() {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {services.items.map((s, i) => {
-            const Icon = ICONS[i % ICONS.length];
+            const Icon = resolveServiceIcon(s.icon, i);
             return (
               <div
                 key={s.title}

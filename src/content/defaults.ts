@@ -164,6 +164,7 @@ export interface ServiceItem {
   title: string;
   summary: string;
   description: string;
+  icon: string;
 }
 
 export interface ServicesContent {
@@ -188,6 +189,7 @@ export interface PortfolioItem {
   author: string;
   category: string;
   coverUrl: string;
+  linkUrl: string;
 }
 
 export interface PortfolioContent {
@@ -648,36 +650,42 @@ export const defaultContent: SiteContent = {
         summary: 'Developmental, copy, and line editing.',
         description:
           'Our experienced editors refine structure, language, and consistency—from developmental editing that shapes your narrative to meticulous proofreading that polishes every line.',
+        icon: 'PenTool',
       },
       {
         title: 'Cover Design',
         summary: 'Custom, market-ready covers.',
         description:
           'Original cover concepts designed to stand out on shelves and thumbnails alike, tailored to your genre and audience.',
+        icon: 'Palette',
       },
       {
         title: 'Interior Formatting',
         summary: 'Print & ebook typesetting.',
         description:
           'Professional interior layout and typesetting for paperback, hardback, and ebook formats, with attention to readability and trim size.',
+        icon: 'LayoutGrid',
       },
       {
         title: 'ISBN & Copyright',
         summary: 'Registration handled for you.',
         description:
           'We assign ISBNs and assist with copyright registration so your work is protected and discoverable.',
+        icon: 'ShieldCheck',
       },
       {
         title: 'Distribution',
         summary: 'Reach Amazon, Flipkart & more.',
         description:
           'Global and Indian distribution across major online retailers, libraries, and 40+ platforms to maximise your reach.',
+        icon: 'Globe',
       },
       {
         title: 'Marketing Support',
         summary: 'Launch & promote with confidence.',
         description:
           'Launch strategy, press materials, and promotional assets to help your book find its readers.',
+        icon: 'Megaphone',
       },
     ],
   },
@@ -685,12 +693,12 @@ export const defaultContent: SiteContent = {
     heading: 'From Our Portfolio',
     subheading: 'A selection of titles we have proudly brought to readers.',
     items: [
-      { title: 'Threads of Dawn', author: 'Ananya Sharma', category: 'Fiction', coverUrl: '' },
-      { title: 'The Quiet Quarter', author: 'Rajat Mehta', category: 'Literary Fiction', coverUrl: '' },
-      { title: 'Beyond the Ledger', author: 'Vikram Nair', category: 'Business', coverUrl: '' },
-      { title: 'Monsoon Letters', author: 'Fatima Qureshi', category: 'Poetry', coverUrl: '' },
-      { title: 'The Founder’s Map', author: 'Sneha Iyer', category: 'Non-Fiction', coverUrl: '' },
-      { title: 'Echoes of Silence', author: 'Arjun Desai', category: 'Thriller', coverUrl: '' },
+      { title: 'Threads of Dawn', author: 'Ananya Sharma', category: 'Fiction', coverUrl: '', linkUrl: '' },
+      { title: 'The Quiet Quarter', author: 'Rajat Mehta', category: 'Literary Fiction', coverUrl: '', linkUrl: '' },
+      { title: 'Beyond the Ledger', author: 'Vikram Nair', category: 'Business', coverUrl: '', linkUrl: '' },
+      { title: 'Monsoon Letters', author: 'Fatima Qureshi', category: 'Poetry', coverUrl: '', linkUrl: '' },
+      { title: 'The Founder’s Map', author: 'Sneha Iyer', category: 'Non-Fiction', coverUrl: '', linkUrl: '' },
+      { title: 'Echoes of Silence', author: 'Arjun Desai', category: 'Thriller', coverUrl: '', linkUrl: '' },
     ],
   },
   faq: {

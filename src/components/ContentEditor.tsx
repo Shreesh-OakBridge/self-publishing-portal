@@ -4,8 +4,48 @@ import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import { useContent } from '../content/ContentProvider';
 import { defaultContent, SiteContent } from '../content/defaults';
 import MediaUploadField from './MediaUploadField';
+import { SERVICE_ICONS, SERVICE_ICON_NAMES } from '../lib/serviceIcons';
 
 type Json = unknown;
+
+// Visual grid picker for choosing a service icon by name.
+function IconPickerField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="mb-3">
+      <label className="block text-xs font-semibold text-gray-500 mb-1.5">{label}</label>
+      <div className="flex flex-wrap gap-2">
+        {SERVICE_ICON_NAMES.map((name) => {
+          const Icon = SERVICE_ICONS[name];
+          const selected = value === name;
+          return (
+            <button
+              key={name}
+              type="button"
+              title={name}
+              onClick={() => onChange(name)}
+              className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${
+                selected
+                  ? 'bg-amber-600 border-amber-600 text-white'
+                  : 'bg-white border-gray-200 text-gray-600 hover:border-amber-300 hover:bg-amber-50'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+            </button>
+          );
+        })}
+      </div>
+      {value && <p className="mt-1.5 text-xs text-gray-400">Selected: {value}</p>}
+    </div>
+  );
+}
 
 const SECTION_LABELS: Record<string, string> = {
   branding: 'Logo & Branding',
@@ -215,6 +255,16 @@ function Field({
         <div className={label ? 'pl-3 border-l-2 border-amber-200 space-y-1' : 'space-y-1'}>
           {Object.entries(obj).map(([k, v]) => {
             const media = MEDIA_FIELDS[k];
+            if (k === 'icon') {
+              return (
+                <IconPickerField
+                  key={k}
+                  label="Icon"
+                  value={typeof v === 'string' ? v : ''}
+                  onChange={(nv) => onChange({ ...obj, [k]: nv })}
+                />
+              );
+            }
             return media ? (
               <MediaUploadField
                 key={k}
