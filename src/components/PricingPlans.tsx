@@ -143,18 +143,13 @@ export default function PricingPlans() {
   const { user } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  // Pre-select a plan when arriving from the homepage teaser (/plans?plan=...).
+  const planParam = new URLSearchParams(window.location.search).get('plan');
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(planParam);
   const [detailPlan, setDetailPlan] = useState<PricingPlan | null>(null);
-  // Two-plan model: Expert Publishing (packages) vs Publish on your own (self).
-  // Default to the path chosen in the Get Started funnel, if any.
-  const [view, setView] = useState<'expert' | 'self'>(() => {
-    try {
-      const o = JSON.parse(sessionStorage.getItem('ob_onboarding') || 'null');
-      return o?.publish_path === 'self' ? 'self' : 'expert';
-    } catch {
-      return 'expert';
-    }
-  });
+  // Two-plan model: "Publish on your own" (basic) shows first; Expert Publishing
+  // second. A pre-selected plan (a tier package) opens the Expert view.
+  const [view, setView] = useState<'expert' | 'self'>(planParam ? 'expert' : 'self');
 
   const goToCheckout = (plan: string) => {
     go(`/checkout?plan=${encodeURIComponent(plan)}`);
@@ -183,15 +178,6 @@ export default function PricingPlans() {
         <div className="flex justify-center mb-12">
           <div className="inline-flex bg-white border rounded-full p-1 shadow-sm">
             <button
-              onClick={() => setView('expert')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors ${
-                view === 'expert' ? 'bg-amber-600 text-white' : 'text-gray-600 hover:text-amber-700'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              {g.expertTitle}
-            </button>
-            <button
               onClick={() => setView('self')}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors ${
                 view === 'self' ? 'bg-amber-600 text-white' : 'text-gray-600 hover:text-amber-700'
@@ -199,6 +185,15 @@ export default function PricingPlans() {
             >
               <Laptop className="w-4 h-4" />
               {g.selfTitle}
+            </button>
+            <button
+              onClick={() => setView('expert')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors ${
+                view === 'expert' ? 'bg-amber-600 text-white' : 'text-gray-600 hover:text-amber-700'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              {g.expertTitle}
             </button>
           </div>
         </div>

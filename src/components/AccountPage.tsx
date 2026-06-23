@@ -294,6 +294,7 @@ export default function AccountPage() {
                     <th className="px-4 py-3 font-semibold">Layout</th>
                     <th className="px-4 py-3 font-semibold">Size</th>
                     <th className="px-4 py-3 font-semibold">Est. Price</th>
+                    <th className="px-4 py-3 font-semibold text-right">Edit</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -301,7 +302,7 @@ export default function AccountPage() {
                     <tr
                       key={c.id}
                       onClick={() => openCustomization(c)}
-                      title="Open this design in the customizer"
+                      title="Open this design in the customizer to edit"
                       className="border-b last:border-0 hover:bg-amber-50 cursor-pointer"
                     >
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(c.created_at)}</td>
@@ -309,7 +310,13 @@ export default function AccountPage() {
                       <td className="px-4 py-3">{c.cover_design || '—'}</td>
                       <td className="px-4 py-3">{c.layout_option || '—'}</td>
                       <td className="px-4 py-3">{c.book_size || '—'}</td>
-                      <td className="px-4 py-3 font-semibold text-amber-700">{inr(c.estimated_price)} ›</td>
+                      <td className="px-4 py-3 font-semibold text-amber-700">{inr(c.estimated_price)}</td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="inline-flex items-center gap-1 text-amber-700 font-semibold">
+                          <Pencil className="w-4 h-4" />
+                          <span className="hidden sm:inline">Edit</span>
+                        </span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -343,6 +350,7 @@ export default function AccountPage() {
                     <th className="px-4 py-3 font-semibold">Monthly Sales</th>
                     <th className="px-4 py-3 font-semibold">Royalty / Book</th>
                     <th className="px-4 py-3 font-semibold">Monthly Earnings</th>
+                    <th className="px-4 py-3 font-semibold text-right">Edit</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -350,7 +358,7 @@ export default function AccountPage() {
                     <tr
                       key={r.id}
                       onClick={() => openCalculation(r)}
-                      title="Open this projection in the calculator"
+                      title="Open this projection in the calculator to edit"
                       className="border-b last:border-0 hover:bg-amber-50 cursor-pointer"
                     >
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(r.created_at)}</td>
@@ -358,7 +366,13 @@ export default function AccountPage() {
                       <td className="px-4 py-3">{inr(r.book_price)}</td>
                       <td className="px-4 py-3">{r.expected_sales ?? '—'}</td>
                       <td className="px-4 py-3">{inr(r.estimated_royalty)}</td>
-                      <td className="px-4 py-3 font-semibold text-amber-700">{inr(r.monthly_earnings)} ›</td>
+                      <td className="px-4 py-3 font-semibold text-amber-700">{inr(r.monthly_earnings)}</td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="inline-flex items-center gap-1 text-amber-700 font-semibold">
+                          <Pencil className="w-4 h-4" />
+                          <span className="hidden sm:inline">Edit</span>
+                        </span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

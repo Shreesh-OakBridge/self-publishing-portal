@@ -8,6 +8,7 @@ import Hero from './components/Hero';
 import ValueProposition from './components/ValueProposition';
 import VideoSection from './components/VideoSection';
 import PricingPlans from './components/PricingPlans';
+import PlansTeaser from './components/PlansTeaser';
 import BookCustomizer from './components/BookCustomizer';
 import RoyaltyCalculator from './components/RoyaltyCalculator';
 import ContactForm from './components/ContactForm';
@@ -93,7 +94,7 @@ function HomePage() {
     submit: () => <HomeManuscriptSection />,
     portfolio: () => <PortfolioSection />,
     testimonials: () => <Testimonials />,
-    plans: () => <PricingPlans />,
+    plans: () => <PlansTeaser />,
     contact: () => (
       <section id="contact" className="py-20 px-4 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50">
         <div className="max-w-4xl mx-auto">
@@ -169,6 +170,12 @@ function App() {
     return (
       <SubPage>
         <GetStarted />
+      </SubPage>
+    );
+  if (path === '/plans')
+    return (
+      <SubPage>
+        <PricingPlans />
       </SubPage>
     );
   if (path === '/services')

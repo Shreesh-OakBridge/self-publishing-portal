@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ShoppingCart, CheckCircle, AlertCircle, Loader2, Lock, Tag } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, CheckCircle, AlertCircle, Loader2, Lock, Tag, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
-import { go } from '../lib/basePath';
+import { go, withBase } from '../lib/basePath';
 
 const inr = (n: number) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const priceToNumber = (p: string) => Number((p || '').replace(/[^0-9.]/g, '')) || 0;
@@ -37,7 +37,7 @@ interface RoyaltyCalc {
 
 export default function Checkout() {
   const { user, loading } = useAuth();
-  const { pricing, customizer } = useContent();
+  const { pricing, customizer, pages } = useContent();
   const params = new URLSearchParams(window.location.search);
   const planName = params.get('plan');
   const customizationId = params.get('customization');
@@ -66,6 +66,10 @@ export default function Checkout() {
   const [ship, setShip] = useState({ name: '', phone: '', address: '', city: '', state: '', pincode: '' });
   const [sameAsShip, setSameAsShip] = useState(true);
   const [bill, setBill] = useState({ name: '', address: '' });
+
+  // Terms & Conditions acceptance
+  const [agreedTerms, setAgreedTerms] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
 
   // Coupon
   const [couponInput, setCouponInput] = useState('');
@@ -152,12 +156,22 @@ export default function Checkout() {
     setCouponMsg({ type: 'ok', text: row.message || 'Coupon applied.' });
   };
 
-  const placeOrder = async () => {
+  const placeOrder = () => {
     if (!user || conflict) return;
     if (!ship.name.trim() || !ship.address.trim() || !ship.city.trim() || !ship.pincode.trim()) {
       setError('Please complete the required shipping fields (name, address, city, pincode).');
       return;
     }
+    // Must accept Terms & Conditions — if not, surface the modal.
+    if (!agreedTerms) {
+      setTermsModalOpen(true);
+      return;
+    }
+    submitOrder();
+  };
+
+  const submitOrder = async () => {
+    if (!user) return;
     setPlacing(true);
     setError('');
     const billing = sameAsShip
@@ -176,6 +190,7 @@ export default function Checkout() {
       publish_path: onboarding?.publish_path ?? null,
       language: onboarding?.language ?? null,
       manuscript_status: onboarding?.manuscript_status ?? null,
+      terms_accepted_at: new Date().toISOString(),
       status: 'pending',
       ship_name: ship.name,
       ship_phone: ship.phone,
@@ -435,6 +450,27 @@ export default function Checkout() {
               )}
             </div>
 
+            {/* Terms acceptance */}
+            <label className="flex items-start gap-2 mt-5 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreedTerms}
+                onChange={(e) => setAgreedTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-amber-600 flex-shrink-0"
+              />
+              <span>
+                I accept the{' '}
+                <a href={withBase('/terms')} target="_blank" rel="noreferrer" className="text-amber-700 underline">
+                  Terms &amp; Conditions
+                </a>{' '}
+                and{' '}
+                <a href={withBase('/privacy')} target="_blank" rel="noreferrer" className="text-amber-700 underline">
+                  Privacy Policy
+                </a>
+                .
+              </span>
+            </label>
+
             <button
               onClick={placeOrder}
               disabled={placing || conflict}
@@ -447,6 +483,54 @@ export default function Checkout() {
           </div>
         </div>
       </main>
+
+      {/* Terms & Conditions modal — shown if the box wasn't ticked */}
+      {termsModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setTermsModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-5 border-b flex items-center justify-between">
+              <h3 className="font-bold text-gray-900">Please accept to continue</h3>
+              <button onClick={() => setTermsModalOpen(false)} className="text-gray-400 hover:text-gray-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto text-sm text-gray-700 space-y-3">
+              <h4 className="font-bold text-gray-900">{pages.terms.title}</h4>
+              {pages.terms.body.split(/\n\s*\n/).map((p, i) => (
+                <p key={i} className="whitespace-pre-line">{p.trim()}</p>
+              ))}
+              <h4 className="font-bold text-gray-900 pt-2">{pages.privacy.title}</h4>
+              {pages.privacy.body.split(/\n\s*\n/).map((p, i) => (
+                <p key={i} className="whitespace-pre-line">{p.trim()}</p>
+              ))}
+            </div>
+            <div className="p-4 border-t flex justify-end gap-2">
+              <button
+                onClick={() => setTermsModalOpen(false)}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setAgreedTerms(true);
+                  setTermsModalOpen(false);
+                  submitOrder();
+                }}
+                className="px-5 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 text-white text-sm font-semibold hover:from-amber-700 hover:to-orange-700"
+              >
+                I accept &amp; place order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
