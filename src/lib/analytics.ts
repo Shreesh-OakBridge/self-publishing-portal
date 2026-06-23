@@ -1,9 +1,15 @@
-// Google Analytics 4, loaded ONLY after the visitor accepts cookies.
+// PostHog product analytics, loaded ONLY after the visitor accepts cookies.
 //
-// Swap in your real Measurement ID either by:
-//   • setting VITE_GA_ID in your env (recommended — no code change), or
-//   • replacing the placeholder string below.
-export const GA_MEASUREMENT_ID = (import.meta.env.VITE_GA_ID as string) || 'G-XXXXXXXXXX';
+// Swap in your real values either by:
+//   • setting VITE_POSTHOG_KEY (and optionally VITE_POSTHOG_HOST) in your env
+//     (recommended — no code change), or
+//   • replacing the placeholders below.
+//
+// Default host is PostHog Cloud US; for EU use https://eu.i.posthog.com.
+import type { PostHog } from 'posthog-js';
+
+export const POSTHOG_KEY = (import.meta.env.VITE_POSTHOG_KEY as string) || 'phc_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+export const POSTHOG_HOST = (import.meta.env.VITE_POSTHOG_HOST as string) || 'https://us.i.posthog.com';
 
 const CONSENT_KEY = 'cookie_consent'; // 'accepted' | 'declined'
 
@@ -26,28 +32,41 @@ export function setConsent(v: 'accepted' | 'declined') {
   }
 }
 
-// True once a real (non-placeholder) GA id is configured.
-export const analyticsConfigured = !!GA_MEASUREMENT_ID && !GA_MEASUREMENT_ID.includes('X');
+// True once a real (non-placeholder) PostHog key is configured.
+export const analyticsConfigured = !!POSTHOG_KEY && !POSTHOG_KEY.includes('X');
 
-let loaded = false;
+let ph: PostHog | null = null;
+let loading = false;
 
-// Injects gtag.js and initialises GA4. The init runs from our bundled code
-// (CSP 'self'), so no inline script is needed.
-export function loadAnalytics() {
-  if (loaded || !analyticsConfigured) return;
-  loaded = true;
-
-  const s = document.createElement('script');
-  s.async = true;
-  s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
-  document.head.appendChild(s);
-
-  const w = window as unknown as { dataLayer: unknown[]; gtag?: (...args: unknown[]) => void };
-  w.dataLayer = w.dataLayer || [];
-  function gtag(...args: unknown[]) {
-    w.dataLayer.push(args);
+// Lazily imports posthog-js (so it's not in the main bundle) and initialises it
+// with privacy-safe defaults: form inputs are masked in session replays.
+export async function loadAnalytics() {
+  if (ph || loading || !analyticsConfigured) return;
+  loading = true;
+  try {
+    const { default: posthog } = await import('posthog-js');
+    posthog.init(POSTHOG_KEY, {
+      api_host: POSTHOG_HOST,
+      capture_pageview: true,
+      autocapture: true,
+      persistence: 'localStorage+cookie',
+      // Privacy: never record what people type (passwords, addresses, manuscripts).
+      session_recording: { maskAllInputs: true },
+      respect_dnt: true,
+    });
+    ph = posthog;
+  } catch (err) {
+    console.error('analytics load failed:', err);
+  } finally {
+    loading = false;
   }
-  w.gtag = gtag;
-  gtag('js', new Date());
-  gtag('config', GA_MEASUREMENT_ID, { anonymize_ip: true });
+}
+
+// Called if the visitor declines — stops any capture if it had started.
+export function disableAnalytics() {
+  try {
+    ph?.opt_out_capturing();
+  } catch {
+    /* ignore */
+  }
 }

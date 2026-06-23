@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Cookie, X } from 'lucide-react';
-import { getConsent, setConsent, loadAnalytics } from '../lib/analytics';
+import { getConsent, setConsent, loadAnalytics, disableAnalytics } from '../lib/analytics';
 import { withBase } from '../lib/basePath';
 
 // Bottom banner: analytics only loads after the visitor accepts.
@@ -25,6 +25,7 @@ export default function CookieConsent() {
   };
   const decline = () => {
     setConsent('declined');
+    disableAnalytics();
     setShow(false);
   };
 
