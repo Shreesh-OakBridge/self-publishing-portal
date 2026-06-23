@@ -97,7 +97,7 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 px-6 py-8 max-w-2xl max-h-full overflow-y-auto flex flex-col items-center">
+      <div className="relative z-10 px-6 pt-8 pb-16 max-w-2xl max-h-full overflow-y-auto flex flex-col items-center">
         {/* Flip-book */}
         <div className="ob-book mb-6">
           <div className="ob-spread">
