@@ -321,7 +321,7 @@ export const defaultContent: SiteContent = {
   },
   welcome: {
     enabled: true,
-    eyebrow: 'Cursive Publishing',
+    eyebrow: 'Cursive',
     headlineLine1: 'Your story deserves',
     headlineLine2: 'to be told.',
     subheading:

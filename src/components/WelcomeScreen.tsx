@@ -144,11 +144,17 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
         </div>
 
         {welcome.eyebrow && (
-          <p className="ob-anim ob-d1 text-amber-300/90 font-semibold tracking-[0.28em] uppercase text-[10px] sm:text-xs mb-1">
+          <p
+            className="ob-anim ob-d1 text-amber-300 text-4xl sm:text-5xl leading-none mb-1 drop-shadow"
+            style={{
+              fontFamily: "'Brush Script MT','Segoe Script','Apple Chancery','Snell Roundhand',cursive",
+              fontStyle: 'italic',
+            }}
+          >
             {welcome.eyebrow}
           </p>
         )}
-        <p className="ob-anim ob-d1 text-amber-200/50 text-[10px] tracking-wide mb-2.5">
+        <p className="ob-anim ob-d1 text-amber-200/60 text-[10px] sm:text-xs tracking-[0.25em] uppercase mb-4">
           An Imprint of OakBridge
         </p>
 
