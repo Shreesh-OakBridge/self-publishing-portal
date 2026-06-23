@@ -90,6 +90,11 @@ export interface RoyaltyCalcContent {
   subheading: string;
 }
 
+export interface EditorialContent {
+  expertReviewPrice: number;
+  expertReviewNote: string;
+}
+
 export interface FooterContent {
   tagline: string;
   email: string;
@@ -270,6 +275,7 @@ export interface SiteContent {
   customizer: CustomizerContent;
   manuscript: ManuscriptSectionContent;
   royaltyCalc: RoyaltyCalcContent;
+  editorial: EditorialContent;
   contact: ContactContent;
   faq: FaqContent;
   pages: PagesContent;
@@ -603,6 +609,11 @@ export const defaultContent: SiteContent = {
     heading: 'Estimate Your Royalties',
     subheading:
       'See how much you could earn. Adjust your book price and expected monthly sales to project your royalty income across our plans.',
+  },
+  editorial: {
+    expertReviewPrice: 4999,
+    expertReviewNote:
+      'Expert Editorial Review is a paid add-on. Once you request it, our team will confirm the scope and payment details before work begins.',
   },
   contact: {
     heading: 'Start Your Publishing Journey',

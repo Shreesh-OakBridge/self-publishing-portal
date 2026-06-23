@@ -353,6 +353,7 @@ ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS content text;
 ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS expert_review_status text;
 ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS expert_review_feedback text;
 ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS expert_review_at timestamptz;
+ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS expert_review_price numeric;
 ALTER TABLE manuscripts ALTER COLUMN file_path DROP NOT NULL;
 ALTER TABLE manuscripts ENABLE ROW LEVEL SECURITY;
 

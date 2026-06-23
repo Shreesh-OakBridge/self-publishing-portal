@@ -10,12 +10,16 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useContent } from '../content/ContentProvider';
+
+const inr = (n: number) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
 interface Props {
   manuscriptId?: string | null;
   text: string;
   reviewStatus?: string | null;
   reviewFeedback?: string | null;
+  reviewPrice?: number | null;
 }
 
 const REVIEW_LABEL: Record<string, { label: string; color: string }> = {
@@ -41,12 +45,16 @@ function analyze(text: string) {
   return { words, sentences, paragraphs, readingTime, pages, avgSentence, grade };
 }
 
-export default function EditorialReview({ manuscriptId, text, reviewStatus, reviewFeedback }: Props) {
+export default function EditorialReview({ manuscriptId, text, reviewStatus, reviewFeedback, reviewPrice }: Props) {
+  const { editorial } = useContent();
   const [ran, setRan] = useState(false);
   const [status, setStatus] = useState<string | null>(reviewStatus ?? null);
   const [feedback] = useState<string | null>(reviewFeedback ?? null);
   const [requesting, setRequesting] = useState(false);
   const [error, setError] = useState('');
+
+  // Quoted add-on charge: a manuscript-specific price wins over the CMS default.
+  const price = reviewPrice ?? editorial.expertReviewPrice;
 
   const a = analyze(text);
 
@@ -63,7 +71,12 @@ export default function EditorialReview({ manuscriptId, text, reviewStatus, revi
     setError('');
     const { error: err } = await supabase
       .from('manuscripts')
-      .update({ expert_review_status: 'requested', expert_review_at: new Date().toISOString() })
+      .update({
+        expert_review_status: 'requested',
+        expert_review_at: new Date().toISOString(),
+        // Lock in the quoted price at request time if not already set.
+        expert_review_price: reviewPrice ?? editorial.expertReviewPrice,
+      })
       .eq('id', manuscriptId);
     setRequesting(false);
     if (err) {
@@ -135,19 +148,25 @@ export default function EditorialReview({ manuscriptId, text, reviewStatus, revi
 
       {/* Expert editorial review */}
       <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-100 p-5">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
           <UserCheck className="w-5 h-5 text-amber-600" />
           <h3 className="font-bold text-gray-900">Expert Editorial Review</h3>
+          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-600 text-white">
+            {inr(price)} add-on
+          </span>
           {statusMeta && (
             <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-semibold ${statusMeta.color}`}>
               {statusMeta.label}
             </span>
           )}
         </div>
-        <p className="text-sm text-gray-600 mb-4">
-          A human editor reviews your manuscript and shares detailed feedback. Available as an add-on
-          with Expert Publishing.
+        <p className="text-sm text-gray-600 mb-2">
+          A human editor reviews your manuscript and shares detailed feedback. Available as a paid
+          add-on with Expert Publishing.
         </p>
+        {!status && editorial.expertReviewNote && (
+          <p className="text-xs text-gray-500 mb-4">{editorial.expertReviewNote}</p>
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 p-2.5 rounded-lg text-sm flex items-center gap-2 mb-3">
@@ -165,7 +184,7 @@ export default function EditorialReview({ manuscriptId, text, reviewStatus, revi
                 className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:from-amber-700 hover:to-orange-700 disabled:opacity-50"
               >
                 {requesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
-                Request Expert Editorial Review
+                Request Expert Review — {inr(price)}
               </button>
             ) : (
               <p className="text-sm text-gray-500">Save your manuscript first to request an expert review.</p>

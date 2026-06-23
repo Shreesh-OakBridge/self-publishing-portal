@@ -22,6 +22,7 @@ const SECTION_LABELS: Record<string, string> = {
   customizer: 'Book Customizer',
   manuscript: 'Manuscript Section',
   royaltyCalc: 'Royalty Calculator',
+  editorial: 'Editorial Review',
   contact: 'Contact Section',
   faq: 'FAQ',
   pages: 'Static Pages (About / Terms / Privacy)',

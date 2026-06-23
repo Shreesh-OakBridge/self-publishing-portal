@@ -17,6 +17,7 @@ interface Manuscript {
   status: string;
   expert_review_status: string | null;
   expert_review_feedback: string | null;
+  expert_review_price: number | null;
   created_at: string;
 }
 
@@ -55,23 +56,27 @@ export default function ManuscriptsPanel() {
   const [reviewing, setReviewing] = useState<Manuscript | null>(null);
   const [rStatus, setRStatus] = useState('none');
   const [rFeedback, setRFeedback] = useState('');
+  const [rPrice, setRPrice] = useState('');
   const [savingReview, setSavingReview] = useState(false);
 
   const openReview = (m: Manuscript) => {
     setReviewing(m);
     setRStatus(m.expert_review_status || 'none');
     setRFeedback(m.expert_review_feedback || '');
+    setRPrice(m.expert_review_price != null ? String(m.expert_review_price) : '');
   };
 
   const saveReview = async () => {
     if (!reviewing) return;
     setSavingReview(true);
     const next = rStatus === 'none' ? null : rStatus;
+    const priceVal = rPrice.trim() === '' ? null : Number(rPrice);
     const { error: err } = await supabase
       .from('manuscripts')
       .update({
         expert_review_status: next,
         expert_review_feedback: rFeedback.trim() || null,
+        expert_review_price: priceVal,
         expert_review_at: new Date().toISOString(),
       })
       .eq('id', reviewing.id);
@@ -84,7 +89,7 @@ export default function ManuscriptsPanel() {
     setItems((prev) =>
       prev.map((m) =>
         m.id === reviewing.id
-          ? { ...m, expert_review_status: next, expert_review_feedback: rFeedback.trim() || null }
+          ? { ...m, expert_review_status: next, expert_review_feedback: rFeedback.trim() || null, expert_review_price: priceVal }
           : m
       )
     );
@@ -284,18 +289,33 @@ export default function ManuscriptsPanel() {
               </button>
             </div>
 
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Status</label>
-            <select
-              value={rStatus}
-              onChange={(e) => setRStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-amber-500 outline-none mb-4 capitalize"
-            >
-              {REVIEW_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s === 'none' ? 'No review' : s.replace('_', ' ')}
-                </option>
-              ))}
-            </select>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Status</label>
+                <select
+                  value={rStatus}
+                  onChange={(e) => setRStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-amber-500 outline-none capitalize"
+                >
+                  {REVIEW_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s === 'none' ? 'No review' : s.replace('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Add-on charge (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={rPrice}
+                  onChange={(e) => setRPrice(e.target.value)}
+                  placeholder="e.g. 4999"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-amber-500 outline-none"
+                />
+              </div>
+            </div>
 
             <label className="block text-xs font-semibold text-gray-500 mb-1">
               Feedback to author {(rStatus === 'completed' || rStatus === 'changes_requested') && <span className="text-gray-400">(shown to the author)</span>}

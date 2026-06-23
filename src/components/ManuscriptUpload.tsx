@@ -17,6 +17,7 @@ interface Manuscript {
   content: string | null;
   expert_review_status: string | null;
   expert_review_feedback: string | null;
+  expert_review_price: number | null;
   created_at: string;
 }
 
@@ -85,7 +86,7 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
     if (!user) return;
     const { data } = await supabase
       .from('manuscripts')
-      .select('id, title, genre, file_name, word_count, status, content, expert_review_status, expert_review_feedback, created_at')
+      .select('id, title, genre, file_name, word_count, status, content, expert_review_status, expert_review_feedback, expert_review_price, created_at')
       .order('created_at', { ascending: false });
     setItems((data as Manuscript[]) ?? []);
   };
@@ -302,6 +303,7 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
                           text={m.content || ''}
                           reviewStatus={m.expert_review_status}
                           reviewFeedback={m.expert_review_feedback}
+                          reviewPrice={m.expert_review_price}
                         />
                       </td>
                     </tr>

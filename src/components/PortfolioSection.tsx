@@ -6,7 +6,15 @@ import { withBase } from '../lib/basePath';
 // mobile. "View all" links to the full /portfolio page.
 export default function PortfolioSection() {
   const { portfolio } = useContent();
-  const items = portfolio.items.slice(0, 8);
+  const items = portfolio.items;
+  // Up to 4 → centered showcase; more → swipe carousel (≈4 visible + peek).
+  const overflow = items.length > 4;
+  const containerClass = overflow
+    ? 'flex gap-5 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide'
+    : 'flex md:flex-wrap md:justify-center gap-5 md:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide';
+  const tileClass = overflow
+    ? 'group shrink-0 w-[40%] md:w-[22%] snap-start'
+    : 'group shrink-0 w-[40%] md:w-[200px] snap-start';
 
   return (
     <section id="portfolio" className="py-20 px-4 bg-gradient-to-br from-gray-50 to-slate-100">
@@ -16,9 +24,9 @@ export default function PortfolioSection() {
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">{portfolio.subheading}</p>
         </div>
 
-        <div className="flex md:grid md:grid-cols-4 gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+        <div className={containerClass}>
           {items.map((book, i) => (
-            <div key={i} className="group shrink-0 w-[40%] snap-start md:w-auto md:shrink">
+            <div key={i} className={tileClass}>
               <div className="aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 border border-amber-100 flex items-center justify-center mb-3 shadow-sm group-hover:shadow-md transition-shadow">
                 {book.coverUrl ? (
                   <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
