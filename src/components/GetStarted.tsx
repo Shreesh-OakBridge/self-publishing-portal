@@ -1,17 +1,27 @@
 import { useState } from 'react';
 import { Check, Users, Laptop, ArrowRight } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
+import { useAuth } from '../lib/auth';
 import { go } from '../lib/basePath';
+import AuthModal from './AuthModal';
 
 // Onboarding funnel: language → manuscript status → publish method.
-// Selections are stashed in sessionStorage so checkout can record them.
+// Selections are stashed in sessionStorage so the destination + checkout can
+// record them. Logged-out users are prompted to log in / sign up after
+// selecting; their selection is preserved and applied once they authenticate.
 export default function GetStarted() {
   const { getStarted: g } = useContent();
+  const { user } = useAuth();
   const [language, setLanguage] = useState('');
   const [status, setStatus] = useState('');
   const [method, setMethod] = useState<'expert' | 'self' | ''>('');
+  const [authOpen, setAuthOpen] = useState(false);
 
   const ready = language && status && method;
+
+  // Expert → dedicated plans page with Expert view preselected (choose a
+  // package); Self → book customizer.
+  const destination = () => (method === 'expert' ? '/plans?plan=expert' : '/customize');
 
   const proceed = () => {
     if (!ready) return;
@@ -23,8 +33,10 @@ export default function GetStarted() {
     } catch {
       /* ignore */
     }
-    // Expert → choose a package (tiers); Self → customizer.
-    go(method === 'expert' ? '/#plans' : '/customize');
+    // Logged in → continue straight to the chosen path. Logged out → prompt to
+    // log in / sign up first; the selection (already stashed) is applied after.
+    if (user) go(destination());
+    else setAuthOpen(true);
   };
 
   const Radio = ({
@@ -154,13 +166,26 @@ export default function GetStarted() {
             {g.ctaLabel}
             <ArrowRight className="w-5 h-5" />
           </button>
-          {!ready && (
+          {!ready ? (
             <p className="text-sm text-gray-400 mt-3">
               Please select a language, your manuscript status, and a publishing option to continue.
             </p>
+          ) : (
+            !user && (
+              <p className="text-sm text-gray-500 mt-3">
+                You’ll be asked to log in or create a free account to continue — your selection is saved.
+              </p>
+            )
           )}
         </div>
       </div>
+
+      <AuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onAuthenticated={() => go(destination())}
+        heading="Log in or sign up to continue"
+      />
     </section>
   );
 }
