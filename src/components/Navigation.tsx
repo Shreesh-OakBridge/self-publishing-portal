@@ -11,16 +11,16 @@ export default function Navigation() {
   const { user, isAdmin } = useAuth();
   const { branding, services } = useContent();
 
-  // First letter of the author's name (falls back to email) for the avatar.
-  const accountInitial = (
+  // Author's first name + initial for the account button.
+  const firstName = (
     (user?.user_metadata?.first_name as string) ||
     (user?.user_metadata?.full_name as string) ||
-    user?.email ||
     ''
   )
     .trim()
-    .charAt(0)
-    .toUpperCase();
+    .split(' ')[0];
+  const accountInitial = (firstName || user?.email || '').trim().charAt(0).toUpperCase();
+  const accountLabel = firstName ? `Hi, ${firstName}` : 'My Account';
 
   const path = stripBase(window.location.pathname);
   const isHome = path === '';
@@ -160,7 +160,7 @@ export default function Navigation() {
                 <span className="w-7 h-7 rounded-full bg-white/25 flex items-center justify-center text-sm font-bold">
                   {accountInitial || <UserCircle className="w-5 h-5" />}
                 </span>
-                <span>My Account</span>
+                <span>{accountLabel}</span>
               </button>
             ) : (
               <>
@@ -215,7 +215,7 @@ export default function Navigation() {
                   onClick={() => goTo('/account')}
                   className="block w-full text-center bg-amber-600 text-white px-6 py-2.5 rounded-full hover:bg-amber-700 font-medium"
                 >
-                  My Account
+                  {accountLabel}
                 </button>
               ) : (
                 <>

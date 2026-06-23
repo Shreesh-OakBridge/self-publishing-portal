@@ -1,4 +1,5 @@
-import { BookOpen, ArrowRight } from 'lucide-react';
+import { useRef } from 'react';
+import { BookOpen, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import { withBase } from '../lib/basePath';
 
@@ -16,6 +17,13 @@ export default function PortfolioSection() {
     ? 'group shrink-0 w-[40%] md:w-[22%] snap-start'
     : 'group shrink-0 w-[40%] md:w-[200px] snap-start';
 
+  const scroller = useRef<HTMLDivElement>(null);
+  const scrollBy = (dir: number) =>
+    scroller.current?.scrollBy({ left: dir * scroller.current.clientWidth * 0.85, behavior: 'smooth' });
+
+  const arrowBtn =
+    'hidden md:flex absolute top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-white border shadow-lg text-gray-700 hover:bg-amber-50 hover:text-amber-700';
+
   return (
     <section id="portfolio" className="py-20 px-4 bg-gradient-to-br from-gray-50 to-slate-100">
       <div className="max-w-7xl mx-auto">
@@ -24,7 +32,18 @@ export default function PortfolioSection() {
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">{portfolio.subheading}</p>
         </div>
 
-        <div className={containerClass}>
+        <div className="relative">
+          {overflow && (
+            <>
+              <button onClick={() => scrollBy(-1)} className={`${arrowBtn} -left-3`} aria-label="Previous">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button onClick={() => scrollBy(1)} className={`${arrowBtn} -right-3`} aria-label="Next">
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+          )}
+          <div ref={scroller} className={containerClass}>
           {items.map((book, i) => (
             <div key={i} className={tileClass}>
               <div className="aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 border border-amber-100 flex items-center justify-center mb-3 shadow-sm group-hover:shadow-md transition-shadow">
@@ -42,6 +61,7 @@ export default function PortfolioSection() {
               {book.category && <p className="text-xs text-amber-700 mt-0.5">{book.category}</p>}
             </div>
           ))}
+          </div>
         </div>
 
         <div className="text-center mt-10">

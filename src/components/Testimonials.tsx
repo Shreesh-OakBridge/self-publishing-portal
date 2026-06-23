@@ -1,4 +1,5 @@
-import { Quote, Star } from 'lucide-react';
+import { useRef } from 'react';
+import { Quote, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 
 export default function Testimonials() {
@@ -15,6 +16,12 @@ export default function Testimonials() {
     ? 'relative bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-8 flex flex-col shrink-0 w-[83%] md:w-[31%] snap-start'
     : 'relative bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-8 flex flex-col shrink-0 w-[83%] md:w-[340px] snap-start';
 
+  const scroller = useRef<HTMLDivElement>(null);
+  const scrollBy = (dir: number) =>
+    scroller.current?.scrollBy({ left: dir * scroller.current.clientWidth * 0.85, behavior: 'smooth' });
+  const arrowBtn =
+    'hidden md:flex absolute top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-white border shadow-lg text-gray-700 hover:bg-amber-50 hover:text-amber-700';
+
   return (
     <section id="testimonials" className="py-20 px-4 bg-white">
       <div className="max-w-7xl mx-auto">
@@ -23,7 +30,18 @@ export default function Testimonials() {
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">{testimonials.subheading}</p>
         </div>
 
-        <div className={containerClass}>
+        <div className="relative">
+          {overflow && (
+            <>
+              <button onClick={() => scrollBy(-1)} className={`${arrowBtn} -left-3`} aria-label="Previous">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button onClick={() => scrollBy(1)} className={`${arrowBtn} -right-3`} aria-label="Next">
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+          )}
+          <div ref={scroller} className={containerClass}>
           {items.map((t, idx) => (
             <div key={idx} className={tileClass}>
               <Quote className="w-9 h-9 text-amber-400 mb-4" />
@@ -39,6 +57,7 @@ export default function Testimonials() {
               </div>
             </div>
           ))}
+          </div>
         </div>
       </div>
     </section>

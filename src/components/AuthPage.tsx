@@ -14,7 +14,7 @@ export default function AuthPage() {
           <span>Back to site</span>
         </button>
 
-        <AuthForm onAuthenticated={() => go('/account')} />
+        <AuthForm onAuthenticated={() => go('/')} />
       </div>
     </div>
   );
