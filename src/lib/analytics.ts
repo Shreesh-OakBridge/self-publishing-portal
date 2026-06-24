@@ -32,8 +32,10 @@ export function setConsent(v: 'accepted' | 'declined') {
   }
 }
 
-// True once a real (non-placeholder) PostHog key is configured.
-export const analyticsConfigured = !!POSTHOG_KEY && !POSTHOG_KEY.includes('X');
+// True once a real (non-placeholder) PostHog *project* key is configured.
+// Project keys start with "phc_"; the placeholder above has a run of X's.
+// (Personal keys start with "phx_" and must never be used client-side.)
+export const analyticsConfigured = POSTHOG_KEY.startsWith('phc_') && !POSTHOG_KEY.includes('XXXX');
 
 let ph: PostHog | null = null;
 let loading = false;
