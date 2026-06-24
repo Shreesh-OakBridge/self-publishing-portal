@@ -63,6 +63,8 @@ function buildSeo(path: string, c: SiteContent): SeoResult {
       return { title: t('My Account'), description: 'Your Cursive publishing dashboard.', noindex: true };
     case '/checkout':
       return { title: t('Checkout'), description: 'Complete your order.', noindex: true };
+    case '/quote':
+      return { title: t('Request a Quote'), description: 'Request a tailored quote for your book.', noindex: true };
     case '/admin':
       return { title: t('Admin'), description: 'Cursive admin.', noindex: true };
     case '/reset-password':

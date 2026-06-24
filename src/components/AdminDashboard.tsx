@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate, ShieldCheck, Menu } from 'lucide-react';
+import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate, ShieldCheck, Menu, ClipboardList } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import { logActivity } from '../lib/activity';
@@ -8,6 +8,7 @@ import AuthorsPanel from './AuthorsPanel';
 import ActivityPanel from './ActivityPanel';
 import ManuscriptsPanel from './ManuscriptsPanel';
 import OrdersPanel from './OrdersPanel';
+import QuotesPanel from './QuotesPanel';
 import CouponsPanel from './CouponsPanel';
 import BooksPanel from './BooksPanel';
 import LayoutEditor from './LayoutEditor';
@@ -20,6 +21,7 @@ const TABS = [
   { key: 'leads', label: 'Leads', Icon: Inbox, roles: ['owner', 'admin', 'editor'] },
   { key: 'manuscripts', label: 'Manuscripts', Icon: BookText, roles: ['owner', 'admin'] },
   { key: 'orders', label: 'Orders', Icon: ShoppingBag, roles: ['owner', 'admin'] },
+  { key: 'quotes', label: 'Quotes', Icon: ClipboardList, roles: ['owner', 'admin'] },
   { key: 'authors', label: 'Authors', Icon: Users, roles: ['owner', 'admin'] },
   { key: 'books', label: 'Books', Icon: Library, roles: ['owner', 'admin'] },
   { key: 'promotions', label: 'Promotions', Icon: Tag, roles: ['owner', 'admin'] },
@@ -340,6 +342,8 @@ export default function AdminDashboard() {
           <ManuscriptsPanel />
         ) : tab === 'orders' ? (
           <OrdersPanel />
+        ) : tab === 'quotes' ? (
+          <QuotesPanel />
         ) : tab === 'authors' ? (
           <AuthorsPanel />
         ) : tab === 'books' ? (

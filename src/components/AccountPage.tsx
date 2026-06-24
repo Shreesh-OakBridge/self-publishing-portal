@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, LogOut, Palette, Calculator, Home, Pencil, ShoppingBag } from 'lucide-react';
+import { BookOpen, LogOut, Palette, Calculator, Home, Pencil, ShoppingBag, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import ProfileEditor from './ProfileEditor';
@@ -39,6 +39,16 @@ interface Order {
   created_at: string;
 }
 
+interface Quote {
+  id: string;
+  book_size: string | null;
+  binding: string | null;
+  estimated_price: number | null;
+  quoted_price: number | null;
+  status: string;
+  created_at: string;
+}
+
 const statusColor = (s: string) => {
   switch (s) {
     case 'completed':
@@ -48,7 +58,12 @@ const statusColor = (s: string) => {
       return 'bg-red-100 text-red-700';
     case 'confirmed':
     case 'in_production':
+    case 'contacted':
       return 'bg-blue-100 text-blue-700';
+    case 'quoted':
+      return 'bg-green-100 text-green-800';
+    case 'closed':
+      return 'bg-gray-100 text-gray-600';
     default:
       return 'bg-amber-100 text-amber-800';
   }
@@ -64,6 +79,7 @@ export default function AccountPage() {
   const [customizations, setCustomizations] = useState<Customization[]>([]);
   const [calculations, setCalculations] = useState<Calculation[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [editingProfile, setEditingProfile] = useState(false);
 
@@ -77,7 +93,7 @@ export default function AccountPage() {
     if (!user) return;
     (async () => {
       setLoadingData(true);
-      const [c, r, o] = await Promise.all([
+      const [c, r, o, q] = await Promise.all([
         supabase
           .from('book_customizations')
           .select('*')
@@ -93,10 +109,16 @@ export default function AccountPage() {
           .select('id, plan, customization_id, amount, discount, coupon_code, status, created_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false }),
+        supabase
+          .from('quotes')
+          .select('id, book_size, binding, estimated_price, quoted_price, status, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
       ]);
       if (c.data) setCustomizations(c.data as Customization[]);
       if (r.data) setCalculations(r.data as Calculation[]);
       if (o.data) setOrders(o.data as Order[]);
+      if (q.data) setQuotes(q.data as Quote[]);
       setLoadingData(false);
     })();
   }, [user]);
@@ -257,6 +279,56 @@ export default function AccountPage() {
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold capitalize ${statusColor(o.status)}`}>
                           {o.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section>
+          <div className="flex items-center space-x-2 mb-3">
+            <FileText className="w-5 h-5 text-amber-600" />
+            <h2 className="text-xl font-bold text-gray-900">My Quote Requests</h2>
+          </div>
+          {loadingData ? (
+            <p className="text-gray-500">Loading…</p>
+          ) : quotes.length === 0 ? (
+            <div className="bg-white rounded-2xl border p-6 text-gray-500">
+              No quote requests yet.{' '}
+              <a href={withBase('/customize')} className="text-amber-700 font-semibold hover:underline">
+                Customize a book &amp; request a quote →
+              </a>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 border-b">
+                    <th className="px-4 py-3 font-semibold">Date</th>
+                    <th className="px-4 py-3 font-semibold">Book</th>
+                    <th className="px-4 py-3 font-semibold">Estimated</th>
+                    <th className="px-4 py-3 font-semibold">Quoted</th>
+                    <th className="px-4 py-3 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {quotes.map((q) => (
+                    <tr key={q.id} className="border-b last:border-0 hover:bg-gray-50">
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(q.created_at)}</td>
+                      <td className="px-4 py-3 text-gray-700">
+                        {[q.book_size, q.binding].filter(Boolean).join(' · ') || '—'}
+                      </td>
+                      <td className="px-4 py-3">{inr(q.estimated_price)}</td>
+                      <td className="px-4 py-3 font-semibold text-amber-700">
+                        {q.quoted_price != null ? inr(q.quoted_price) : '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold capitalize ${statusColor(q.status)}`}>
+                          {q.status}
                         </span>
                       </td>
                     </tr>

@@ -24,6 +24,7 @@ import PortfolioPage from './components/PortfolioPage';
 import FaqPage from './components/FaqPage';
 import StaticPage from './components/StaticPage';
 import GetStarted from './components/GetStarted';
+import QuotePage from './components/QuotePage';
 import AuthorDashboard from './components/AuthorDashboard';
 import WelcomeScreen from './components/WelcomeScreen';
 import Breadcrumbs from './components/Breadcrumbs';
@@ -207,6 +208,12 @@ function App() {
     return (
       <SubPage>
         <GetStarted />
+      </SubPage>
+    );
+  if (path === '/quote')
+    return (
+      <SubPage>
+        <QuotePage />
       </SubPage>
     );
   if (path === '/plans')

@@ -107,12 +107,18 @@ export default function BookCustomizer() {
     setEstimatedPrice(totalCost);
   };
 
-  const goToContact = () => {
-    if (window.location.pathname.replace(/\/+$/, '') === '') {
-      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      go('/#contact');
-    }
+  // Carry the current configuration + estimated price to the quote request page.
+  const goToQuote = () => {
+    const q = new URLSearchParams({
+      paper: customization.paperType,
+      color: customization.interiorColor,
+      binding: customization.binding,
+      cover: customization.coverDesign,
+      layout: customization.layoutOption,
+      size: customization.bookSize,
+      price: String(estimatedPrice),
+    }).toString();
+    go(`/quote?${q}`);
   };
 
   // Require login first so every saved design is tied to a real account we can
@@ -128,7 +134,7 @@ export default function BookCustomizer() {
 
   const handleQuoteClick = () => {
     if (user) {
-      goToContact();
+      goToQuote();
     } else {
       setPendingAction('quote');
       setAuthOpen(true);
@@ -492,7 +498,7 @@ export default function BookCustomizer() {
         onClose={() => setAuthOpen(false)}
         onAuthenticated={() => {
           if (pendingAction === 'save') doSaveCustomization();
-          else if (pendingAction === 'quote') goToContact();
+          else if (pendingAction === 'quote') goToQuote();
           else if (pendingAction === 'order') doOrder();
           setPendingAction(null);
         }}
