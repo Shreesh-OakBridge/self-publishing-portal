@@ -26,6 +26,7 @@ import StaticPage from './components/StaticPage';
 import GetStarted from './components/GetStarted';
 import AuthorDashboard from './components/AuthorDashboard';
 import WelcomeScreen from './components/WelcomeScreen';
+import Breadcrumbs from './components/Breadcrumbs';
 
 // Heavy / rarely-first-hit routes are code-split so they don't ship in the
 // initial public bundle — each downloads on demand when its route is opened.
@@ -146,11 +147,15 @@ function HomePage() {
 }
 
 // Shell for standalone pages: fixed nav + content (padded below the nav) + footer.
-function SubPage({ children }: { children: ReactNode }) {
+// Pass `crumb` to show a "Home › <crumb>" breadcrumb above the content.
+function SubPage({ children, crumb }: { children: ReactNode; crumb?: string }) {
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
-      <div className="pt-20">{children}</div>
+      <div className="pt-20">
+        {crumb && <Breadcrumbs label={crumb} />}
+        {children}
+      </div>
       <Footer />
     </div>
   );
@@ -206,43 +211,43 @@ function App() {
     );
   if (path === '/plans')
     return (
-      <SubPage>
+      <SubPage crumb="Plans">
         <PricingPlans />
       </SubPage>
     );
   if (path === '/services')
     return (
-      <SubPage>
+      <SubPage crumb="Services">
         <ServicesPage />
       </SubPage>
     );
   if (path === '/portfolio')
     return (
-      <SubPage>
+      <SubPage crumb="Portfolio">
         <PortfolioPage />
       </SubPage>
     );
   if (path === '/faq')
     return (
-      <SubPage>
+      <SubPage crumb="FAQ">
         <FaqPage />
       </SubPage>
     );
   if (path === '/about')
     return (
-      <SubPage>
+      <SubPage crumb="About Us">
         <StaticPage pageKey="about" />
       </SubPage>
     );
   if (path === '/terms')
     return (
-      <SubPage>
+      <SubPage crumb="Terms &amp; Conditions">
         <StaticPage pageKey="terms" />
       </SubPage>
     );
   if (path === '/privacy')
     return (
-      <SubPage>
+      <SubPage crumb="Privacy Policy">
         <StaticPage pageKey="privacy" />
       </SubPage>
     );
