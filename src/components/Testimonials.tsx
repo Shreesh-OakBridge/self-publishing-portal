@@ -4,6 +4,8 @@ import { useContent } from '../content/ContentProvider';
 
 export default function Testimonials() {
   const { testimonials } = useContent();
+  // Hooks must run on every render — declare before any early return.
+  const scroller = useRef<HTMLDivElement>(null);
   const items = testimonials.items;
   if (items.length === 0) return null;
 
@@ -16,7 +18,6 @@ export default function Testimonials() {
     ? 'relative bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-8 flex flex-col shrink-0 w-[83%] md:w-[31%] snap-start'
     : 'relative bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-8 flex flex-col shrink-0 w-[83%] md:w-[340px] snap-start';
 
-  const scroller = useRef<HTMLDivElement>(null);
   const scrollBy = (dir: number) =>
     scroller.current?.scrollBy({ left: dir * scroller.current.clientWidth * 0.85, behavior: 'smooth' });
   const arrowBtn =

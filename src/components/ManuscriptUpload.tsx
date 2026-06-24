@@ -66,7 +66,10 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
         setWordCount(countWords(raw));
       } else if (ext === 'docx') {
         const arrayBuffer = await f.arrayBuffer();
-        const mod: any = await import('mammoth');
+        const mod = (await import('mammoth')) as unknown as {
+          default?: { extractRawText: (i: { arrayBuffer: ArrayBuffer }) => Promise<{ value: string }> };
+          extractRawText: (i: { arrayBuffer: ArrayBuffer }) => Promise<{ value: string }>;
+        };
         const mammoth = mod.default ?? mod;
         const res = await mammoth.extractRawText({ arrayBuffer });
         setExtractedText(res.value || '');

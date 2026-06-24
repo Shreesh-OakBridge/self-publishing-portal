@@ -19,7 +19,7 @@ export function go(path: string): void {
 
 // Strip the base off the current pathname so the router can match "/login" etc.
 export function stripBase(pathname: string): string {
-  let p = pathname.replace(/\/+$/, '');
+  const p = pathname.replace(/\/+$/, '');
   if (!BASE) return p;
   if (p === BASE) return '';
   if (p.startsWith(BASE + '/')) return p.slice(BASE.length);
