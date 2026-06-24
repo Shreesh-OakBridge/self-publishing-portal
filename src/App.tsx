@@ -1,4 +1,4 @@
-import { useEffect, useState, ReactNode, Fragment } from 'react';
+import { useEffect, useState, ReactNode, Fragment, lazy, Suspense } from 'react';
 import { useAuth } from './lib/auth';
 import { useContent } from './content/ContentProvider';
 import { HOME_SECTIONS } from './content/defaults';
@@ -10,15 +10,11 @@ import ValueProposition from './components/ValueProposition';
 import VideoSection from './components/VideoSection';
 import PricingPlans from './components/PricingPlans';
 import PlansTeaser from './components/PlansTeaser';
-import BookCustomizer from './components/BookCustomizer';
 import RoyaltyCalculator from './components/RoyaltyCalculator';
 import ContactForm from './components/ContactForm';
 import Footer from './components/Footer';
-import AdminDashboard from './components/AdminDashboard';
 import AuthPage from './components/AuthPage';
 import ResetPassword from './components/ResetPassword';
-import AccountPage from './components/AccountPage';
-import Checkout from './components/Checkout';
 import HomeManuscriptSection from './components/HomeManuscriptSection';
 import Testimonials from './components/Testimonials';
 import ConfidenceBar from './components/ConfidenceBar';
@@ -30,6 +26,22 @@ import StaticPage from './components/StaticPage';
 import GetStarted from './components/GetStarted';
 import AuthorDashboard from './components/AuthorDashboard';
 import WelcomeScreen from './components/WelcomeScreen';
+
+// Heavy / rarely-first-hit routes are code-split so they don't ship in the
+// initial public bundle — each downloads on demand when its route is opened.
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const AccountPage = lazy(() => import('./components/AccountPage'));
+const Checkout = lazy(() => import('./components/Checkout'));
+const BookCustomizer = lazy(() => import('./components/BookCustomizer'));
+
+// Small centered fallback shown while a lazy route chunk loads.
+function RouteLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-10 h-10 rounded-full border-4 border-amber-200 border-t-amber-600 animate-spin" />
+    </div>
+  );
+}
 
 function HomePage() {
   const { user, isAdmin } = useAuth();
@@ -152,15 +164,32 @@ function App() {
   // removes the "/cursive" prefix so matches stay simple.
   const path = stripBase(window.location.pathname);
 
-  if (path === '/admin') return <AdminDashboard />;
+  if (path === '/admin')
+    return (
+      <Suspense fallback={<RouteLoading />}>
+        <AdminDashboard />
+      </Suspense>
+    );
   if (path === '/login' || path === '/signup') return <AuthPage />;
   if (path === '/reset-password') return <ResetPassword />;
-  if (path === '/account') return <AccountPage />;
-  if (path === '/checkout') return <Checkout />;
+  if (path === '/account')
+    return (
+      <Suspense fallback={<RouteLoading />}>
+        <AccountPage />
+      </Suspense>
+    );
+  if (path === '/checkout')
+    return (
+      <Suspense fallback={<RouteLoading />}>
+        <Checkout />
+      </Suspense>
+    );
   if (path === '/customize')
     return (
       <SubPage>
-        <BookCustomizer />
+        <Suspense fallback={<RouteLoading />}>
+          <BookCustomizer />
+        </Suspense>
       </SubPage>
     );
   if (path === '/royalty-calculator')

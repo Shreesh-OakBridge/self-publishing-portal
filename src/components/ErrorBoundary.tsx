@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import { reportError } from '../lib/sentry';
 
 interface Props {
   children: ReactNode;
@@ -9,8 +10,7 @@ interface State {
 }
 
 // Catches render-time JavaScript errors so visitors see a friendly message
-// instead of a blank white page. (A future version can forward errors to a
-// monitoring service like Sentry from componentDidCatch.)
+// instead of a blank white page, and forwards them to Sentry (when configured).
 export default class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
 
@@ -20,6 +20,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('Unhandled UI error:', error, info);
+    reportError(error, { componentStack: info.componentStack });
   }
 
   render() {

@@ -6,6 +6,10 @@ import { ContentProvider } from './content/ContentProvider';
 import { AuthProvider } from './lib/auth';
 import ErrorBoundary from './components/ErrorBoundary';
 import CookieConsent from './components/CookieConsent';
+import { initSentry } from './lib/sentry';
+
+// Initialise error monitoring before the app renders so early errors are caught.
+initSentry();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
