@@ -18,7 +18,7 @@ export default function PortfolioPage() {
               <>
                 <div className="aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 border border-amber-100 flex items-center justify-center mb-3 shadow-sm group-hover:shadow-md transition-shadow">
                   {book.coverUrl ? (
-                    <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
+                    <img src={book.coverUrl} alt={book.coverAlt || book.title} className="w-full h-full object-cover" />
                   ) : (
                     <div className="text-center px-3">
                       <BookOpen className="w-8 h-8 text-amber-500 mx-auto mb-2" />

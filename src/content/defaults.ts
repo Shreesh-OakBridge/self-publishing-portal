@@ -15,11 +15,13 @@ export interface HeroContent {
   primaryCta: string;
   secondaryCta: string;
   imageUrl: string;
+  imageAlt?: string;
   cards: FeatureCard[];
 }
 
 export interface BrandingContent {
   logoUrl: string;
+  logoAlt?: string;
 }
 
 export interface ValuePropsContent {
@@ -190,12 +192,15 @@ export interface PortfolioItem {
   author: string;
   category: string;
   coverUrl: string;
+  coverAlt?: string;
   linkUrl: string;
 }
 
 export interface PortfolioContent {
   heading: string;
   subheading: string;
+  autoRotate: boolean;
+  rotateSeconds: number;
   items: PortfolioItem[];
 }
 
@@ -693,6 +698,8 @@ export const defaultContent: SiteContent = {
   portfolio: {
     heading: 'From Our Portfolio',
     subheading: 'A selection of titles we have proudly brought to readers.',
+    autoRotate: true,
+    rotateSeconds: 3,
     items: [
       { title: 'The Good Divorce', author: 'Sarita Salwan', category: 'Memoir', coverUrl: '', linkUrl: '' },
       { title: 'Sheroes Amongst Us', author: 'Falguni Desai & Dr Amit Nagpal', category: 'Non-Fiction', coverUrl: '', linkUrl: '' },

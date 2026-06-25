@@ -11,11 +11,14 @@ interface Props {
   onChange: (v: string) => void;
   label: string;
   accept: Accept;
+  // Optional alt text (SEO/accessibility) for image fields.
+  alt?: string;
+  onAltChange?: (v: string) => void;
 }
 
 // Reusable admin media field: drag-and-drop an image or video (uploaded to
 // Supabase Storage) OR paste a URL. Used for every media field in the CMS.
-export default function MediaUploadField({ value, onChange, label, accept }: Props) {
+export default function MediaUploadField({ value, onChange, label, accept, alt, onAltChange }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
@@ -143,6 +146,22 @@ export default function MediaUploadField({ value, onChange, label, accept }: Pro
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-300 outline-none"
         />
       </div>
+
+      {/* Alt text — improves SEO and accessibility for images. */}
+      {accept === 'image' && onAltChange && (
+        <div className="mt-3">
+          <label className="block text-xs font-semibold text-gray-500 mb-1">
+            Alt text <span className="font-normal text-gray-400">(describe the image — for SEO &amp; screen readers)</span>
+          </label>
+          <input
+            type="text"
+            value={alt ?? ''}
+            onChange={(e) => onAltChange(e.target.value)}
+            placeholder="e.g. Book cover of ‘The Good Divorce’ by Sarita Salwan"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-300 outline-none"
+          />
+        </div>
+      )}
     </div>
   );
 }

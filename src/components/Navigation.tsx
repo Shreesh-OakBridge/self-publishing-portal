@@ -85,7 +85,7 @@ export default function Navigation() {
           <button onClick={() => goTo('/')} className="flex items-center gap-2.5">
             <img
               src={withBase(branding.logoUrl || '/logo.svg')}
-              alt="Cursive"
+              alt={branding.logoAlt || 'Cursive'}
               className="h-9 sm:h-10 w-auto object-contain"
             />
             <span className="hidden sm:block text-[10px] font-semibold text-amber-600 leading-tight text-left">

@@ -21,7 +21,7 @@ export default function Footer() {
             <div className="flex items-center gap-3 mb-4">
               <img
                 src={withBase(branding.logoUrl || '/logo.svg')}
-                alt="Cursive"
+                alt={branding.logoAlt || 'Cursive'}
                 className="h-10 w-auto object-contain"
               />
               <span className="text-[11px] font-semibold text-amber-500 leading-tight">

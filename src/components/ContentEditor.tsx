@@ -270,15 +270,25 @@ function Field({
                 />
               );
             }
-            return media ? (
-              <MediaUploadField
-                key={k}
-                label={media.label}
-                accept={media.accept}
-                value={typeof v === 'string' ? v : ''}
-                onChange={(nv) => onChange({ ...obj, [k]: nv })}
-              />
-            ) : (
+            if (media) {
+              // Alt text is stored in a sibling key, e.g. coverUrl → coverAlt.
+              const altKey = k.replace(/Url$/, '') + 'Alt';
+              const altVal = typeof obj[altKey] === 'string' ? (obj[altKey] as string) : '';
+              return (
+                <MediaUploadField
+                  key={k}
+                  label={media.label}
+                  accept={media.accept}
+                  value={typeof v === 'string' ? v : ''}
+                  onChange={(nv) => onChange({ ...obj, [k]: nv })}
+                  alt={media.accept === 'image' ? altVal : undefined}
+                  onAltChange={
+                    media.accept === 'image' ? (na) => onChange({ ...obj, [altKey]: na }) : undefined
+                  }
+                />
+              );
+            }
+            return (
               <Field
                 key={k}
                 label={humanize(k)}
