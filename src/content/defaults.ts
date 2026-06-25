@@ -147,6 +147,7 @@ export interface PagesContent {
   about: StaticPageContent;
   terms: StaticPageContent;
   privacy: StaticPageContent;
+  publishingAgreement: StaticPageContent;
 }
 
 export interface FaqItem {
@@ -747,6 +748,11 @@ export const defaultContent: SiteContent = {
       title: 'Privacy Policy',
       body:
         'This Privacy Policy explains how Cursive Publishing collects, uses, and protects your personal information.\n\n1. Information We Collect. We collect information you provide directly—such as your name, email, phone number, and manuscript details—and limited technical information when you use our site.\n\n2. How We Use It. We use your information to provide and improve our services, communicate with you, process orders, and meet legal obligations.\n\n3. Sharing. We do not sell your personal information. We share it only with service providers who help us operate, and where required by law.\n\n4. Security. We take reasonable measures to protect your data, but no method of transmission or storage is completely secure.\n\n5. Your Rights. You may request access to, correction of, or deletion of your personal information by contacting us.\n\nThis is placeholder text. Please replace it with your final privacy policy before going live.',
+    },
+    publishingAgreement: {
+      title: 'Publishing Agreement',
+      body:
+        'This Publishing Agreement sets out the terms on which Cursive Publishing provides publishing services for your work. By placing an order, you agree to this Agreement.\n\n1. Grant of Rights. You grant Cursive a non-exclusive licence to format, produce, distribute, and market your work solely to deliver the services in your selected plan. You retain ownership and copyright of your work at all times.\n\n2. Author Warranties. You confirm that the work is your original creation (or that you hold the necessary rights), does not infringe any third-party rights, and is not unlawful, defamatory, or obscene.\n\n3. Deliverables & Timelines. Specific services, formats, and timelines depend on your selected plan or quotation. Timelines are estimates and may vary.\n\n4. Royalties & Payments. Royalties (where applicable) and fees are as set out in your plan or quotation. Applicable taxes, including 18% GST, are added at checkout.\n\n5. Approvals. You are responsible for reviewing and approving proofs before production. Cursive is not liable for errors in content you approve.\n\n6. Termination. Either party may terminate as set out in your plan; work completed up to termination remains chargeable.\n\nThis is placeholder text. Please replace it with your final publishing agreement, reviewed by a qualified lawyer, before going live.',
     },
   },
   footer: {

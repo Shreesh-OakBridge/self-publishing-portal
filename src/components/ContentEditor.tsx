@@ -72,7 +72,12 @@ const SECTION_LABELS: Record<string, string> = {
 // Sections whose object keys should be edited one-at-a-time via sub-tabs
 // (e.g. the Static Pages section → About / Terms / Privacy).
 const SUBSECTIONS: Record<string, Record<string, string>> = {
-  pages: { about: 'About Us', terms: 'Terms & Conditions', privacy: 'Privacy Policy' },
+  pages: {
+    about: 'About Us',
+    terms: 'Terms & Conditions',
+    privacy: 'Privacy Policy',
+    publishingAgreement: 'Publishing Agreement',
+  },
 };
 
 // Content fields that hold media — rendered as drag-and-drop uploaders.

@@ -258,6 +258,12 @@ function App() {
         <StaticPage pageKey="privacy" />
       </SubPage>
     );
+  if (path === '/publishing-agreement')
+    return (
+      <SubPage crumb="Publishing Agreement">
+        <StaticPage pageKey="publishingAgreement" />
+      </SubPage>
+    );
 
   return <HomePage />;
 }

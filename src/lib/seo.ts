@@ -25,6 +25,7 @@ const CRUMB_LABELS: Record<string, string> = {
   '/about': 'About Us',
   '/terms': 'Terms & Conditions',
   '/privacy': 'Privacy Policy',
+  '/publishing-agreement': 'Publishing Agreement',
   '/customize': 'Design Your Book',
 };
 
@@ -52,6 +53,8 @@ function buildSeo(path: string, c: SiteContent): SeoResult {
       return { title: t(c.pages.terms.title), description: 'Our Terms & Conditions.' };
     case '/privacy':
       return { title: t(c.pages.privacy.title), description: 'How we handle and protect your data.' };
+    case '/publishing-agreement':
+      return { title: t(c.pages.publishingAgreement.title), description: 'Our publishing agreement terms.' };
     case '/customize':
       return { title: t('Design Your Book'), description: c.customizer.subheading };
     case '/royalty-calculator':

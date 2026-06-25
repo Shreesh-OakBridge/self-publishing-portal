@@ -657,3 +657,6 @@ BEGIN NEW.updated_at := now(); RETURN NEW; END; $$;
 DROP TRIGGER IF EXISTS trg_touch_quote ON quotes;
 CREATE TRIGGER trg_touch_quote BEFORE UPDATE ON quotes
   FOR EACH ROW EXECUTE FUNCTION touch_quote_updated_at();
+
+-- Publishing Agreement acceptance at checkout
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS publishing_agreement_accepted_at timestamptz;

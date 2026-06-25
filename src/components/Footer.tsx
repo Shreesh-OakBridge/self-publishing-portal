@@ -132,6 +132,10 @@ export default function Footer() {
             <a href={withBase('/privacy')} className="text-gray-400 hover:text-amber-500 transition-colors">
               Privacy Policy
             </a>
+            <span className="text-gray-700">|</span>
+            <a href={withBase('/publishing-agreement')} className="text-gray-400 hover:text-amber-500 transition-colors">
+              Publishing Agreement
+            </a>
           </div>
           <p className="text-gray-400">
             &copy; {new Date().getFullYear()} {footer.copyrightName}. All rights reserved.

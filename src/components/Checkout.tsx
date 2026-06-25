@@ -67,8 +67,9 @@ export default function Checkout() {
   const [sameAsShip, setSameAsShip] = useState(true);
   const [bill, setBill] = useState({ name: '', address: '' });
 
-  // Terms & Conditions acceptance
+  // Terms & Conditions + Publishing Agreement acceptance
   const [agreedTerms, setAgreedTerms] = useState(false);
+  const [agreedAgreement, setAgreedAgreement] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
 
   // Coupon
@@ -162,8 +163,8 @@ export default function Checkout() {
       setError('Please complete the required shipping fields (name, address, city, pincode).');
       return;
     }
-    // Must accept Terms & Conditions — if not, surface the modal.
-    if (!agreedTerms) {
+    // Must accept Terms & Conditions and the Publishing Agreement — surface the modal otherwise.
+    if (!agreedTerms || !agreedAgreement) {
       setTermsModalOpen(true);
       return;
     }
@@ -191,6 +192,7 @@ export default function Checkout() {
       language: onboarding?.language ?? null,
       manuscript_status: onboarding?.manuscript_status ?? null,
       terms_accepted_at: new Date().toISOString(),
+      publishing_agreement_accepted_at: new Date().toISOString(),
       status: 'pending',
       ship_name: ship.name,
       ship_phone: ship.phone,
@@ -471,6 +473,27 @@ export default function Checkout() {
               </span>
             </label>
 
+            <label className="flex items-start gap-2 mt-3 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreedAgreement}
+                onChange={(e) => setAgreedAgreement(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-amber-600 flex-shrink-0"
+              />
+              <span>
+                I have read and accept the{' '}
+                <a
+                  href={withBase('/publishing-agreement')}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-amber-700 underline"
+                >
+                  Publishing Agreement
+                </a>
+                .
+              </span>
+            </label>
+
             <button
               onClick={placeOrder}
               disabled={placing || conflict}
@@ -509,6 +532,10 @@ export default function Checkout() {
               {pages.privacy.body.split(/\n\s*\n/).map((p, i) => (
                 <p key={i} className="whitespace-pre-line">{p.trim()}</p>
               ))}
+              <h4 className="font-bold text-gray-900 pt-2">{pages.publishingAgreement.title}</h4>
+              {pages.publishingAgreement.body.split(/\n\s*\n/).map((p, i) => (
+                <p key={i} className="whitespace-pre-line">{p.trim()}</p>
+              ))}
             </div>
             <div className="p-4 border-t flex justify-end gap-2">
               <button
@@ -520,6 +547,7 @@ export default function Checkout() {
               <button
                 onClick={() => {
                   setAgreedTerms(true);
+                  setAgreedAgreement(true);
                   setTermsModalOpen(false);
                   submitOrder();
                 }}
