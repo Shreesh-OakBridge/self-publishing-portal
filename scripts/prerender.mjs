@@ -47,13 +47,28 @@ function serve() {
   });
 }
 
-async function run() {
-  const server = serve();
-  await new Promise((r) => server.listen(PORT, r));
-  const browser = await puppeteer.launch({
+// On Vercel/CI the build image lacks the system libs (libnss3, etc.) that the
+// bundled Chromium needs, so use @sparticuz/chromium there. Locally we use
+// puppeteer's own Chromium, which works fine.
+async function launchBrowser() {
+  if (process.env.VERCEL || process.env.CI) {
+    const { default: chromium } = await import('@sparticuz/chromium');
+    return puppeteer.launch({
+      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    });
+  }
+  return puppeteer.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
+}
+
+async function run() {
+  const server = serve();
+  await new Promise((r) => server.listen(PORT, r));
+  const browser = await launchBrowser();
 
   try {
     for (const route of ROUTES) {
