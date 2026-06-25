@@ -4,7 +4,7 @@ import { SiteContent } from '../content/defaults';
 import { stripBase } from './basePath';
 
 export const SITE_NAME = 'Cursive';
-export const SITE_URL = 'https://oakbridge.in/cursive';
+export const SITE_URL = 'https://cursivepublishing.com';
 
 // Optional: add your social profile URLs here for richer Organization data.
 const SOCIAL_PROFILES: string[] = [];

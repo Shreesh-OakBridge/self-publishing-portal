@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://oakbridge.in/cursive/sitemap.xml
+Sitemap: https://cursivepublishing.com/sitemap.xml

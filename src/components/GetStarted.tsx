@@ -184,6 +184,7 @@ export default function GetStarted() {
         open={authOpen}
         onClose={() => setAuthOpen(false)}
         onAuthenticated={() => go(destination())}
+        redirectPath={destination()}
         heading="Log in or sign up to continue"
       />
     </section>

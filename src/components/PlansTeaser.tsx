@@ -93,6 +93,7 @@ export default function PlansTeaser() {
         open={authOpen}
         onClose={() => setAuthOpen(false)}
         onAuthenticated={() => go('/plans')}
+        redirectPath="/plans"
         heading="Log in or sign up to access plans"
       />
     </section>
