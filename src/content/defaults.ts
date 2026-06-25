@@ -694,12 +694,12 @@ export const defaultContent: SiteContent = {
     heading: 'From Our Portfolio',
     subheading: 'A selection of titles we have proudly brought to readers.',
     items: [
-      { title: 'Threads of Dawn', author: 'Ananya Sharma', category: 'Fiction', coverUrl: '', linkUrl: '' },
-      { title: 'The Quiet Quarter', author: 'Rajat Mehta', category: 'Literary Fiction', coverUrl: '', linkUrl: '' },
-      { title: 'Beyond the Ledger', author: 'Vikram Nair', category: 'Business', coverUrl: '', linkUrl: '' },
-      { title: 'Monsoon Letters', author: 'Fatima Qureshi', category: 'Poetry', coverUrl: '', linkUrl: '' },
-      { title: 'The Founder’s Map', author: 'Sneha Iyer', category: 'Non-Fiction', coverUrl: '', linkUrl: '' },
-      { title: 'Echoes of Silence', author: 'Arjun Desai', category: 'Thriller', coverUrl: '', linkUrl: '' },
+      { title: 'The Good Divorce', author: 'Sarita Salwan', category: 'Memoir', coverUrl: '', linkUrl: '' },
+      { title: 'Sheroes Amongst Us', author: 'Falguni Desai & Dr Amit Nagpal', category: 'Non-Fiction', coverUrl: '', linkUrl: '' },
+      { title: 'Heroes Amongst Us', author: 'Dr Amit Nagpal', category: 'Non-Fiction', coverUrl: '', linkUrl: '' },
+      { title: 'Pet Care Made Easy', author: 'Dr Gautam Unny', category: 'Non-Fiction', coverUrl: '', linkUrl: '' },
+      { title: 'Tales of Wagging Tails', author: 'Dr Gautam Unny', category: 'Non-Fiction', coverUrl: '', linkUrl: '' },
+      { title: 'Nautanki Saala and Other Stories', author: 'Mohua Chinappa', category: 'Fiction', coverUrl: '', linkUrl: '' },
     ],
   },
   faq: {
