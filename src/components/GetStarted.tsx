@@ -3,6 +3,7 @@ import { Check, Users, Laptop, ArrowRight } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import { useAuth } from '../lib/auth';
 import { go } from '../lib/basePath';
+import { pushToDataLayer } from '../lib/gtm';
 import AuthModal from './AuthModal';
 
 // Onboarding funnel: language → manuscript status → publish method.
@@ -33,6 +34,11 @@ export default function GetStarted() {
     } catch {
       /* ignore */
     }
+    pushToDataLayer('get_started_completed', {
+      language,
+      manuscript_status: status,
+      publish_path: method,
+    });
     // Logged in → continue straight to the chosen path. Logged out → prompt to
     // log in / sign up first; the selection (already stashed) is applied after.
     if (user) go(destination());

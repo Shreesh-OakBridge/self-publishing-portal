@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BookOpen, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { logActivity } from '../lib/activity';
+import { pushToDataLayer } from '../lib/gtm';
 import { withBase } from '../lib/basePath';
 
 type Mode = 'login' | 'signup' | 'forgot';
@@ -96,12 +97,14 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login', oauth
           setInfo('Account created. Please check your email to confirm, then log in.');
           setMode('login');
         } else {
+          pushToDataLayer('sign_up', { method: 'email' });
           onAuthenticated();
         }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
         await logActivity('auth.login');
+        pushToDataLayer('login', { method: 'email' });
         onAuthenticated();
       }
     } catch (err) {

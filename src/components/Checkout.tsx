@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
 import { go, withBase } from '../lib/basePath';
+import { pushToDataLayer } from '../lib/gtm';
 
 const inr = (n: number) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const priceToNumber = (p: string) => Number((p || '').replace(/[^0-9.]/g, '')) || 0;
@@ -213,6 +214,11 @@ export default function Checkout() {
     } catch {
       /* ignore */
     }
+    pushToDataLayer('order_placed', {
+      plan: planName ?? null,
+      amount: total,
+      publish_path: onboarding?.publish_path ?? null,
+    });
     setPlaced(true);
     window.scrollTo({ top: 0 });
   };

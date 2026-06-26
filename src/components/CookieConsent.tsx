@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Cookie, X } from 'lucide-react';
 import { getConsent, setConsent, loadAnalytics, disableAnalytics } from '../lib/analytics';
+import { initGtm } from '../lib/gtm';
 import { withBase } from '../lib/basePath';
 
-// Bottom banner: analytics only loads after the visitor accepts.
+// Bottom banner: analytics + GTM only load after the visitor accepts.
 export default function CookieConsent() {
   const [show, setShow] = useState(false);
 
@@ -13,6 +14,7 @@ export default function CookieConsent() {
       setShow(true);
     } else if (consent === 'accepted') {
       loadAnalytics();
+      initGtm();
     }
   }, []);
 
@@ -21,6 +23,7 @@ export default function CookieConsent() {
   const accept = () => {
     setConsent('accepted');
     loadAnalytics();
+    initGtm();
     setShow(false);
   };
   const decline = () => {

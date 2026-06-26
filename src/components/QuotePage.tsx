@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
 import { go, withBase } from '../lib/basePath';
+import { pushToDataLayer } from '../lib/gtm';
 
 const inr = (n: number) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
@@ -81,6 +82,7 @@ export default function QuotePage() {
       setError('Could not send your request. Please try again.');
       return;
     }
+    pushToDataLayer('quote_requested', { estimated_price: estimatedPrice || 0 });
     setSubmitted(true);
     window.scrollTo({ top: 0 });
   };
