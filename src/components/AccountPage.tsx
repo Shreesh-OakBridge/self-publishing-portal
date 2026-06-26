@@ -1,5 +1,16 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, LogOut, Palette, Calculator, Home, Pencil, ShoppingBag, FileText } from 'lucide-react';
+import {
+  BookOpen,
+  LogOut,
+  Palette,
+  Calculator,
+  Home,
+  Pencil,
+  ShoppingBag,
+  FileText,
+  FileUp,
+  User,
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import ProfileEditor from './ProfileEditor';
@@ -74,6 +85,28 @@ const inr = (n: number | null | undefined) =>
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
+// Account is organised into tabs; each tab maps to a URL hash so links like
+// /account#orders open directly on that section.
+const TABS = [
+  { key: 'profile', label: 'Profile', icon: User },
+  { key: 'orders', label: 'My Orders', icon: ShoppingBag },
+  { key: 'quotes', label: 'Quote Requests', icon: FileText },
+  { key: 'manuscripts', label: 'Manuscripts', icon: FileUp },
+  { key: 'customizations', label: 'Customizations', icon: Palette },
+  { key: 'royalty', label: 'Royalty', icon: Calculator },
+] as const;
+type TabKey = (typeof TABS)[number]['key'];
+
+// Shared heading for each panel.
+function PanelHeading({ icon: Icon, title }: { icon: typeof User; title: string }) {
+  return (
+    <div className="flex items-center space-x-2 mb-4">
+      <Icon className="w-5 h-5 text-amber-600" />
+      <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+    </div>
+  );
+}
+
 export default function AccountPage() {
   const { user, loading, signOut } = useAuth();
   const [customizations, setCustomizations] = useState<Customization[]>([]);
@@ -82,6 +115,16 @@ export default function AccountPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [editingProfile, setEditingProfile] = useState(false);
+  const [tab, setTab] = useState<TabKey>(() => {
+    const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';
+    return TABS.some((t) => t.key === h) ? (h as TabKey) : 'profile';
+  });
+
+  const selectTab = (key: TabKey) => {
+    setTab(key);
+    setEditingProfile(false);
+    history.replaceState(null, '', `${window.location.pathname}#${key}`);
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -134,6 +177,7 @@ export default function AccountPage() {
   const fullName = (user.user_metadata?.full_name as string) || '';
   const bio = (user.user_metadata?.bio as string) || '';
   const bookScope = (user.user_metadata?.book_scope as string) || '';
+  const initial = (fullName || user.email || '?').charAt(0).toUpperCase();
 
   // Re-open a saved item on its page, pre-loaded via query params.
   const openCustomization = (c: Customization) => {
@@ -160,11 +204,8 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
       <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button
-            onClick={() => go('/')}
-            className="flex items-center space-x-3"
-          >
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <button onClick={() => go('/')} className="flex items-center space-x-3">
             <BookOpen className="w-7 h-7 text-amber-600" />
             <span className="text-lg font-bold text-gray-900">Cursive</span>
           </button>
@@ -190,268 +231,301 @@ export default function AccountPage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
-        {editingProfile ? (
-          <ProfileEditor onDone={() => setEditingProfile(false)} />
-        ) : (
-          <div className="bg-white rounded-2xl border p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Login ID</p>
-                <h1 className="text-2xl font-bold text-gray-900">{user.email}</h1>
-                <p className="text-gray-600 mt-1">{fullName || 'Name not set'}</p>
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        <div className="md:flex md:gap-8">
+          {/* Tabs: vertical sidebar on desktop, horizontal scroll on mobile */}
+          <aside className="md:w-60 md:flex-shrink-0 mb-6 md:mb-0">
+            <div className="flex items-center gap-3 mb-5 px-1">
+              <span className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center text-lg font-bold flex-shrink-0">
+                {initial}
+              </span>
+              <div className="min-w-0">
+                <p className="font-semibold text-gray-900 truncate">{fullName || 'My Account'}</p>
+                <p className="text-xs text-gray-500 truncate">{user.email}</p>
               </div>
-              <button
-                onClick={() => setEditingProfile(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm flex-shrink-0"
-              >
-                <Pencil className="w-4 h-4" />
-                <span>Edit Profile</span>
-              </button>
             </div>
+            <nav className="flex md:flex-col gap-1.5 overflow-x-auto md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0 pb-1 md:pb-0">
+              {TABS.map(({ key, label, icon: Icon }) => {
+                const active = tab === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => selectTab(key)}
+                    aria-current={active ? 'page' : undefined}
+                    className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap flex-shrink-0 md:w-full transition-colors ${
+                      active ? 'bg-amber-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
 
-            {(bio || bookScope) && (
-              <div className="mt-4 pt-4 border-t space-y-2 text-sm">
-                {bio && (
-                  <p>
-                    <span className="font-semibold text-gray-700">About: </span>
-                    <span className="text-gray-600">{bio}</span>
-                  </p>
+          {/* Active panel */}
+          <div className="flex-1 min-w-0">
+            {tab === 'profile' &&
+              (editingProfile ? (
+                <ProfileEditor onDone={() => setEditingProfile(false)} />
+              ) : (
+                <div className="bg-white rounded-2xl border p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Login ID</p>
+                      <h1 className="text-2xl font-bold text-gray-900 break-all">{user.email}</h1>
+                      <p className="text-gray-600 mt-1">{fullName || 'Name not set'}</p>
+                    </div>
+                    <button
+                      onClick={() => setEditingProfile(true)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm flex-shrink-0"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      <span>Edit Profile</span>
+                    </button>
+                  </div>
+
+                  {(bio || bookScope) && (
+                    <div className="mt-4 pt-4 border-t space-y-2 text-sm">
+                      {bio && (
+                        <p>
+                          <span className="font-semibold text-gray-700">About: </span>
+                          <span className="text-gray-600">{bio}</span>
+                        </p>
+                      )}
+                      {bookScope && (
+                        <p>
+                          <span className="font-semibold text-gray-700">My book: </span>
+                          <span className="text-gray-600">{bookScope}</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+            {tab === 'orders' && (
+              <section>
+                <PanelHeading icon={ShoppingBag} title="My Orders" />
+                {loadingData ? (
+                  <p className="text-gray-500">Loading…</p>
+                ) : orders.length === 0 ? (
+                  <div className="bg-white rounded-2xl border p-6 text-gray-500">
+                    No orders yet.{' '}
+                    <a href={withBase('/#plans')} className="text-amber-700 font-semibold hover:underline">
+                      Explore publishing plans →
+                    </a>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl border overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-gray-500 border-b">
+                          <th className="px-4 py-3 font-semibold">Date</th>
+                          <th className="px-4 py-3 font-semibold">Order</th>
+                          <th className="px-4 py-3 font-semibold">Coupon</th>
+                          <th className="px-4 py-3 font-semibold">Amount</th>
+                          <th className="px-4 py-3 font-semibold">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orders.map((o) => (
+                          <tr key={o.id} className="border-b last:border-0 hover:bg-gray-50">
+                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(o.created_at)}</td>
+                            <td className="px-4 py-3 text-gray-700">
+                              {o.plan ? o.plan : o.customization_id ? 'Custom book' : '—'}
+                              {o.plan && o.customization_id && (
+                                <span className="text-xs text-gray-400"> + custom design</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-gray-600">
+                              {o.coupon_code ? (
+                                <span className="font-mono text-xs">
+                                  {o.coupon_code}
+                                  {o.discount ? ` (−${inr(o.discount)})` : ''}
+                                </span>
+                              ) : (
+                                '—'
+                              )}
+                            </td>
+                            <td className="px-4 py-3 font-semibold">{inr(o.amount)}</td>
+                            <td className="px-4 py-3">
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold capitalize ${statusColor(o.status)}`}>
+                                {o.status.replace('_', ' ')}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
-                {bookScope && (
-                  <p>
-                    <span className="font-semibold text-gray-700">My book: </span>
-                    <span className="text-gray-600">{bookScope}</span>
-                  </p>
+              </section>
+            )}
+
+            {tab === 'quotes' && (
+              <section>
+                <PanelHeading icon={FileText} title="My Quote Requests" />
+                {loadingData ? (
+                  <p className="text-gray-500">Loading…</p>
+                ) : quotes.length === 0 ? (
+                  <div className="bg-white rounded-2xl border p-6 text-gray-500">
+                    No quote requests yet.{' '}
+                    <a href={withBase('/customize')} className="text-amber-700 font-semibold hover:underline">
+                      Customize a book &amp; request a quote →
+                    </a>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl border overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-gray-500 border-b">
+                          <th className="px-4 py-3 font-semibold">Date</th>
+                          <th className="px-4 py-3 font-semibold">Book</th>
+                          <th className="px-4 py-3 font-semibold">Estimated</th>
+                          <th className="px-4 py-3 font-semibold">Quoted</th>
+                          <th className="px-4 py-3 font-semibold">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {quotes.map((q) => (
+                          <tr key={q.id} className="border-b last:border-0 hover:bg-gray-50">
+                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(q.created_at)}</td>
+                            <td className="px-4 py-3 text-gray-700">
+                              {[q.book_size, q.binding].filter(Boolean).join(' · ') || '—'}
+                            </td>
+                            <td className="px-4 py-3">{inr(q.estimated_price)}</td>
+                            <td className="px-4 py-3 font-semibold text-amber-700">
+                              {q.quoted_price != null ? inr(q.quoted_price) : '—'}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold capitalize ${statusColor(q.status)}`}>
+                                {q.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
-              </div>
+              </section>
+            )}
+
+            {tab === 'manuscripts' && <ManuscriptUpload />}
+
+            {tab === 'customizations' && (
+              <section>
+                <PanelHeading icon={Palette} title="Saved Book Customizations" />
+                {loadingData ? (
+                  <p className="text-gray-500">Loading…</p>
+                ) : customizations.length === 0 ? (
+                  <div className="bg-white rounded-2xl border p-6 text-gray-500">
+                    No saved customizations yet.{' '}
+                    <a href={withBase('/customize')} className="text-amber-700 font-semibold hover:underline">
+                      Customize a book →
+                    </a>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl border overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-gray-500 border-b">
+                          <th className="px-4 py-3 font-semibold">Date</th>
+                          <th className="px-4 py-3 font-semibold">Paper</th>
+                          <th className="px-4 py-3 font-semibold">Cover</th>
+                          <th className="px-4 py-3 font-semibold">Layout</th>
+                          <th className="px-4 py-3 font-semibold">Size</th>
+                          <th className="px-4 py-3 font-semibold">Est. Price</th>
+                          <th className="px-4 py-3 font-semibold text-right">Edit</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {customizations.map((c) => (
+                          <tr
+                            key={c.id}
+                            onClick={() => openCustomization(c)}
+                            title="Open this design in the customizer to edit"
+                            className="border-b last:border-0 hover:bg-amber-50 cursor-pointer"
+                          >
+                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(c.created_at)}</td>
+                            <td className="px-4 py-3">{c.paper_type || '—'}</td>
+                            <td className="px-4 py-3">{c.cover_design || '—'}</td>
+                            <td className="px-4 py-3">{c.layout_option || '—'}</td>
+                            <td className="px-4 py-3">{c.book_size || '—'}</td>
+                            <td className="px-4 py-3 font-semibold text-amber-700">{inr(c.estimated_price)}</td>
+                            <td className="px-4 py-3 text-right">
+                              <span className="inline-flex items-center gap-1 text-amber-700 font-semibold">
+                                <Pencil className="w-4 h-4" />
+                                <span className="hidden sm:inline">Edit</span>
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {tab === 'royalty' && (
+              <section>
+                <PanelHeading icon={Calculator} title="Saved Royalty Calculations" />
+                {loadingData ? (
+                  <p className="text-gray-500">Loading…</p>
+                ) : calculations.length === 0 ? (
+                  <div className="bg-white rounded-2xl border p-6 text-gray-500">
+                    No saved calculations yet.{' '}
+                    <a href={withBase('/royalty-calculator')} className="text-amber-700 font-semibold hover:underline">
+                      Try the calculator →
+                    </a>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl border overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-gray-500 border-b">
+                          <th className="px-4 py-3 font-semibold">Date</th>
+                          <th className="px-4 py-3 font-semibold">Plan</th>
+                          <th className="px-4 py-3 font-semibold">Book Price</th>
+                          <th className="px-4 py-3 font-semibold">Monthly Sales</th>
+                          <th className="px-4 py-3 font-semibold">Royalty / Book</th>
+                          <th className="px-4 py-3 font-semibold">Monthly Earnings</th>
+                          <th className="px-4 py-3 font-semibold text-right">Edit</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {calculations.map((r) => (
+                          <tr
+                            key={r.id}
+                            onClick={() => openCalculation(r)}
+                            title="Open this projection in the calculator to edit"
+                            className="border-b last:border-0 hover:bg-amber-50 cursor-pointer"
+                          >
+                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(r.created_at)}</td>
+                            <td className="px-4 py-3">{r.plan_type || '—'}</td>
+                            <td className="px-4 py-3">{inr(r.book_price)}</td>
+                            <td className="px-4 py-3">{r.expected_sales ?? '—'}</td>
+                            <td className="px-4 py-3">{inr(r.estimated_royalty)}</td>
+                            <td className="px-4 py-3 font-semibold text-amber-700">{inr(r.monthly_earnings)}</td>
+                            <td className="px-4 py-3 text-right">
+                              <span className="inline-flex items-center gap-1 text-amber-700 font-semibold">
+                                <Pencil className="w-4 h-4" />
+                                <span className="hidden sm:inline">Edit</span>
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
             )}
           </div>
-        )}
-
-        <section>
-          <div className="flex items-center space-x-2 mb-3">
-            <ShoppingBag className="w-5 h-5 text-amber-600" />
-            <h2 className="text-xl font-bold text-gray-900">My Orders</h2>
-          </div>
-          {loadingData ? (
-            <p className="text-gray-500">Loading…</p>
-          ) : orders.length === 0 ? (
-            <div className="bg-white rounded-2xl border p-6 text-gray-500">
-              No orders yet.{' '}
-              <a href={withBase('/#plans')} className="text-amber-700 font-semibold hover:underline">
-                Explore publishing plans →
-              </a>
-            </div>
-          ) : (
-            <div className="bg-white rounded-2xl border overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-gray-500 border-b">
-                    <th className="px-4 py-3 font-semibold">Date</th>
-                    <th className="px-4 py-3 font-semibold">Order</th>
-                    <th className="px-4 py-3 font-semibold">Coupon</th>
-                    <th className="px-4 py-3 font-semibold">Amount</th>
-                    <th className="px-4 py-3 font-semibold">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map((o) => (
-                    <tr key={o.id} className="border-b last:border-0 hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(o.created_at)}</td>
-                      <td className="px-4 py-3 text-gray-700">
-                        {o.plan ? o.plan : o.customization_id ? 'Custom book' : '—'}
-                        {o.plan && o.customization_id && (
-                          <span className="text-xs text-gray-400"> + custom design</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {o.coupon_code ? (
-                          <span className="font-mono text-xs">
-                            {o.coupon_code}
-                            {o.discount ? ` (−${inr(o.discount)})` : ''}
-                          </span>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                      <td className="px-4 py-3 font-semibold">{inr(o.amount)}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold capitalize ${statusColor(o.status)}`}>
-                          {o.status.replace('_', ' ')}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
-        <section>
-          <div className="flex items-center space-x-2 mb-3">
-            <FileText className="w-5 h-5 text-amber-600" />
-            <h2 className="text-xl font-bold text-gray-900">My Quote Requests</h2>
-          </div>
-          {loadingData ? (
-            <p className="text-gray-500">Loading…</p>
-          ) : quotes.length === 0 ? (
-            <div className="bg-white rounded-2xl border p-6 text-gray-500">
-              No quote requests yet.{' '}
-              <a href={withBase('/customize')} className="text-amber-700 font-semibold hover:underline">
-                Customize a book &amp; request a quote →
-              </a>
-            </div>
-          ) : (
-            <div className="bg-white rounded-2xl border overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-gray-500 border-b">
-                    <th className="px-4 py-3 font-semibold">Date</th>
-                    <th className="px-4 py-3 font-semibold">Book</th>
-                    <th className="px-4 py-3 font-semibold">Estimated</th>
-                    <th className="px-4 py-3 font-semibold">Quoted</th>
-                    <th className="px-4 py-3 font-semibold">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {quotes.map((q) => (
-                    <tr key={q.id} className="border-b last:border-0 hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(q.created_at)}</td>
-                      <td className="px-4 py-3 text-gray-700">
-                        {[q.book_size, q.binding].filter(Boolean).join(' · ') || '—'}
-                      </td>
-                      <td className="px-4 py-3">{inr(q.estimated_price)}</td>
-                      <td className="px-4 py-3 font-semibold text-amber-700">
-                        {q.quoted_price != null ? inr(q.quoted_price) : '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold capitalize ${statusColor(q.status)}`}>
-                          {q.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
-        <ManuscriptUpload />
-
-        <section>
-          <div className="flex items-center space-x-2 mb-3">
-            <Palette className="w-5 h-5 text-amber-600" />
-            <h2 className="text-xl font-bold text-gray-900">Saved Book Customizations</h2>
-          </div>
-          {loadingData ? (
-            <p className="text-gray-500">Loading…</p>
-          ) : customizations.length === 0 ? (
-            <div className="bg-white rounded-2xl border p-6 text-gray-500">
-              No saved customizations yet.{' '}
-              <a href={withBase('/customize')} className="text-amber-700 font-semibold hover:underline">
-                Customize a book →
-              </a>
-            </div>
-          ) : (
-            <div className="bg-white rounded-2xl border overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-gray-500 border-b">
-                    <th className="px-4 py-3 font-semibold">Date</th>
-                    <th className="px-4 py-3 font-semibold">Paper</th>
-                    <th className="px-4 py-3 font-semibold">Cover</th>
-                    <th className="px-4 py-3 font-semibold">Layout</th>
-                    <th className="px-4 py-3 font-semibold">Size</th>
-                    <th className="px-4 py-3 font-semibold">Est. Price</th>
-                    <th className="px-4 py-3 font-semibold text-right">Edit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {customizations.map((c) => (
-                    <tr
-                      key={c.id}
-                      onClick={() => openCustomization(c)}
-                      title="Open this design in the customizer to edit"
-                      className="border-b last:border-0 hover:bg-amber-50 cursor-pointer"
-                    >
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(c.created_at)}</td>
-                      <td className="px-4 py-3">{c.paper_type || '—'}</td>
-                      <td className="px-4 py-3">{c.cover_design || '—'}</td>
-                      <td className="px-4 py-3">{c.layout_option || '—'}</td>
-                      <td className="px-4 py-3">{c.book_size || '—'}</td>
-                      <td className="px-4 py-3 font-semibold text-amber-700">{inr(c.estimated_price)}</td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="inline-flex items-center gap-1 text-amber-700 font-semibold">
-                          <Pencil className="w-4 h-4" />
-                          <span className="hidden sm:inline">Edit</span>
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
-        <section>
-          <div className="flex items-center space-x-2 mb-3">
-            <Calculator className="w-5 h-5 text-amber-600" />
-            <h2 className="text-xl font-bold text-gray-900">Saved Royalty Calculations</h2>
-          </div>
-          {loadingData ? (
-            <p className="text-gray-500">Loading…</p>
-          ) : calculations.length === 0 ? (
-            <div className="bg-white rounded-2xl border p-6 text-gray-500">
-              No saved calculations yet.{' '}
-              <a href={withBase('/royalty-calculator')} className="text-amber-700 font-semibold hover:underline">
-                Try the calculator →
-              </a>
-            </div>
-          ) : (
-            <div className="bg-white rounded-2xl border overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-gray-500 border-b">
-                    <th className="px-4 py-3 font-semibold">Date</th>
-                    <th className="px-4 py-3 font-semibold">Plan</th>
-                    <th className="px-4 py-3 font-semibold">Book Price</th>
-                    <th className="px-4 py-3 font-semibold">Monthly Sales</th>
-                    <th className="px-4 py-3 font-semibold">Royalty / Book</th>
-                    <th className="px-4 py-3 font-semibold">Monthly Earnings</th>
-                    <th className="px-4 py-3 font-semibold text-right">Edit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {calculations.map((r) => (
-                    <tr
-                      key={r.id}
-                      onClick={() => openCalculation(r)}
-                      title="Open this projection in the calculator to edit"
-                      className="border-b last:border-0 hover:bg-amber-50 cursor-pointer"
-                    >
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(r.created_at)}</td>
-                      <td className="px-4 py-3">{r.plan_type || '—'}</td>
-                      <td className="px-4 py-3">{inr(r.book_price)}</td>
-                      <td className="px-4 py-3">{r.expected_sales ?? '—'}</td>
-                      <td className="px-4 py-3">{inr(r.estimated_royalty)}</td>
-                      <td className="px-4 py-3 font-semibold text-amber-700">{inr(r.monthly_earnings)}</td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="inline-flex items-center gap-1 text-amber-700 font-semibold">
-                          <Pencil className="w-4 h-4" />
-                          <span className="hidden sm:inline">Edit</span>
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+        </div>
       </main>
     </div>
   );

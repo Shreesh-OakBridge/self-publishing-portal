@@ -55,7 +55,7 @@ export default function MobileBottomNav() {
           <Item
             icon={ShoppingBag}
             label="My Orders"
-            onClick={() => go('/account')}
+            onClick={() => go('/account#orders')}
             active={path === '/account'}
           />
           <button

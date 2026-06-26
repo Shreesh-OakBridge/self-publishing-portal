@@ -1,5 +1,17 @@
-import { Menu, X, UserCircle, ChevronDown, Shield } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import {
+  Menu,
+  X,
+  UserCircle,
+  ChevronDown,
+  Shield,
+  ShoppingBag,
+  FileText,
+  HelpCircle,
+  KeyRound,
+  LogOut,
+  User,
+} from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
 import { go, stripBase, withBase } from '../lib/basePath';
@@ -8,7 +20,9 @@ export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [scrolled, setScrolled] = useState(false);
-  const { user, isAdmin } = useAuth();
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
+  const { user, isAdmin, signOut } = useAuth();
   const { branding, services } = useContent();
 
   // Author's first name + initial for the account button.
@@ -43,6 +57,30 @@ export default function Navigation() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, [isHome]);
+
+  // Close the account dropdown on outside click or Escape.
+  useEffect(() => {
+    if (!accountOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+        setAccountOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setAccountOpen(false);
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [accountOpen]);
+
+  const handleSignOut = async () => {
+    setAccountOpen(false);
+    setIsMenuOpen(false);
+    await signOut();
+    go('/');
+  };
 
   const goToSection = (id: string) => {
     setIsMenuOpen(false);
@@ -153,15 +191,73 @@ export default function Navigation() {
                 <span>Admin</span>
               </button>
             ) : user ? (
-              <button
-                onClick={() => goTo('/account')}
-                className="flex items-center space-x-2 bg-amber-600 text-white pl-2 pr-5 py-1.5 rounded-full hover:bg-amber-700 transition-colors font-medium"
-              >
-                <span className="w-7 h-7 rounded-full bg-white/25 flex items-center justify-center text-sm font-bold">
-                  {accountInitial || <UserCircle className="w-5 h-5" />}
-                </span>
-                <span>{accountLabel}</span>
-              </button>
+              <div className="relative" ref={accountRef}>
+                <button
+                  onClick={() => setAccountOpen((o) => !o)}
+                  aria-haspopup="menu"
+                  aria-expanded={accountOpen}
+                  className="flex items-center space-x-2 bg-amber-600 text-white pl-2 pr-4 py-1.5 rounded-full hover:bg-amber-700 transition-colors font-medium"
+                >
+                  <span className="w-7 h-7 rounded-full bg-white/25 flex items-center justify-center text-sm font-bold">
+                    {accountInitial || <UserCircle className="w-5 h-5" />}
+                  </span>
+                  <span>{accountLabel}</span>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${accountOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {accountOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50"
+                  >
+                    {/* Header: avatar + name + email */}
+                    <div className="flex items-center gap-3 px-4 pb-3 mb-1 border-b border-gray-100">
+                      <span className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center text-base font-bold flex-shrink-0">
+                        {accountInitial || <UserCircle className="w-6 h-6" />}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {firstName || 'My Account'}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      </div>
+                    </div>
+
+                    {[
+                      { icon: User, label: 'My Account', path: '/account' },
+                      { icon: ShoppingBag, label: 'My Orders', path: '/account#orders' },
+                      { icon: FileText, label: 'Get a Quote', path: '/quote' },
+                      { icon: HelpCircle, label: 'Need Help?', path: '/faq' },
+                      { icon: KeyRound, label: 'Change Password', path: '/reset-password' },
+                    ].map(({ icon: Icon, label, path: p }) => (
+                      <button
+                        key={label}
+                        role="menuitem"
+                        onClick={() => {
+                          setAccountOpen(false);
+                          goTo(p);
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
+                      >
+                        <Icon className="w-4 h-4 text-gray-400" />
+                        {label}
+                      </button>
+                    ))}
+
+                    <div className="border-t border-gray-100 my-1" />
+                    <button
+                      role="menuitem"
+                      onClick={handleSignOut}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Log Out
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <button onClick={() => goTo('/login')} className="text-gray-700 hover:text-amber-600 font-medium transition-colors">
@@ -211,12 +307,30 @@ export default function Navigation() {
                   Admin
                 </button>
               ) : user ? (
-                <button
-                  onClick={() => goTo('/account')}
-                  className="block w-full text-center bg-amber-600 text-white px-6 py-2.5 rounded-full hover:bg-amber-700 font-medium"
-                >
-                  {accountLabel}
-                </button>
+                <>
+                  <button
+                    onClick={() => goTo('/account')}
+                    className="block w-full text-center bg-amber-600 text-white px-6 py-2.5 rounded-full hover:bg-amber-700 font-medium"
+                  >
+                    {accountLabel}
+                  </button>
+                  <button onClick={() => goTo('/quote')} className={mobileLink(false)}>
+                    Get a Quote
+                  </button>
+                  <button onClick={() => goTo('/faq')} className={mobileLink(false)}>
+                    Need Help?
+                  </button>
+                  <button onClick={() => goTo('/reset-password')} className={mobileLink(false)}>
+                    Change Password
+                  </button>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex w-full items-center gap-2 py-2 font-medium text-red-600"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Log Out
+                  </button>
+                </>
               ) : (
                 <>
                   <button
