@@ -4,6 +4,7 @@ import { useContent } from './content/ContentProvider';
 import { HOME_SECTIONS } from './content/defaults';
 import { stripBase } from './lib/basePath';
 import { useSeo } from './lib/seo';
+import { track } from './lib/track';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
 import ValueProposition from './components/ValueProposition';
@@ -169,6 +170,12 @@ function App() {
   // vercel.json ensures these paths serve index.html in production. stripBase
   // removes the "/cursive" prefix so matches stay simple.
   const path = stripBase(window.location.pathname);
+
+  // Funnel step 1: every page load (fires once per load; navigation is full-page).
+  useEffect(() => {
+    track('page_load', { path: path || '/' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (path === '/admin')
     return (

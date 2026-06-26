@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { logActivity } from './activity';
+import { identifyUser, resetUser } from './analytics';
 
 interface AuthContextValue {
   session: Session | null;
@@ -29,8 +30,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       setLoading(false);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
+      // Tie PostHog activity to the account (covers email + Google logins).
+      if (event === 'SIGNED_IN' && s?.user) {
+        identifyUser(s.user.id, { email: s.user.email });
+      } else if (event === 'SIGNED_OUT') {
+        resetUser();
+      }
     });
     return () => sub.subscription.unsubscribe();
   }, []);

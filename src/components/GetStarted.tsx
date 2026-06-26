@@ -3,7 +3,7 @@ import { Check, Users, Laptop, ArrowRight } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import { useAuth } from '../lib/auth';
 import { go } from '../lib/basePath';
-import { pushToDataLayer } from '../lib/gtm';
+import { track } from '../lib/track';
 import AuthModal from './AuthModal';
 
 // Onboarding funnel: language → manuscript status → publish method.
@@ -34,7 +34,7 @@ export default function GetStarted() {
     } catch {
       /* ignore */
     }
-    pushToDataLayer('get_started_completed', {
+    track('get_started', {
       language,
       manuscript_status: status,
       publish_path: method,

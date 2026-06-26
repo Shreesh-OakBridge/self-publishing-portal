@@ -1,6 +1,7 @@
 import { Feather, Sparkles, BookOpen } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import { go } from '../lib/basePath';
+import { track } from '../lib/track';
 
 const cardIcons = [Feather, Sparkles, BookOpen];
 const cardGradients = [
@@ -13,6 +14,7 @@ export default function Hero() {
   const { hero } = useContent();
 
   const goToGetStarted = () => {
+    track('click_event', { label: 'hero_primary_cta' });
     go('/get-started');
   };
 
@@ -44,7 +46,10 @@ export default function Hero() {
               {hero.primaryCta}
             </button>
             <button
-              onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => {
+                track('click_event', { label: 'hero_view_plans' });
+                document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' });
+              }}
               className="border-2 border-amber-600 text-amber-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-amber-50 transition-all"
             >
               {hero.secondaryCta}

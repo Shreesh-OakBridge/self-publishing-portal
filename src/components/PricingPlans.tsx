@@ -4,6 +4,7 @@ import { useContent } from '../content/ContentProvider';
 import type { PricingPlan } from '../content/defaults';
 import { useAuth } from '../lib/auth';
 import { go } from '../lib/basePath';
+import { track } from '../lib/track';
 import AuthModal from './AuthModal';
 
 const planIcons = [Zap, Rocket, Crown, Sparkles];
@@ -150,6 +151,11 @@ export default function PricingPlans() {
   // Two-plan model: "Publish on your own" (basic) shows first; Expert Publishing
   // second. A pre-selected plan (a tier package) opens the Expert view.
   const [view, setView] = useState<'expert' | 'self'>(planParam ? 'expert' : 'self');
+
+  // Funnel step: viewing the plans/pricing (product view).
+  useEffect(() => {
+    track('view', { page: 'plans' });
+  }, []);
 
   const goToCheckout = (plan: string) => {
     go(`/checkout?plan=${encodeURIComponent(plan)}`);

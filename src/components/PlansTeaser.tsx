@@ -3,6 +3,7 @@ import { ArrowRight, Laptop, Users, Check } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import { useAuth } from '../lib/auth';
 import { go } from '../lib/basePath';
+import { track } from '../lib/track';
 import AuthModal from './AuthModal';
 
 // Homepage teaser showing BOTH publishing pathways — full self-publishing and
@@ -14,6 +15,7 @@ export default function PlansTeaser() {
   const [authOpen, setAuthOpen] = useState(false);
 
   const explorePlans = () => {
+    track('click_event', { label: 'explore_plans' });
     if (user) go('/plans');
     else setAuthOpen(true);
   };

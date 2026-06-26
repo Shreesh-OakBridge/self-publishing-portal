@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
 import { go, withBase } from '../lib/basePath';
-import { pushToDataLayer } from '../lib/gtm';
+import { track } from '../lib/track';
 
 const inr = (n: number) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const priceToNumber = (p: string) => Number((p || '').replace(/[^0-9.]/g, '')) || 0;
@@ -164,6 +164,7 @@ export default function Checkout() {
       setError('Please complete the required shipping fields (name, address, city, pincode).');
       return;
     }
+    track('add_shipping_info', { value: total, currency: 'INR' });
     // Must accept Terms & Conditions and the Publishing Agreement — surface the modal otherwise.
     if (!agreedTerms || !agreedAgreement) {
       setTermsModalOpen(true);
@@ -174,6 +175,7 @@ export default function Checkout() {
 
   const submitOrder = async () => {
     if (!user) return;
+    track('add_payment_info', { value: total, currency: 'INR' });
     setPlacing(true);
     setError('');
     const billing = sameAsShip
@@ -214,9 +216,10 @@ export default function Checkout() {
     } catch {
       /* ignore */
     }
-    pushToDataLayer('order_placed', {
+    track('purchase', {
       plan: planName ?? null,
-      amount: total,
+      value: total,
+      currency: 'INR',
       publish_path: onboarding?.publish_path ?? null,
     });
     setPlaced(true);

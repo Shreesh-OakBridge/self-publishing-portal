@@ -7,6 +7,7 @@
 //
 // Default host is PostHog Cloud US; for EU use https://eu.i.posthog.com.
 import type { PostHog } from 'posthog-js';
+import { supabase } from './supabase';
 
 export const POSTHOG_KEY = (import.meta.env.VITE_POSTHOG_KEY as string) || 'phc_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 export const POSTHOG_HOST = (import.meta.env.VITE_POSTHOG_HOST as string) || 'https://us.i.posthog.com';
@@ -57,6 +58,15 @@ export async function loadAnalytics() {
       respect_dnt: true,
     });
     ph = posthog;
+    // If a user is already signed in when analytics loads (e.g. they consented
+    // after logging in), link their profile so activity ties to the account.
+    try {
+      const { data } = await supabase.auth.getSession();
+      const u = data.session?.user;
+      if (u) posthog.identify(u.id, { email: u.email });
+    } catch {
+      /* ignore */
+    }
   } catch (err) {
     console.error('analytics load failed:', err);
   } finally {
@@ -68,6 +78,33 @@ export async function loadAnalytics() {
 export function disableAnalytics() {
   try {
     ph?.opt_out_capturing();
+  } catch {
+    /* ignore */
+  }
+}
+
+// Custom product-analytics event (no-op until PostHog is loaded after consent).
+export function captureEvent(event: string, props?: Record<string, unknown>) {
+  try {
+    ph?.capture(event, props);
+  } catch {
+    /* ignore */
+  }
+}
+
+// Link subsequent (and prior anonymous) activity to a real account.
+export function identifyUser(id: string, props?: Record<string, unknown>) {
+  try {
+    ph?.identify(id, props);
+  } catch {
+    /* ignore */
+  }
+}
+
+// Clear the identity on logout so the next session isn't merged into this user.
+export function resetUser() {
+  try {
+    ph?.reset();
   } catch {
     /* ignore */
   }
