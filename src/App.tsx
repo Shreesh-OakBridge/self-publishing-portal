@@ -135,7 +135,7 @@ function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-16 md:pb-0">
       {showWelcome && welcome.enabled && <WelcomeScreen onEnter={dismissWelcome} />}
       <Navigation />
       {ordered
@@ -152,7 +152,7 @@ function HomePage() {
 // Pass `crumb` to show a "Home › <crumb>" breadcrumb above the content.
 function SubPage({ children, crumb }: { children: ReactNode; crumb?: string }) {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-16 md:pb-0">
       <Navigation />
       <div className="pt-20">
         {crumb && <Breadcrumbs label={crumb} />}
