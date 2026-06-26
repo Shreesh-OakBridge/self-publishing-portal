@@ -143,6 +143,8 @@ export interface CustomizerContent {
 export interface StaticPageContent {
   title: string;
   body: string;
+  bannerUrl?: string;
+  bannerAlt?: string;
 }
 
 export interface PagesContent {
@@ -214,6 +216,8 @@ export interface TestimonialItem {
 export interface TestimonialsContent {
   heading: string;
   subheading: string;
+  autoRotate: boolean;
+  rotateSeconds: number;
   items: TestimonialItem[];
 }
 
@@ -419,6 +423,8 @@ export const defaultContent: SiteContent = {
   testimonials: {
     heading: 'Loved by authors',
     subheading: 'Writers across the country trust Cursive to bring their stories to readers.',
+    autoRotate: true,
+    rotateSeconds: 4,
     items: [
       {
         quote:
@@ -743,6 +749,7 @@ export const defaultContent: SiteContent = {
   pages: {
     about: {
       title: 'About Cursive Publishing',
+      bannerUrl: '',
       body:
         'Cursive Publishing is a premium self-publishing partner dedicated to helping authors bring their stories to readers. Founded by industry veterans with over 30 years of combined experience, we combine traditional publishing craft with modern, author-first technology.\n\nWe believe a book is more than words on a page—it is a legacy. That is why we treat every manuscript as a unique project, offering personalised attention through editing, design, production, distribution, and marketing.\n\nUnlike many services, our authors retain full ownership and creative control of their work. Our role is to serve your vision, not to dictate it. From your first consultation to long after your launch, we remain your partner in building a lasting readership.',
     },

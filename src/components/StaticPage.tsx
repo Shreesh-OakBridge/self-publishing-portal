@@ -13,6 +13,15 @@ export default function StaticPage({
 
   return (
     <section className="py-16 px-4">
+      {page.bannerUrl && (
+        <div className="max-w-5xl mx-auto mb-10">
+          <img
+            src={page.bannerUrl}
+            alt={page.bannerAlt || page.title}
+            className="w-full h-auto rounded-2xl shadow-sm"
+          />
+        </div>
+      )}
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8">{page.title}</h1>
         <div className="space-y-5 text-gray-700 leading-relaxed">

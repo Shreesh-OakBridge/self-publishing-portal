@@ -87,6 +87,7 @@ const MEDIA_FIELDS: Record<string, { label: string; accept: 'image' | 'video' }>
   imageUrl: { label: 'Hero Image', accept: 'image' },
   logoUrl: { label: 'Logo Image', accept: 'image' },
   coverUrl: { label: 'Book Cover Image', accept: 'image' },
+  bannerUrl: { label: 'Banner Image', accept: 'image' },
 };
 
 function humanize(key: string): string {

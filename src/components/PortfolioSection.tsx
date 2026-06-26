@@ -1,54 +1,24 @@
-import { useEffect, useRef } from 'react';
 import type { Key } from 'react';
-import { BookOpen, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, ArrowRight } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import { PortfolioItem } from '../content/defaults';
 import { withBase } from '../lib/basePath';
 
-// Homepage portfolio preview. With more than 4 titles it's a horizontal
-// carousel that can auto-rotate on a CMS-set timer (pauses on hover); manual
-// arrows + swipe always work. The full /portfolio page shows everything.
+// Homepage portfolio preview. With enough titles and auto-rotate on, the covers
+// glide as a seamless, never-ending marquee (pauses on hover). The admin
+// "rotateSeconds" sets the pace. Otherwise it's a static / manually-scrollable
+// row. The full /portfolio page shows everything as a grid.
 export default function PortfolioSection() {
   const { portfolio } = useContent();
   const items = portfolio.items;
   const overflow = items.length > 4;
   const autoRotate = portfolio.autoRotate ?? true;
   const rotateSeconds = portfolio.rotateSeconds ?? 3;
+  const scrolling = autoRotate && overflow;
+  // Each cover takes ~rotateSeconds to pass; one full loop = items × seconds.
+  const duration = Math.max(12, items.length * Math.max(1, rotateSeconds));
 
-  const scroller = useRef<HTMLDivElement>(null);
-  const paused = useRef(false);
-
-  const nudge = (dir: number) => {
-    const el = scroller.current;
-    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: 'smooth' });
-  };
-
-  // Auto-rotate: advance to the next cover every `rotateSeconds`, wrapping to
-  // the start at the end. Pauses while hovered. Off when toggled off in the CMS.
-  useEffect(() => {
-    if (!autoRotate || !overflow) return;
-    const id = setInterval(() => {
-      const el = scroller.current;
-      if (!el || paused.current) return;
-      if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 4) {
-        el.scrollTo({ left: 0, behavior: 'smooth' });
-      } else {
-        const first = el.firstElementChild as HTMLElement | null;
-        const step = first ? first.offsetWidth + 24 : el.clientWidth * 0.5;
-        el.scrollBy({ left: step, behavior: 'smooth' });
-      }
-    }, Math.max(1, rotateSeconds) * 1000);
-    return () => clearInterval(id);
-  }, [autoRotate, overflow, rotateSeconds]);
-
-  const arrowBtn =
-    'hidden md:flex absolute top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-white border shadow-lg text-gray-700 hover:bg-amber-50 hover:text-amber-700';
-
-  const containerClass = overflow
-    ? 'flex gap-5 md:gap-6 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide'
-    : 'flex md:flex-wrap md:justify-center gap-5 md:gap-6 overflow-x-auto md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide';
-
-  const Tile = (book: PortfolioItem, key: Key) => {
+  const Tile = (book: PortfolioItem, key: Key, extra = '') => {
     const inner = (
       <>
         <div className="aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 border border-amber-100 flex items-center justify-center mb-3 shadow-sm group-hover:shadow-md transition-shadow">
@@ -72,7 +42,7 @@ export default function PortfolioSection() {
         {book.category && <p className="text-xs text-amber-700 mt-0.5">{book.category}</p>}
       </>
     );
-    const cls = 'group shrink-0 w-[40%] sm:w-[200px] snap-start';
+    const cls = `group shrink-0 ${extra}`;
     return book.linkUrl ? (
       <a key={key} href={book.linkUrl} target="_blank" rel="noopener noreferrer" className={`${cls} cursor-pointer`}>
         {inner}
@@ -92,25 +62,20 @@ export default function PortfolioSection() {
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">{portfolio.subheading}</p>
         </div>
 
-        <div
-          className="relative"
-          onMouseEnter={() => (paused.current = true)}
-          onMouseLeave={() => (paused.current = false)}
-        >
-          {overflow && (
-            <>
-              <button onClick={() => nudge(-1)} className={`${arrowBtn} -left-3`} aria-label="Previous">
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button onClick={() => nudge(1)} className={`${arrowBtn} -right-3`} aria-label="Next">
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </>
-          )}
-          <div ref={scroller} className={containerClass}>
-            {items.map((b, i) => Tile(b, i))}
+        {scrolling ? (
+          // Items rendered twice; the track translates -50% so it loops
+          // seamlessly. Right-margin (not gap) keeps the loop point exact.
+          <div className="overflow-hidden -mx-4 px-4 md:mx-0 md:px-0">
+            <div className="marquee-track flex w-max" style={{ animationDuration: `${duration}s` }}>
+              {items.map((b, i) => Tile(b, `a-${i}`, 'w-[150px] sm:w-[200px] mr-5 md:mr-7'))}
+              {items.map((b, i) => Tile(b, `b-${i}`, 'w-[150px] sm:w-[200px] mr-5 md:mr-7'))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex md:flex-wrap md:justify-center gap-5 md:gap-6 overflow-x-auto md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+            {items.map((b, i) => Tile(b, i, 'w-[40%] sm:w-[200px]'))}
+          </div>
+        )}
 
         <div className="text-center mt-10">
           <a
