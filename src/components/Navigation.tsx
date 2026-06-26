@@ -191,7 +191,12 @@ export default function Navigation() {
                 <span>Admin</span>
               </button>
             ) : user ? (
-              <div className="relative" ref={accountRef}>
+              <div
+                className="relative"
+                ref={accountRef}
+                onMouseEnter={() => setAccountOpen(true)}
+                onMouseLeave={() => setAccountOpen(false)}
+              >
                 <button
                   onClick={() => setAccountOpen((o) => !o)}
                   aria-haspopup="menu"
@@ -208,10 +213,11 @@ export default function Navigation() {
                 </button>
 
                 {accountOpen && (
-                  <div
-                    role="menu"
-                    className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50"
-                  >
+                  <div className="absolute right-0 top-full pt-2 z-50">
+                    <div
+                      role="menu"
+                      className="w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2"
+                    >
                     {/* Header: avatar + name + email */}
                     <div className="flex items-center gap-3 px-4 pb-3 mb-1 border-b border-gray-100">
                       <span className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center text-base font-bold flex-shrink-0">
@@ -255,6 +261,7 @@ export default function Navigation() {
                       <LogOut className="w-4 h-4" />
                       Log Out
                     </button>
+                    </div>
                   </div>
                 )}
               </div>
