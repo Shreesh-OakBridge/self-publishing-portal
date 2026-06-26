@@ -691,3 +691,9 @@ $$;
 DROP TRIGGER IF EXISTS trg_order_invoice_number ON orders;
 CREATE TRIGGER trg_order_invoice_number BEFORE INSERT ON orders
   FOR EACH ROW EXECUTE FUNCTION set_order_invoice_number();
+
+-- ============================================================
+-- Production-stage tracker (from 20260626130000_production_tracker.sql)
+-- ============================================================
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS production_stage text DEFAULT 'placed';
+UPDATE orders SET production_stage = 'placed' WHERE production_stage IS NULL;

@@ -4,6 +4,7 @@ import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
+import { PRODUCTION_STAGES, stageLabel } from '../lib/productionStages';
 
 interface Order {
   id: string;
@@ -18,6 +19,7 @@ interface Order {
   language: string | null;
   manuscript_status: string | null;
   status: string;
+  production_stage: string | null;
   ship_name: string | null;
   ship_city: string | null;
   ship_state: string | null;
@@ -77,6 +79,16 @@ export default function OrdersPanel() {
     }
   };
 
+  const setStage = async (id: string, production_stage: string) => {
+    setItems((prev) => prev.map((o) => (o.id === id ? { ...o, production_stage } : o)));
+    const { error: err } = await supabase.from('orders').update({ production_stage }).eq('id', id);
+    if (err) {
+      console.error(err);
+      alert('Could not update production stage.');
+      load();
+    }
+  };
+
   const columns: Column<Order>[] = [
     { header: 'Date', value: (o) => fmt(o.created_at) },
     { header: 'Customer', value: (o) => o.ship_name || authors[o.user_id]?.full_name || '' },
@@ -90,6 +102,7 @@ export default function OrdersPanel() {
     { header: 'Coupon', value: (o) => o.coupon_code || '' },
     { header: 'Discount', value: (o) => o.discount ?? 0 },
     { header: 'Amount (INR)', value: (o) => o.amount ?? 0 },
+    { header: 'Production Stage', value: (o) => stageLabel(o.production_stage) },
     { header: 'Status', value: (o) => o.status },
     { header: 'Phone', value: (o) => o.ship_phone || '' },
     { header: 'City', value: (o) => o.ship_city || '' },
@@ -140,6 +153,7 @@ export default function OrdersPanel() {
                 <th className="px-4 py-3 font-semibold">Plan</th>
                 <th className="px-4 py-3 font-semibold">Amount</th>
                 <th className="px-4 py-3 font-semibold">Ship to</th>
+                <th className="px-4 py-3 font-semibold">Stage</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
               </tr>
             </thead>
@@ -165,6 +179,19 @@ export default function OrdersPanel() {
                     <td className="px-4 py-3 font-semibold">{inr(o.amount)}</td>
                     <td className="px-4 py-3 text-gray-600">
                       {[o.ship_city, o.ship_state, o.ship_pincode].filter(Boolean).join(', ') || '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={o.production_stage ?? PRODUCTION_STAGES[0].key}
+                        onChange={(e) => setStage(o.id, e.target.value)}
+                        className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:border-amber-500 outline-none"
+                      >
+                        {PRODUCTION_STAGES.map((s) => (
+                          <option key={s.key} value={s.key}>
+                            {s.label}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-4 py-3">
                       <select

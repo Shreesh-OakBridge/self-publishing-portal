@@ -15,6 +15,8 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import ProfileEditor from './ProfileEditor';
 import ManuscriptUpload from './ManuscriptUpload';
+import StageTracker from './StageTracker';
+import { stageLabel } from '../lib/productionStages';
 import { go, withBase } from '../lib/basePath';
 
 interface Customization {
@@ -47,6 +49,7 @@ interface Order {
   discount: number | null;
   coupon_code: string | null;
   status: string;
+  production_stage: string | null;
   created_at: string;
 }
 
@@ -149,7 +152,7 @@ export default function AccountPage() {
           .order('created_at', { ascending: false }),
         supabase
           .from('orders')
-          .select('id, plan, customization_id, amount, discount, coupon_code, status, created_at')
+          .select('id, plan, customization_id, amount, discount, coupon_code, status, production_stage, created_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false }),
         supabase
@@ -308,6 +311,17 @@ export default function AccountPage() {
             {tab === 'orders' && (
               <section>
                 <PanelHeading icon={ShoppingBag} title="My Orders" />
+                {!loadingData && orders.length > 0 && (
+                  <div className="bg-white rounded-2xl border p-5 mb-5">
+                    <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                      <h3 className="font-semibold text-gray-900">Publishing progress</h3>
+                      <span className="text-xs text-gray-500">
+                        {orders[0].plan || 'Latest order'} · {stageLabel(orders[0].production_stage)}
+                      </span>
+                    </div>
+                    <StageTracker stageKey={orders[0].production_stage} />
+                  </div>
+                )}
                 {loadingData ? (
                   <p className="text-gray-500">Loading…</p>
                 ) : orders.length === 0 ? (
@@ -326,6 +340,7 @@ export default function AccountPage() {
                           <th className="px-4 py-3 font-semibold">Order</th>
                           <th className="px-4 py-3 font-semibold">Coupon</th>
                           <th className="px-4 py-3 font-semibold">Amount</th>
+                          <th className="px-4 py-3 font-semibold">Stage</th>
                           <th className="px-4 py-3 font-semibold">Status</th>
                         </tr>
                       </thead>
@@ -350,6 +365,11 @@ export default function AccountPage() {
                               )}
                             </td>
                             <td className="px-4 py-3 font-semibold">{inr(o.amount)}</td>
+                            <td className="px-4 py-3">
+                              <span className="px-2 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 whitespace-nowrap">
+                                {stageLabel(o.production_stage)}
+                              </span>
+                            </td>
                             <td className="px-4 py-3">
                               <span className={`px-2 py-1 rounded-full text-xs font-semibold capitalize ${statusColor(o.status)}`}>
                                 {o.status.replace('_', ' ')}
