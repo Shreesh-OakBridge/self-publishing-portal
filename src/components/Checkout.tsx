@@ -68,6 +68,11 @@ export default function Checkout() {
   const [sameAsShip, setSameAsShip] = useState(true);
   const [bill, setBill] = useState({ name: '', address: '' });
 
+  // Invoice fields: author name (required, prefilled) + optional buyer GSTIN / business name.
+  const [author, setAuthor] = useState('');
+  const [gstin, setGstin] = useState('');
+  const [businessName, setBusinessName] = useState('');
+
   // Terms & Conditions + Publishing Agreement acceptance
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedAgreement, setAgreedAgreement] = useState(false);
@@ -107,6 +112,7 @@ export default function Checkout() {
       }
       const fullName = (user.user_metadata?.full_name as string) || '';
       if (fullName) setShip((s) => ({ ...s, name: fullName }));
+      if (fullName) setAuthor((a) => a || fullName);
       setLoadingData(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -164,6 +170,15 @@ export default function Checkout() {
       setError('Please complete the required shipping fields (name, address, city, pincode).');
       return;
     }
+    if (!author.trim()) {
+      setError('Please enter the author name — it appears on your invoice.');
+      return;
+    }
+    const g = gstin.trim().toUpperCase();
+    if (g && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/.test(g)) {
+      setError('That GSTIN doesn’t look valid (it should be 15 characters). Leave it blank if you don’t have one.');
+      return;
+    }
     track('add_shipping_info', { value: total, currency: 'INR' });
     // Must accept Terms & Conditions and the Publishing Agreement — surface the modal otherwise.
     if (!agreedTerms || !agreedAgreement) {
@@ -178,12 +193,22 @@ export default function Checkout() {
     track('add_payment_info', { value: total, currency: 'INR' });
     setPlacing(true);
     setError('');
-    const billing = sameAsShip
-      ? { bill_name: ship.name, bill_address: ship.address }
-      : { bill_name: bill.name, bill_address: bill.address };
+    const buyerGst = gstin.trim().toUpperCase();
+    // When a GSTIN is given, prefer the registered business name for Bill-to.
+    const billName = buyerGst && businessName.trim()
+      ? businessName.trim()
+      : sameAsShip
+      ? ship.name
+      : bill.name;
+    const billing = {
+      bill_name: billName,
+      bill_address: sameAsShip ? ship.address : bill.address,
+      bill_gst: buyerGst || null,
+    };
     const { error: err } = await supabase.from('orders').insert({
       user_id: user.id,
       email: user.email,
+      author_name: author.trim(),
       plan: planName,
       customization_id: customizationId,
       royalty_calculation_id: royaltyId,
@@ -394,6 +419,10 @@ export default function Checkout() {
           {/* Shipping */}
           <div className="bg-white rounded-2xl border p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Shipping address</h2>
+            <div className="mb-3">
+              <input className={field} placeholder="Author name *" value={author} onChange={(e) => setAuthor(e.target.value)} />
+              <p className="text-xs text-gray-400 mt-1">As it should appear on your invoice (use a pen name if your book is published under one).</p>
+            </div>
             <div className="grid sm:grid-cols-2 gap-3">
               <input className={field} placeholder="Full name *" value={ship.name} onChange={(e) => setShip({ ...ship, name: e.target.value })} />
               <input className={field} placeholder="Phone" value={ship.phone} onChange={(e) => setShip({ ...ship, phone: e.target.value })} />
@@ -417,6 +446,26 @@ export default function Checkout() {
                 <input className={field} placeholder="Billing address" value={bill.address} onChange={(e) => setBill({ ...bill, address: e.target.value })} />
               </div>
             )}
+            <div className="mt-4 grid sm:grid-cols-2 gap-3">
+              <div>
+                <input
+                  className={field}
+                  placeholder="GSTIN (optional)"
+                  value={gstin}
+                  maxLength={15}
+                  onChange={(e) => setGstin(e.target.value.toUpperCase())}
+                />
+                <p className="text-xs text-gray-400 mt-1">For a business/GST invoice. Leave blank if you don’t have one.</p>
+              </div>
+              {gstin.trim() && (
+                <input
+                  className={field}
+                  placeholder="Business name (as per GST)"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                />
+              )}
+            </div>
           </div>
 
           {/* Payment placeholder */}
