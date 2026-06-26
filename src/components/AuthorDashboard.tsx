@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, TrendingUp, IndianRupee, LayoutDashboard } from 'lucide-react';
+import { BookOpen, TrendingUp, IndianRupee, LayoutDashboard, Sparkles, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
+import { go } from '../lib/basePath';
 
 interface AuthorBook {
   id: string;
@@ -96,9 +97,24 @@ export default function AuthorDashboard({ showHeading = true }: { showHeading?: 
       {loading ? (
         <p className="text-gray-500">Loading…</p>
       ) : books.length === 0 ? (
-        <div className="bg-white rounded-2xl border p-6 text-gray-500">
-          Your publishing journey hasn’t started yet. Once your book is in production, your status,
-          sales, and royalty earnings will appear here.
+        <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 border border-amber-100 rounded-2xl p-8 sm:p-10 text-center">
+          <Sparkles className="w-10 h-10 text-amber-500 mx-auto mb-4" />
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+            Your story is still unwritten on these shelves
+          </h3>
+          <p className="text-gray-600 max-w-xl mx-auto mb-6 leading-relaxed">
+            This is where your published titles, copies sold, and royalty earnings will live — but
+            right now it’s empty. Hundreds of authors have already turned their manuscripts into
+            beautifully published books with Cursive while their stories sat waiting in a drawer.
+            Yours doesn’t have to. Your readers are out there; the only thing missing is your book.
+          </p>
+          <button
+            onClick={() => go('/get-started')}
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-8 py-3.5 rounded-full font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-sm"
+          >
+            Begin Your Publishing Journey <ArrowRight className="w-4 h-4" />
+          </button>
+          <p className="text-xs text-gray-400 mt-3">Most authors start in minutes — your shelf could look very different by next month.</p>
         </div>
       ) : (
         <div className="bg-white rounded-2xl border overflow-x-auto">
