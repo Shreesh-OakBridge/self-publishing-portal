@@ -28,6 +28,7 @@ import JourneyPage from './components/JourneyPage';
 import Planner from './components/Planner';
 import EstimateBanner from './components/EstimateBanner';
 import ProjectPage from './components/ProjectPage';
+import AuthorHub from './components/AuthorHub';
 import StaticPage from './components/StaticPage';
 import GetStarted from './components/GetStarted';
 import QuotePage from './components/QuotePage';
@@ -179,6 +180,13 @@ function App() {
 
   // Funnel step 1: every page load (fires once per load; navigation is full-page).
   useEffect(() => {
+    // Capture a referral code (?ref=) so it can be attached at signup.
+    try {
+      const ref = new URLSearchParams(window.location.search).get('ref');
+      if (ref) localStorage.setItem('cursive_ref', ref);
+    } catch {
+      /* ignore */
+    }
     track('page_load', { path: path || '/' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -204,6 +212,7 @@ function App() {
       </Suspense>
     );
   if (path === '/project') return <ProjectPage />;
+  if (path === '/hub') return <AuthorHub />;
   if (path === '/customize')
     return (
       <SubPage>

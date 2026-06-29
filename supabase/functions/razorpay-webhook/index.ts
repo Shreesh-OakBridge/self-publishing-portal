@@ -49,6 +49,20 @@ Deno.serve(async (req: Request) => {
             razorpay_order_id: payment.order_id,
           })
           .eq('id', orderId);
+
+        // Fire the paid confirmation + invoice email (idempotent enough for our
+        // needs; the client verify path may also have sent it).
+        try {
+          const { data: order } = await admin.from('orders').select('*').eq('id', orderId).single();
+          const secret = Deno.env.get('WEBHOOK_SECRET');
+          await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/notify-order`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(secret ? { 'x-webhook-secret': secret } : {}) },
+            body: JSON.stringify({ type: 'PAYMENT', record: order }),
+          });
+        } catch (e) {
+          console.error('notify-order trigger failed:', e);
+        }
       }
     }
     return new Response(JSON.stringify({ ok: true }), {

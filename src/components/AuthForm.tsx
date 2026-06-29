@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { logActivity } from '../lib/activity';
 import { track } from '../lib/track';
 import { withBase } from '../lib/basePath';
+import { recordReferralIfAny } from '../lib/referral';
 
 type Mode = 'login' | 'signup' | 'forgot';
 
@@ -80,6 +81,12 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login', oauth
     try {
       if (mode === 'signup') {
         const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+        let referredBy: string | undefined;
+        try {
+          referredBy = localStorage.getItem('cursive_ref') || undefined;
+        } catch {
+          referredBy = undefined;
+        }
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -88,15 +95,22 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login', oauth
               first_name: firstName.trim(),
               last_name: lastName.trim(),
               full_name: fullName,
+              ...(referredBy ? { referred_by: referredBy } : {}),
             },
           },
         });
         if (signUpError) throw signUpError;
+        try {
+          localStorage.removeItem('cursive_ref');
+        } catch {
+          /* ignore */
+        }
 
         if (!data.session) {
           setInfo('Account created. Please check your email to confirm, then log in.');
           setMode('login');
         } else {
+          await recordReferralIfAny(data.user);
           track('sign_up', { method: 'email' });
           onAuthenticated();
         }

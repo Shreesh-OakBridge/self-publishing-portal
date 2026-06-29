@@ -748,3 +748,37 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_order_id text;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_payment_id text;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_status text DEFAULT 'unpaid';
 UPDATE orders SET payment_status = 'unpaid' WHERE payment_status IS NULL;
+
+-- Invoice email idempotency (from 20260626160000_invoice_emailed.sql)
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_emailed_at timestamptz;
+
+-- Proofs storage bucket (from 20260626170000_proofs_storage.sql)
+INSERT INTO storage.buckets (id, name, public) VALUES ('proofs', 'proofs', true) ON CONFLICT (id) DO NOTHING;
+DROP POLICY IF EXISTS "Admins upload proofs" ON storage.objects;
+CREATE POLICY "Admins upload proofs" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'proofs' AND is_admin());
+DROP POLICY IF EXISTS "Public read proofs" ON storage.objects;
+CREATE POLICY "Public read proofs" ON storage.objects FOR SELECT TO public USING (bucket_id = 'proofs');
+
+-- ============================================================
+-- Referrals / Author Hub (from 20260626180000_referrals.sql)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS referrals (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  referrer_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  referred_user_id uuid UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  referred_email text,
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'rewarded', 'invalid')),
+  reward_note text,
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS referrals_referrer_idx ON referrals (referrer_id);
+ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Referrer reads own referrals" ON referrals;
+CREATE POLICY "Referrer reads own referrals" ON referrals FOR SELECT TO authenticated
+  USING (is_admin() OR referrer_id = auth.uid() OR referred_user_id = auth.uid());
+DROP POLICY IF EXISTS "Referred user records referral" ON referrals;
+CREATE POLICY "Referred user records referral" ON referrals FOR INSERT TO authenticated
+  WITH CHECK (referred_user_id = auth.uid() AND referrer_id <> auth.uid());
+DROP POLICY IF EXISTS "Admins manage referrals" ON referrals;
+CREATE POLICY "Admins manage referrals" ON referrals FOR UPDATE TO authenticated
+  USING (is_admin()) WITH CHECK (is_admin());

@@ -57,6 +57,7 @@ const SECTION_LABELS: Record<string, string> = {
   confidenceBar: 'Confidence Bar',
   services: 'Services',
   journeys: 'Journeys (Choose Your Journey)',
+  authorHub: 'Author Hub',
   portfolio: 'Portfolio',
   testimonials: 'Testimonials',
   pricing: 'Pricing Plans',

@@ -190,6 +190,19 @@ export interface JourneysContent {
   items: JourneyItem[];
 }
 
+export interface ResourceLink {
+  label: string;
+  url: string;
+  description: string;
+}
+
+export interface AuthorHubContent {
+  heading: string;
+  subheading: string;
+  referralReward: string;
+  community: ResourceLink[];
+}
+
 export interface ServiceItem {
   title: string;
   summary: string;
@@ -308,6 +321,7 @@ export interface SiteContent {
   confidenceBar: ConfidenceBarContent;
   services: ServicesContent;
   journeys: JourneysContent;
+  authorHub: AuthorHubContent;
   portfolio: PortfolioContent;
   testimonials: TestimonialsContent;
   pricing: PricingContent;
@@ -845,6 +859,28 @@ export const defaultContent: SiteContent = {
           { question: 'Can you match our brand guidelines?', answer: 'Yes, we design to your brand colours, fonts and tone.' },
         ],
         ctaLabel: 'Start my company book',
+      },
+    ],
+  },
+  authorHub: {
+    heading: 'Author Hub',
+    subheading: 'Your home as a published author — track earnings, grow your readership, and earn rewards.',
+    referralReward: 'Love working with us? Refer a fellow author — when they publish their first book, you both get a reward. Share your link below.',
+    community: [
+      {
+        label: 'Author community',
+        url: '',
+        description: 'Connect with other Cursive authors, swap tips, and share your launch.',
+      },
+      {
+        label: 'Learning & resources',
+        url: '',
+        description: 'Guides on marketing, pricing, and growing your book sales.',
+      },
+      {
+        label: 'Events & webinars',
+        url: '',
+        description: 'Join our author workshops and live sessions.',
       },
     ],
   },

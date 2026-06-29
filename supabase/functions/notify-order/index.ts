@@ -13,6 +13,7 @@
 import { PDFDocument, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1';
 import fontkit from 'https://esm.sh/@pdf-lib/fontkit@1.1.1';
 import { encodeBase64, decodeBase64 } from 'https://deno.land/std@0.224.0/encoding/base64.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { LOGO_PNG_B64, RUPEE_FONT_B64 } from './assets.ts';
 
 interface Order {
@@ -30,6 +31,7 @@ interface Order {
   coupon_code?: string | null;
   royalty_rate?: number | null;
   status?: string;
+  payment_status?: string | null;
   ship_name?: string | null;
   ship_phone?: string | null;
   ship_address?: string | null;
@@ -391,6 +393,43 @@ Deno.serve(async (req: Request) => {
 
     const payload = (await req.json()) as WebhookPayload;
     const order = payload.record ?? (payload as unknown as Order);
+
+    // Only email once the order is actually paid. verify-razorpay-payment and
+    // razorpay-webhook call this with type 'PAYMENT' after payment succeeds; the
+    // plain DB INSERT webhook (pending order) no-ops here.
+    const paid = payload.type === 'PAYMENT' || order.payment_status === 'paid';
+    if (!paid) {
+      return new Response(JSON.stringify({ ok: true, skipped: 'order not paid yet' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Idempotency: claim the order so the paid email sends only once even if the
+    // client verify and the webhook both trigger.
+    if (order.id) {
+      try {
+        const admin = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+        );
+        const { data: claimed } = await admin
+          .from('orders')
+          .update({ invoice_emailed_at: new Date().toISOString() })
+          .eq('id', order.id)
+          .is('invoice_emailed_at', null)
+          .select('id');
+        if (!claimed || claimed.length === 0) {
+          return new Response(JSON.stringify({ ok: true, skipped: 'already emailed' }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+      } catch (e) {
+        console.error('idempotency claim failed (continuing):', e);
+      }
+    }
+
     const table = summaryTable(order);
     const results: Record<string, unknown> = {};
 

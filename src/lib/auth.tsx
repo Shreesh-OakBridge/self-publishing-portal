@@ -3,6 +3,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { logActivity } from './activity';
 import { identifyUser, resetUser } from './analytics';
+import { recordReferralIfAny } from './referral';
 
 interface AuthContextValue {
   session: Session | null;
@@ -35,6 +36,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Tie PostHog activity to the account (covers email + Google logins).
       if (event === 'SIGNED_IN' && s?.user) {
         identifyUser(s.user.id, { email: s.user.email });
+        // Record a referral on the first authenticated session (email-confirm /
+        // Google signups). Harmless on repeat — UNIQUE on referred_user_id.
+        void recordReferralIfAny(s.user);
       } else if (event === 'SIGNED_OUT') {
         resetUser();
       }

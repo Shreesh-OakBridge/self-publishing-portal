@@ -54,6 +54,7 @@ export default function ProjectWorkspace({
   const [pTitle, setPTitle] = useState('');
   const [pNote, setPNote] = useState('');
   const [pUrl, setPUrl] = useState('');
+  const [pFile, setPFile] = useState<File | null>(null);
   const [addingProof, setAddingProof] = useState(false);
 
   // author "request changes" inline box
@@ -94,11 +95,24 @@ export default function ProjectWorkspace({
   const addProof = async () => {
     if (!pTitle.trim()) return;
     setAddingProof(true);
+    let fileUrl: string | null = pUrl.trim() || null;
+    if (pFile) {
+      const safe = pFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `${orderId}/${Date.now()}-${safe}`;
+      const up = await client.storage.from('proofs').upload(path, pFile, { upsert: false });
+      if (up.error) {
+        setAddingProof(false);
+        console.error(up.error);
+        alert('File upload failed: ' + up.error.message);
+        return;
+      }
+      fileUrl = client.storage.from('proofs').getPublicUrl(path).data.publicUrl;
+    }
     const { error } = await client.from('project_proofs').insert({
       order_id: orderId,
       title: pTitle.trim(),
       note: pNote.trim() || null,
-      file_url: pUrl.trim() || null,
+      file_url: fileUrl,
     });
     setAddingProof(false);
     if (error) {
@@ -109,6 +123,7 @@ export default function ProjectWorkspace({
     setPTitle('');
     setPNote('');
     setPUrl('');
+    setPFile(null);
     load();
   };
 
@@ -152,6 +167,19 @@ export default function ProjectWorkspace({
             <p className="text-sm font-semibold text-gray-800">Share a proof for approval</p>
             <input className={input} placeholder="Proof title (e.g. Cover design v1)" value={pTitle} onChange={(e) => setPTitle(e.target.value)} />
             <input className={input} placeholder="Link to file (PDF / image URL) — optional" value={pUrl} onChange={(e) => setPUrl(e.target.value)} />
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                onChange={(e) => setPFile(e.target.files?.[0] ?? null)}
+                className="text-sm text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-amber-100 file:text-amber-800 file:text-sm file:font-semibold"
+              />
+              {pFile && (
+                <button onClick={() => setPFile(null)} className="text-xs text-gray-500 hover:text-gray-700">
+                  clear
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-gray-400">Paste a link or upload a file (PDF/image). Uploads are stored securely.</p>
             <textarea className={input} rows={2} placeholder="Note for the author — optional" value={pNote} onChange={(e) => setPNote(e.target.value)} />
             <button
               onClick={addProof}

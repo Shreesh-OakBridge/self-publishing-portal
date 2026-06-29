@@ -55,6 +55,19 @@ Deno.serve(async (req: Request) => {
       .eq('id', order_id);
     if (error) return json({ ok: false, error: error.message }, 500);
 
+    // Fire the paid confirmation + invoice email now that the order is paid.
+    try {
+      const { data: order } = await admin.from('orders').select('*').eq('id', order_id).single();
+      const secret = Deno.env.get('WEBHOOK_SECRET');
+      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/notify-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(secret ? { 'x-webhook-secret': secret } : {}) },
+        body: JSON.stringify({ type: 'PAYMENT', record: order }),
+      });
+    } catch (e) {
+      console.error('notify-order trigger failed:', e);
+    }
+
     return json({ ok: true });
   } catch (err) {
     return json({ ok: false, error: String(err) }, 500);

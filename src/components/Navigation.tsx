@@ -10,6 +10,7 @@ import {
   KeyRound,
   LogOut,
   User,
+  Award,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../lib/auth';
@@ -241,6 +242,7 @@ export default function Navigation() {
                     {[
                       { icon: User, label: 'My Account', path: '/account' },
                       { icon: ShoppingBag, label: 'My Orders', path: '/account#orders' },
+                      { icon: Award, label: 'Author Hub', path: '/hub' },
                       { icon: FileText, label: 'Get a Quote', path: '/quote' },
                       { icon: HelpCircle, label: 'Need Help?', path: '/faq' },
                       { icon: KeyRound, label: 'Change Password', path: '/reset-password' },
