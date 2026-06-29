@@ -174,7 +174,6 @@ export default function OrdersPanel() {
                 <th className="px-4 py-3 font-semibold">Ship to</th>
                 <th className="px-4 py-3 font-semibold">Stage</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold text-right">Workspace</th>
               </tr>
             </thead>
             <tbody>
@@ -191,6 +190,12 @@ export default function OrdersPanel() {
                         </a>
                       )}
                       {o.ship_phone && <div className="text-xs text-gray-500">{o.ship_phone}</div>}
+                      <button
+                        onClick={() => setOpenOrder(o)}
+                        className="inline-flex items-center gap-1 text-amber-700 text-xs font-semibold mt-1 hover:underline"
+                      >
+                        <MessagesSquare className="w-3.5 h-3.5" /> Open workspace
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-gray-700">
                       {o.plan || '—'}
@@ -225,14 +230,6 @@ export default function OrdersPanel() {
                           </option>
                         ))}
                       </select>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => setOpenOrder(o)}
-                        className="inline-flex items-center gap-1 text-amber-700 font-semibold hover:underline whitespace-nowrap"
-                      >
-                        <MessagesSquare className="w-4 h-4" /> Open
-                      </button>
                     </td>
                   </tr>
                 );
