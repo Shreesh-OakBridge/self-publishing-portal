@@ -31,6 +31,8 @@ const TABS = [
   { key: 'admins', label: 'Admins', Icon: ShieldCheck, roles: ['owner'] },
 ] as const;
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
+import { SearchBox, SortControl } from './AdminControls';
+import { filterBySearch, sortRows, noSort, type SortState } from '../lib/adminFilter';
 
 const leadColumns: Column<Lead>[] = [
   { header: 'Date', value: (l) => new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) },
@@ -71,11 +73,17 @@ export default function AdminDashboard() {
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [leadsError, setLeadsError] = useState('');
   const [leadRange, setLeadRange] = useState<DateRange>(emptyRange);
+  const [leadSearch, setLeadSearch] = useState('');
+  const [leadSort, setLeadSort] = useState<SortState>(noSort);
   const [tab, setTab] = useState<'leads' | 'orders' | 'quotes' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'layout' | 'content' | 'admins'>('leads');
   const [adminRole, setAdminRole] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const role = adminRole ?? 'admin';
-  const filteredLeads = filterByRange(leads, leadRange, (l) => l.created_at);
+  const filteredLeads = sortRows(
+    filterBySearch(filterByRange(leads, leadRange, (l) => l.created_at), leadColumns, leadSearch),
+    leadColumns,
+    leadSort,
+  );
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -364,6 +372,8 @@ export default function AdminDashboard() {
             {leadRange.from || leadRange.to ? ' in range' : ' total'}
           </p>
           <div className="flex items-center gap-2 flex-wrap">
+            <SearchBox value={leadSearch} onChange={setLeadSearch} placeholder="Search name, email, plan…" />
+            <SortControl columns={leadColumns} sort={leadSort} onChange={setLeadSort} />
             <DateRangeFilter range={leadRange} onChange={setLeadRange} />
             <ExportMenu baseName="leads" title="Leads" columns={leadColumns} rows={filteredLeads} />
           </div>

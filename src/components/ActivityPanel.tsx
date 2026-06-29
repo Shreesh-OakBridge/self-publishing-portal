@@ -4,6 +4,8 @@ import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
+import { SearchBox, SortControl } from './AdminControls';
+import { filterBySearch, sortRows, noSort, type SortState } from '../lib/adminFilter';
 
 interface LogRow {
   id: string;
@@ -86,7 +88,8 @@ export default function ActivityPanel() {
     load();
   }, []);
 
-  const filtered = filterByRange(rows, range, (r) => r.created_at);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortState>(noSort);
 
   const columns: Column<LogRow>[] = [
     { header: 'When', value: (r) => fmt(r.created_at) },
@@ -96,6 +99,12 @@ export default function ActivityPanel() {
     { header: 'Details', value: (r) => summarize(r.metadata) },
   ];
 
+  const filtered = sortRows(
+    filterBySearch(filterByRange(rows, range, (r) => r.created_at), columns, search),
+    columns,
+    sort,
+  );
+
   return (
     <>
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
@@ -104,6 +113,8 @@ export default function ActivityPanel() {
           {range.from || range.to ? ' in range' : ' (latest 500)'}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
+          <SearchBox value={search} onChange={setSearch} placeholder="Search who, action, entity…" />
+          <SortControl columns={columns} sort={sort} onChange={setSort} />
           <DateRangeFilter range={range} onChange={setRange} />
           <ExportMenu baseName="activity_log" title="Activity Log" columns={columns} rows={filtered} />
           <button

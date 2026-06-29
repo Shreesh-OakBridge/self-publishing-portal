@@ -5,6 +5,8 @@ import { useContent } from '../content/ContentProvider';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
+import { SearchBox, SortControl } from './AdminControls';
+import { filterBySearch, sortRows, noSort, type SortState } from '../lib/adminFilter';
 
 interface Quote {
   id: string;
@@ -37,7 +39,8 @@ export default function QuotesPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [range, setRange] = useState<DateRange>(emptyRange);
-  const filtered = filterByRange(items, range, (q) => q.created_at);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortState>(noSort);
 
   const name = (list: { id: string; name: string }[], id: string | null) =>
     list.find((o) => o.id === id)?.name || id || '—';
@@ -99,6 +102,17 @@ export default function QuotesPanel() {
     { header: 'Notes', value: (q) => q.admin_notes || '' },
   ];
 
+  const filtered = sortRows(
+    filterBySearch(
+      filterByRange(items, range, (q) => q.created_at),
+      columns,
+      search,
+      (q) => `${q.id} ${q.user_id ?? ''}`,
+    ),
+    columns,
+    sort,
+  );
+
   if (loading) return <div className="text-center text-gray-500 py-16">Loading quotes…</div>;
   if (error)
     return (
@@ -116,6 +130,8 @@ export default function QuotesPanel() {
           {(range.from || range.to) && <span className="text-gray-400"> in range</span>}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
+          <SearchBox value={search} onChange={setSearch} placeholder="Search user ID, email, name…" />
+          <SortControl columns={columns} sort={sort} onChange={setSort} />
           <DateRangeFilter range={range} onChange={setRange} />
           <ExportMenu baseName="quotes" title="Quote Requests" columns={columns} rows={filtered} />
           <button

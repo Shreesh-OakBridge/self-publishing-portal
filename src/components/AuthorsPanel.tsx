@@ -4,6 +4,8 @@ import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
+import { SearchBox, SortControl } from './AdminControls';
+import { filterBySearch, sortRows, noSort, type SortState } from '../lib/adminFilter';
 
 interface Author {
   id: string;
@@ -68,7 +70,8 @@ export default function AuthorsPanel() {
     load();
   }, []);
 
-  const filtered = filterByRange(authors, range, (a) => a.created_at);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortState>(noSort);
 
   const columns: Column<Author>[] = [
     { header: 'Name', value: (a) => a.full_name || '' },
@@ -79,6 +82,17 @@ export default function AuthorsPanel() {
     { header: 'Customizations', value: (a) => custs.filter((x) => x.user_id === a.id).length },
     { header: 'Royalty Projections', value: (a) => calcs.filter((x) => x.user_id === a.id).length },
   ];
+
+  const filtered = sortRows(
+    filterBySearch(
+      filterByRange(authors, range, (a) => a.created_at),
+      columns,
+      search,
+      (a) => `${a.id}`,
+    ),
+    columns,
+    sort,
+  );
 
   if (loading) {
     return <div className="text-center text-gray-500 py-16">Loading authors…</div>;
@@ -100,6 +114,8 @@ export default function AuthorsPanel() {
           {(range.from || range.to) && <span className="text-gray-400"> in range</span>}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
+          <SearchBox value={search} onChange={setSearch} placeholder="Search user ID, email, name…" />
+          <SortControl columns={columns} sort={sort} onChange={setSort} />
           <DateRangeFilter range={range} onChange={setRange} />
           <ExportMenu baseName="authors" title="Authors" columns={columns} rows={filtered} />
           <button

@@ -4,6 +4,8 @@ import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
+import { SearchBox, SortControl } from './AdminControls';
+import { filterBySearch, sortRows, noSort, type SortState } from '../lib/adminFilter';
 
 interface Coupon {
   code: string;
@@ -27,6 +29,8 @@ export default function CouponsPanel() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [range, setRange] = useState<DateRange>(emptyRange);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortState>(noSort);
 
   // create form
   const [code, setCode] = useState('');
@@ -112,7 +116,11 @@ export default function CouponsPanel() {
     { header: 'Active', value: (c) => (c.active ? 'Yes' : 'No') },
   ];
 
-  const filtered = filterByRange(items, range, (c) => c.created_at);
+  const filtered = sortRows(
+    filterBySearch(filterByRange(items, range, (c) => c.created_at), columns, search),
+    columns,
+    sort,
+  );
 
   const field = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-300 outline-none';
 
@@ -180,6 +188,8 @@ export default function CouponsPanel() {
           {(range.from || range.to) && <span className="text-gray-400"> in range</span>}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
+          <SearchBox value={search} onChange={setSearch} placeholder="Search code, email…" />
+          <SortControl columns={columns} sort={sort} onChange={setSort} />
           <DateRangeFilter range={range} onChange={setRange} />
           <ExportMenu baseName="coupons" title="Coupons" columns={columns} rows={filtered} />
           <button onClick={load} className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">

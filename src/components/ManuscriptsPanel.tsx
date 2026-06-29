@@ -4,6 +4,8 @@ import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
+import { SearchBox, SortControl } from './AdminControls';
+import { filterBySearch, sortRows, noSort, type SortState } from '../lib/adminFilter';
 
 interface Manuscript {
   id: string;
@@ -140,7 +142,8 @@ export default function ManuscriptsPanel() {
     }
   };
 
-  const filtered = filterByRange(items, range, (m) => m.created_at);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortState>(noSort);
 
   const columns: Column<Manuscript>[] = [
     { header: 'Date', value: (m) => fmt(m.created_at) },
@@ -152,6 +155,17 @@ export default function ManuscriptsPanel() {
     { header: 'File', value: (m) => m.file_name || '' },
     { header: 'Status', value: (m) => STATUS_LABEL[m.status] ?? m.status },
   ];
+
+  const filtered = sortRows(
+    filterBySearch(
+      filterByRange(items, range, (m) => m.created_at),
+      columns,
+      search,
+      (m) => `${m.id} ${m.user_id}`,
+    ),
+    columns,
+    sort,
+  );
 
   if (loading) return <div className="text-center text-gray-500 py-16">Loading manuscripts…</div>;
   if (error)
@@ -170,6 +184,8 @@ export default function ManuscriptsPanel() {
           {(range.from || range.to) && <span className="text-gray-400"> in range</span>}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
+          <SearchBox value={search} onChange={setSearch} placeholder="Search title, author, email, ID…" />
+          <SortControl columns={columns} sort={sort} onChange={setSort} />
           <DateRangeFilter range={range} onChange={setRange} />
           <ExportMenu baseName="manuscripts" title="Manuscripts" columns={columns} rows={filtered} />
           <button

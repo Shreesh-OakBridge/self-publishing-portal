@@ -4,6 +4,8 @@ import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
+import { SearchBox, SortControl } from './AdminControls';
+import { filterBySearch, sortRows, noSort, type SortState } from '../lib/adminFilter';
 
 interface Book {
   id: string;
@@ -32,6 +34,8 @@ export default function BooksPanel() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [range, setRange] = useState<DateRange>(emptyRange);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortState>(noSort);
 
   // create form
   const [userId, setUserId] = useState('');
@@ -145,7 +149,16 @@ export default function BooksPanel() {
     },
   ];
 
-  const filtered = filterByRange(items, range, (b) => b.created_at);
+  const filtered = sortRows(
+    filterBySearch(
+      filterByRange(items, range, (b) => b.created_at),
+      columns,
+      search,
+      (b) => `${b.id} ${b.user_id}`,
+    ),
+    columns,
+    sort,
+  );
 
   const field = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-300 outline-none';
   const cell = 'px-2 py-1 border border-gray-200 rounded text-sm w-full focus:border-amber-500 outline-none';
@@ -222,6 +235,8 @@ export default function BooksPanel() {
           {(range.from || range.to) && <span className="text-gray-400"> in range</span>}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
+          <SearchBox value={search} onChange={setSearch} placeholder="Search title, author, ID…" />
+          <SortControl columns={columns} sort={sort} onChange={setSort} />
           <DateRangeFilter range={range} onChange={setRange} />
           <ExportMenu baseName="books" title="Books" columns={columns} rows={filtered} />
           <button onClick={load} className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">

@@ -5,9 +5,12 @@ import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
 import { PRODUCTION_STAGES, stageLabel } from '../lib/productionStages';
+import { SearchBox, SortControl } from './AdminControls';
+import { filterBySearch, sortRows, noSort, type SortState } from '../lib/adminFilter';
 
 interface Order {
   id: string;
+  invoice_number: string | null;
   user_id: string;
   plan: string | null;
   customization_id: string | null;
@@ -44,7 +47,8 @@ export default function OrdersPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [range, setRange] = useState<DateRange>(emptyRange);
-  const filtered = filterByRange(items, range, (o) => o.created_at);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortState>(noSort);
 
   const load = async () => {
     setLoading(true);
@@ -110,6 +114,17 @@ export default function OrdersPanel() {
     { header: 'Pincode', value: (o) => o.ship_pincode || '' },
   ];
 
+  const filtered = sortRows(
+    filterBySearch(
+      filterByRange(items, range, (o) => o.created_at),
+      columns,
+      search,
+      (o) => `${o.id} ${o.invoice_number ?? ''} ${o.user_id} ${authors[o.user_id]?.email ?? ''}`,
+    ),
+    columns,
+    sort,
+  );
+
   if (loading) return <div className="text-center text-gray-500 py-16">Loading orders…</div>;
   if (error)
     return (
@@ -127,6 +142,8 @@ export default function OrdersPanel() {
           {(range.from || range.to) && <span className="text-gray-400"> in range</span>}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
+          <SearchBox value={search} onChange={setSearch} placeholder="Search order/invoice no., email…" />
+          <SortControl columns={columns} sort={sort} onChange={setSort} />
           <DateRangeFilter range={range} onChange={setRange} />
           <ExportMenu baseName="orders" title="Orders" columns={columns} rows={filtered} />
           <button
