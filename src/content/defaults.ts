@@ -293,6 +293,7 @@ export const HOME_SECTIONS: { key: string; label: string }[] = [
   { key: 'portfolio', label: 'Portfolio' },
   { key: 'testimonials', label: 'Testimonials' },
   { key: 'plans', label: 'Pricing Plans' },
+  { key: 'estimate', label: 'Instant Estimate Band' },
   { key: 'contact', label: 'Contact Form' },
 ];
 

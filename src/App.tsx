@@ -25,6 +25,9 @@ import PortfolioPage from './components/PortfolioPage';
 import FaqPage from './components/FaqPage';
 import JourneysPage from './components/JourneysPage';
 import JourneyPage from './components/JourneyPage';
+import Planner from './components/Planner';
+import EstimateBanner from './components/EstimateBanner';
+import ProjectPage from './components/ProjectPage';
 import StaticPage from './components/StaticPage';
 import GetStarted from './components/GetStarted';
 import QuotePage from './components/QuotePage';
@@ -113,6 +116,7 @@ function HomePage() {
     portfolio: () => <PortfolioSection />,
     testimonials: () => <Testimonials />,
     plans: () => <PlansTeaser />,
+    estimate: () => (!isAdmin ? <EstimateBanner /> : null),
     contact: () => (
       <section id="contact" className="py-20 px-4 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50">
         <div className="max-w-4xl mx-auto">
@@ -199,6 +203,7 @@ function App() {
         <Checkout />
       </Suspense>
     );
+  if (path === '/project') return <ProjectPage />;
   if (path === '/customize')
     return (
       <SubPage>
@@ -235,6 +240,12 @@ function App() {
     return (
       <SubPage crumb="Journeys">
         <JourneyPage slug={decodeURIComponent(path.slice('/journey/'.length))} />
+      </SubPage>
+    );
+  if (path === '/planner')
+    return (
+      <SubPage crumb="Plan Your Book">
+        <Planner />
       </SubPage>
     );
   if (path === '/plans')

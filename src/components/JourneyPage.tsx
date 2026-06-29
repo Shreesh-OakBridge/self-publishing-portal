@@ -34,7 +34,7 @@ export default function JourneyPage({ slug }: { slug: string }) {
     } catch {
       /* ignore */
     }
-    go(`/get-started?journey=${encodeURIComponent(j.slug)}`);
+    go(`/planner?journey=${encodeURIComponent(j.slug)}`);
   };
 
   return (

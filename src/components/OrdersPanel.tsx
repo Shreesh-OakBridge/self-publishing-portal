@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw, AlertCircle, X, MessagesSquare } from 'lucide-react';
 import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
+import ProjectWorkspace from './ProjectWorkspace';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
@@ -49,6 +50,7 @@ export default function OrdersPanel() {
   const [range, setRange] = useState<DateRange>(emptyRange);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortState>(noSort);
+  const [openOrder, setOpenOrder] = useState<Order | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -172,6 +174,7 @@ export default function OrdersPanel() {
                 <th className="px-4 py-3 font-semibold">Ship to</th>
                 <th className="px-4 py-3 font-semibold">Stage</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 font-semibold text-right">Workspace</th>
               </tr>
             </thead>
             <tbody>
@@ -223,11 +226,47 @@ export default function OrdersPanel() {
                         ))}
                       </select>
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => setOpenOrder(o)}
+                        className="inline-flex items-center gap-1 text-amber-700 font-semibold hover:underline whitespace-nowrap"
+                      >
+                        <MessagesSquare className="w-4 h-4" /> Open
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {openOrder && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setOpenOrder(null)}
+        >
+          <div
+            className="bg-gray-50 rounded-2xl shadow-xl w-full max-w-2xl my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b bg-white rounded-t-2xl sticky top-0">
+              <div className="min-w-0">
+                <p className="text-xs uppercase tracking-wide text-gray-400">Project workspace</p>
+                <p className="font-bold text-gray-900 truncate">
+                  {openOrder.ship_name || authors[openOrder.user_id]?.full_name || openOrder.id.slice(0, 8)}
+                  {openOrder.plan ? ` · ${openOrder.plan}` : ''}
+                </p>
+              </div>
+              <button onClick={() => setOpenOrder(null)} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5">
+              <ProjectWorkspace orderId={openOrder.id} client={supabase} role="team" />
+            </div>
+          </div>
         </div>
       )}
     </>

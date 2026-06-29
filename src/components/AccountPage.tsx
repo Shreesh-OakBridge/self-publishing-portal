@@ -320,6 +320,14 @@ export default function AccountPage() {
                       </span>
                     </div>
                     <StageTracker stageKey={orders[0].production_stage} />
+                    <div className="mt-5">
+                      <button
+                        onClick={() => go(`/project?id=${orders[0].id}`)}
+                        className="inline-flex items-center gap-2 bg-amber-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-amber-700"
+                      >
+                        Open project workspace →
+                      </button>
+                    </div>
                   </div>
                 )}
                 {loadingData ? (
@@ -342,6 +350,7 @@ export default function AccountPage() {
                           <th className="px-4 py-3 font-semibold">Amount</th>
                           <th className="px-4 py-3 font-semibold">Stage</th>
                           <th className="px-4 py-3 font-semibold">Status</th>
+                          <th className="px-4 py-3 font-semibold text-right">Workspace</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -374,6 +383,14 @@ export default function AccountPage() {
                               <span className={`px-2 py-1 rounded-full text-xs font-semibold capitalize ${statusColor(o.status)}`}>
                                 {o.status.replace('_', ' ')}
                               </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                onClick={() => go(`/project?id=${o.id}`)}
+                                className="text-amber-700 font-semibold hover:underline whitespace-nowrap"
+                              >
+                                Open →
+                              </button>
                             </td>
                           </tr>
                         ))}

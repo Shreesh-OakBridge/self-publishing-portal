@@ -19,6 +19,7 @@ interface SeoResult {
 const CRUMB_LABELS: Record<string, string> = {
   '/services': 'Services',
   '/journeys': 'Journeys',
+  '/planner': 'Plan Your Book',
   '/portfolio': 'Portfolio',
   '/plans': 'Plans',
   '/get-started': 'Get Started',
@@ -54,6 +55,8 @@ function buildSeo(path: string, c: SiteContent): SeoResult {
       return { title: t('Publishing Plans & Pricing'), description: c.pricing.subheading };
     case '/get-started':
       return { title: t('Start Your Publishing Journey'), description: c.getStarted.subheading };
+    case '/planner':
+      return { title: t('Plan Your Book — Instant Estimate'), description: 'Answer a few quick questions and get an instant estimate for publishing your book — budget, timeline and a recommended plan.' };
     case '/faq':
       return { title: t('Frequently Asked Questions'), description: c.faq.subtitle };
     case '/about':
@@ -73,6 +76,8 @@ function buildSeo(path: string, c: SiteContent): SeoResult {
       return { title: t('Sign In or Sign Up'), description: 'Access your Cursive author account.', noindex: true };
     case '/account':
       return { title: t('My Account'), description: 'Your Cursive publishing dashboard.', noindex: true };
+    case '/project':
+      return { title: t('Project Workspace'), description: 'Your project workspace.', noindex: true };
     case '/checkout':
       return { title: t('Checkout'), description: 'Complete your order.', noindex: true };
     case '/quote':

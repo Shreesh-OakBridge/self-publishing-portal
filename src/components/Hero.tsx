@@ -13,9 +13,9 @@ const cardGradients = [
 export default function Hero() {
   const { hero } = useContent();
 
-  const goToGetStarted = () => {
-    track('click_event', { label: 'hero_primary_cta' });
-    go('/get-started');
+  const goToJourneys = () => {
+    track('click_event', { label: 'hero_primary_cta', destination: 'journeys' });
+    go('/journeys');
   };
 
   return (
@@ -40,7 +40,7 @@ export default function Hero() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button
-              onClick={goToGetStarted}
+              onClick={goToJourneys}
               className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
               {hero.primaryCta}
