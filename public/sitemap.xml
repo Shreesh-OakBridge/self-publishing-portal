@@ -6,6 +6,41 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://cursivepublishing.com/journeys</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://cursivepublishing.com/journey/novel</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cursivepublishing.com/journey/family-history</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cursivepublishing.com/journey/childrens-book</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cursivepublishing.com/journey/non-fiction</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cursivepublishing.com/journey/coffee-table-book</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cursivepublishing.com/journey/business-book</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://cursivepublishing.com/services</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

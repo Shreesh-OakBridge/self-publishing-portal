@@ -165,6 +165,31 @@ export interface FaqContent {
   items: FaqItem[];
 }
 
+// Intent-based "Journey" (e.g. Novel, Memoir, Children's Book). A single
+// reusable template renders any journey from this content, keyed by `slug`
+// (URL: /journey/<slug>). Add/edit journeys here or in the admin Content editor.
+export interface JourneyItem {
+  slug: string;
+  icon: string;
+  title: string;
+  tagline: string;
+  heroUrl: string;
+  heroAlt?: string;
+  intro: string;
+  examples: string[];
+  formats: string[];
+  timeline: string;
+  pricingNote: string;
+  faqs: FaqItem[];
+  ctaLabel: string;
+}
+
+export interface JourneysContent {
+  heading: string;
+  subheading: string;
+  items: JourneyItem[];
+}
+
 export interface ServiceItem {
   title: string;
   summary: string;
@@ -281,6 +306,7 @@ export interface SiteContent {
   homeLayout: HomeLayoutContent;
   confidenceBar: ConfidenceBarContent;
   services: ServicesContent;
+  journeys: JourneysContent;
   portfolio: PortfolioContent;
   testimonials: TestimonialsContent;
   pricing: PricingContent;
@@ -698,6 +724,126 @@ export const defaultContent: SiteContent = {
         description:
           'Launch strategy, press materials, and promotional assets to help your book find its readers.',
         icon: 'Megaphone',
+      },
+    ],
+  },
+  journeys: {
+    heading: 'Choose Your Journey',
+    subheading: 'Every book is different. Tell us what you’re creating and we’ll shape the path around it.',
+    items: [
+      {
+        slug: 'novel',
+        icon: 'BookOpen',
+        title: 'I Wrote a Novel',
+        tagline: 'Turn your manuscript into a beautifully published book readers will love.',
+        heroUrl: '',
+        heroAlt: '',
+        intro:
+          'You’ve written your story — now let’s give it the cover, typesetting and finish it deserves. From a single polished manuscript to print-ready files and distribution, we guide fiction authors through every step.',
+        examples: ['Literary & commercial fiction', 'Thrillers & mystery', 'Romance', 'Short-story collections'],
+        formats: ['Paperback & hardcover', 'Standard novel trim sizes', 'Matte or gloss covers', 'eBook & print'],
+        timeline: 'Typically 6–10 weeks',
+        pricingNote: 'Plans from ₹ — final estimate after the planner.',
+        faqs: [
+          { question: 'Do you edit the manuscript?', answer: 'Yes — copy-editing and proofreading are available as part of your plan.' },
+          { question: 'Will my book be on Amazon?', answer: 'Yes, distribution and listing support is included in our expert path.' },
+        ],
+        ctaLabel: 'Start my novel',
+      },
+      {
+        slug: 'family-history',
+        icon: 'Heart',
+        title: 'Preserve Family Memories',
+        tagline: 'Transform letters, photos and stories into a keepsake your family will treasure.',
+        heroUrl: '',
+        heroAlt: '',
+        intro:
+          'Some books aren’t for the world — they’re for the people you love. We help you turn memories, photographs and voices into a beautifully bound family heirloom.',
+        examples: ['Memoirs & life stories', 'Family histories', 'Tribute & anniversary books', 'Letters & journals'],
+        formats: ['Premium hardcover', 'Photo-friendly paper', 'Private print runs', 'Reprints on demand'],
+        timeline: 'Typically 4–8 weeks',
+        pricingNote: 'Private printing from ₹ — final estimate after the planner.',
+        faqs: [
+          { question: 'Can you work from handwritten notes?', answer: 'Absolutely — we can transcribe and organise your material for you.' },
+          { question: 'Can I order just a few copies?', answer: 'Yes, private runs can be as small as you like.' },
+        ],
+        ctaLabel: 'Preserve our story',
+      },
+      {
+        slug: 'childrens-book',
+        icon: 'Sparkles',
+        title: 'Children’s Story Book',
+        tagline: 'Bring your characters to life with illustration, colour and playful design.',
+        heroUrl: '',
+        heroAlt: '',
+        intro:
+          'A children’s book is as much about pictures as words. We pair you with illustration and layout that make little readers (and their parents) smile.',
+        examples: ['Picture books', 'Early readers', 'Rhyming stories', 'Activity books'],
+        formats: ['Full-colour interior', 'Hardcover & paperback', 'Durable child-safe finishes', 'Large illustrated trims'],
+        timeline: 'Typically 8–12 weeks',
+        pricingNote: 'Illustrated packages from ₹ — final estimate after the planner.',
+        faqs: [
+          { question: 'Do you provide illustrators?', answer: 'Yes — we can match you with an illustrator suited to your style.' },
+          { question: 'Can it be full colour?', answer: 'Yes, full-colour interiors are standard for children’s books.' },
+        ],
+        ctaLabel: 'Start my children’s book',
+      },
+      {
+        slug: 'non-fiction',
+        icon: 'Library',
+        title: 'Non-Fiction & Academic',
+        tagline: 'Professional formatting for guides, research and reference works.',
+        heroUrl: '',
+        heroAlt: '',
+        intro:
+          'Non-fiction lives or dies on clarity. We handle structured layouts, references, tables and indexes so your expertise reads as authoritative as it is.',
+        examples: ['How-to & self-help', 'Business & professional', 'Academic & research', 'Reference & manuals'],
+        formats: ['Clean typeset interiors', 'Tables, figures & indexes', 'Paperback & hardcover', 'eBook & print'],
+        timeline: 'Typically 6–10 weeks',
+        pricingNote: 'Plans from ₹ — final estimate after the planner.',
+        faqs: [
+          { question: 'Can you handle citations and an index?', answer: 'Yes, structured references and indexing are supported.' },
+          { question: 'Do you assign ISBNs?', answer: 'Yes, ISBN assignment is part of the publishing process.' },
+        ],
+        ctaLabel: 'Start my book',
+      },
+      {
+        slug: 'coffee-table-book',
+        icon: 'Camera',
+        title: 'Coffee-Table & Art Book',
+        tagline: 'Large-format, image-led books printed to gallery quality.',
+        heroUrl: '',
+        heroAlt: '',
+        intro:
+          'When the visuals are the story, print quality is everything. We produce large-format, image-rich books with the paper and finish your work deserves.',
+        examples: ['Photography', 'Art & design portfolios', 'Travel', 'Brand & lookbooks'],
+        formats: ['Large landscape & square trims', 'Premium art paper', 'Lay-flat & hardcover binding', 'High-fidelity colour'],
+        timeline: 'Typically 8–12 weeks',
+        pricingNote: 'Premium print from ₹ — final estimate after the planner.',
+        faqs: [
+          { question: 'Can you colour-match my images?', answer: 'Yes, we proof and calibrate colour for image-led books.' },
+          { question: 'What paper options are there?', answer: 'A range of art papers and finishes — we’ll recommend based on your images.' },
+        ],
+        ctaLabel: 'Start my art book',
+      },
+      {
+        slug: 'business-book',
+        icon: 'BarChart3',
+        title: 'Business & Company Story',
+        tagline: 'Tell your company’s story or build authority with a professional book.',
+        heroUrl: '',
+        heroAlt: '',
+        intro:
+          'A book is the ultimate business card. Whether it’s a founder’s story, a thought-leadership title or a corporate gift, we deliver a polished, on-brand result.',
+        examples: ['Founder & company stories', 'Thought leadership', 'Anniversary & milestone books', 'Corporate gifting'],
+        formats: ['On-brand design', 'Hardcover & paperback', 'Bulk corporate runs', 'eBook & print'],
+        timeline: 'Typically 6–10 weeks',
+        pricingNote: 'Corporate packages from ₹ — final estimate after the planner.',
+        faqs: [
+          { question: 'Can you print in bulk for our team?', answer: 'Yes, bulk corporate runs and gifting editions are available.' },
+          { question: 'Can you match our brand guidelines?', answer: 'Yes, we design to your brand colours, fonts and tone.' },
+        ],
+        ctaLabel: 'Start my company book',
       },
     ],
   },

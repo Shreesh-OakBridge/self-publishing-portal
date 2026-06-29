@@ -139,6 +139,13 @@ export default function Navigation() {
               Home
             </button>
 
+            <button
+              onClick={() => goTo('/journeys')}
+              className={deskLink(path === '/journeys' || path.startsWith('/journey/'))}
+            >
+              Journeys
+            </button>
+
             {/* Services — hover flyout, click goes to the landing page */}
             <div className="relative group">
               <button onClick={() => goTo('/services')} className={deskLink(path === '/services')}>
@@ -292,6 +299,12 @@ export default function Navigation() {
           <div className="px-4 py-4 space-y-2">
             <button onClick={() => goToSection('home')} className={mobileLink(isActive('home'))}>
               Home
+            </button>
+            <button
+              onClick={() => goTo('/journeys')}
+              className={mobileLink(path === '/journeys' || path.startsWith('/journey/'))}
+            >
+              Journeys
             </button>
             <button onClick={() => goTo('/services')} className={mobileLink(path === '/services')}>
               Services

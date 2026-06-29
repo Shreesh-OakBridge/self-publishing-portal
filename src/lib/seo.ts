@@ -18,6 +18,7 @@ interface SeoResult {
 // Crumb labels for indexable subpages (Home is implicit position 1).
 const CRUMB_LABELS: Record<string, string> = {
   '/services': 'Services',
+  '/journeys': 'Journeys',
   '/portfolio': 'Portfolio',
   '/plans': 'Plans',
   '/get-started': 'Get Started',
@@ -34,6 +35,14 @@ const firstSentence = (text: string) =>
 
 function buildSeo(path: string, c: SiteContent): SeoResult {
   const t = (s: string) => `${s} — ${SITE_NAME}`;
+  if (path === '/journeys')
+    return { title: t('Choose Your Journey'), description: c.journeys.subheading };
+  if (path.startsWith('/journey/')) {
+    const slug = decodeURIComponent(path.slice('/journey/'.length));
+    const j = c.journeys.items.find((x) => x.slug === slug);
+    if (j) return { title: t(j.title), description: j.tagline };
+    return { title: t('Journeys'), description: c.journeys.subheading };
+  }
   switch (path) {
     case '':
       return { title: `${SITE_NAME} — Professional Self-Publishing | An Imprint of OakBridge`, description: c.hero.subheading };
@@ -115,6 +124,30 @@ function pageJsonLd(path: string, c: SiteContent): object | null {
   if (label) graph.push(breadcrumbNode(path, label));
   if (path === '/services') graph.push(...serviceNodes(c));
   if (path === '/faq') graph.push(faqNode(c));
+  if (path.startsWith('/journey/')) {
+    const slug = decodeURIComponent(path.slice('/journey/'.length));
+    const j = c.journeys.items.find((x) => x.slug === slug);
+    if (j) {
+      graph.push({
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+          { '@type': 'ListItem', position: 2, name: 'Journeys', item: `${SITE_URL}/journeys` },
+          { '@type': 'ListItem', position: 3, name: j.title, item: `${SITE_URL}${path}` },
+        ],
+      });
+      if (j.faqs.length) {
+        graph.push({
+          '@type': 'FAQPage',
+          mainEntity: j.faqs.map((q) => ({
+            '@type': 'Question',
+            name: q.question,
+            acceptedAnswer: { '@type': 'Answer', text: q.answer },
+          })),
+        });
+      }
+    }
+  }
   if (graph.length === 0) return null;
   return { '@context': 'https://schema.org', '@graph': graph };
 }

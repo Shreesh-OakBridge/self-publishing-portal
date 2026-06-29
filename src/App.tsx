@@ -23,6 +23,8 @@ import PortfolioSection from './components/PortfolioSection';
 import ServicesPage from './components/ServicesPage';
 import PortfolioPage from './components/PortfolioPage';
 import FaqPage from './components/FaqPage';
+import JourneysPage from './components/JourneysPage';
+import JourneyPage from './components/JourneyPage';
 import StaticPage from './components/StaticPage';
 import GetStarted from './components/GetStarted';
 import QuotePage from './components/QuotePage';
@@ -221,6 +223,18 @@ function App() {
     return (
       <SubPage>
         <QuotePage />
+      </SubPage>
+    );
+  if (path === '/journeys')
+    return (
+      <SubPage crumb="Journeys">
+        <JourneysPage />
+      </SubPage>
+    );
+  if (path.startsWith('/journey/'))
+    return (
+      <SubPage crumb="Journeys">
+        <JourneyPage slug={decodeURIComponent(path.slice('/journey/'.length))} />
       </SubPage>
     );
   if (path === '/plans')

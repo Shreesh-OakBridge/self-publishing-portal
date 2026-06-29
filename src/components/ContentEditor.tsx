@@ -56,6 +56,7 @@ const SECTION_LABELS: Record<string, string> = {
   video: 'Process & Video',
   confidenceBar: 'Confidence Bar',
   services: 'Services',
+  journeys: 'Journeys (Choose Your Journey)',
   portfolio: 'Portfolio',
   testimonials: 'Testimonials',
   pricing: 'Pricing Plans',
