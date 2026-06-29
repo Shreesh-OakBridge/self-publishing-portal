@@ -36,6 +36,43 @@ interface RoyaltyCalc {
   monthly_earnings: number | null;
 }
 
+interface RazorpayResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+interface RazorpayOptions {
+  key: string;
+  order_id: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description?: string;
+  prefill?: { name?: string; email?: string; contact?: string };
+  theme?: { color?: string };
+  handler?: (resp: RazorpayResponse) => void;
+  modal?: { ondismiss?: () => void };
+}
+interface RazorpayInstance {
+  open: () => void;
+}
+declare global {
+  interface Window {
+    Razorpay?: new (opts: RazorpayOptions) => RazorpayInstance;
+  }
+}
+
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (window.Razorpay) return resolve(true);
+    const s = document.createElement('script');
+    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.body.appendChild(s);
+  });
+}
+
 export default function Checkout() {
   const { user, loading } = useAuth();
   const { pricing, customizer, pages } = useContent();
@@ -205,33 +242,38 @@ export default function Checkout() {
       bill_address: sameAsShip ? ship.address : bill.address,
       bill_gst: buyerGst || null,
     };
-    const { error: err } = await supabase.from('orders').insert({
-      user_id: user.id,
-      email: user.email,
-      author_name: author.trim(),
-      plan: planName,
-      customization_id: customizationId,
-      royalty_calculation_id: royaltyId,
-      royalty_rate: royaltyRate,
-      amount: total,
-      discount,
-      coupon_code: applied?.code ?? null,
-      publish_path: onboarding?.publish_path ?? null,
-      language: onboarding?.language ?? null,
-      manuscript_status: onboarding?.manuscript_status ?? null,
-      terms_accepted_at: new Date().toISOString(),
-      publishing_agreement_accepted_at: new Date().toISOString(),
-      status: 'pending',
-      ship_name: ship.name,
-      ship_phone: ship.phone,
-      ship_address: ship.address,
-      ship_city: ship.city,
-      ship_state: ship.state,
-      ship_pincode: ship.pincode,
-      ...billing,
-    });
-    setPlacing(false);
-    if (err) {
+    const { data: inserted, error: err } = await supabase
+      .from('orders')
+      .insert({
+        user_id: user.id,
+        email: user.email,
+        author_name: author.trim(),
+        plan: planName,
+        customization_id: customizationId,
+        royalty_calculation_id: royaltyId,
+        royalty_rate: royaltyRate,
+        amount: total,
+        discount,
+        coupon_code: applied?.code ?? null,
+        publish_path: onboarding?.publish_path ?? null,
+        language: onboarding?.language ?? null,
+        manuscript_status: onboarding?.manuscript_status ?? null,
+        terms_accepted_at: new Date().toISOString(),
+        publishing_agreement_accepted_at: new Date().toISOString(),
+        status: 'pending',
+        payment_status: 'unpaid',
+        ship_name: ship.name,
+        ship_phone: ship.phone,
+        ship_address: ship.address,
+        ship_city: ship.city,
+        ship_state: ship.state,
+        ship_pincode: ship.pincode,
+        ...billing,
+      })
+      .select('id')
+      .single();
+    if (err || !inserted) {
+      setPlacing(false);
       console.error(err);
       setError('Could not place the order. Please try again.');
       return;
@@ -241,14 +283,71 @@ export default function Checkout() {
     } catch {
       /* ignore */
     }
+
+    const rzpKey = import.meta.env.VITE_RAZORPAY_KEY_ID as string | undefined;
+    if (rzpKey && total > 0) {
+      await payWithRazorpay(inserted.id as string, rzpKey);
+    } else {
+      // No gateway configured — keep the existing "team confirms payment" flow.
+      finishPlaced();
+    }
+  };
+
+  const finishPlaced = () => {
     track('purchase', {
       plan: planName ?? null,
       value: total,
       currency: 'INR',
       publish_path: onboarding?.publish_path ?? null,
     });
+    setPlacing(false);
     setPlaced(true);
     window.scrollTo({ top: 0 });
+  };
+
+  const payWithRazorpay = async (orderId: string, key: string) => {
+    const ok = await loadRazorpayScript();
+    if (!ok || !window.Razorpay) {
+      setPlacing(false);
+      setError('Could not load the payment gateway. Please try again.');
+      return;
+    }
+    const { data, error: ce } = await supabase.functions.invoke('create-razorpay-order', {
+      body: { amount: total, order_id: orderId, email: user?.email },
+    });
+    if (ce || !data?.id) {
+      setPlacing(false);
+      setError('Could not start payment. Please try again, or contact us.');
+      return;
+    }
+    const rzp = new window.Razorpay({
+      key,
+      order_id: data.id,
+      amount: data.amount,
+      currency: data.currency || 'INR',
+      name: 'Cursive',
+      description: planName || 'Publishing order',
+      prefill: { name: ship.name, email: user?.email ?? '', contact: ship.phone },
+      theme: { color: '#b45309' },
+      handler: async (resp: RazorpayResponse) => {
+        const { data: v, error: ve } = await supabase.functions.invoke('verify-razorpay-payment', {
+          body: { ...resp, order_id: orderId },
+        });
+        if (ve || !v?.ok) {
+          setError('Payment could not be verified. If money was deducted, please contact us — your order is saved.');
+          return;
+        }
+        finishPlaced();
+      },
+      modal: {
+        ondismiss: () => {
+          setPlacing(false);
+          setError('Payment was not completed — your order is saved as pending.');
+        },
+      },
+    });
+    rzp.open();
+    setPlacing(false);
   };
 
   if (loading || loadingData) {

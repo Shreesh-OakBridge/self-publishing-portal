@@ -740,3 +740,11 @@ DROP POLICY IF EXISTS "Decide proofs" ON project_proofs;
 CREATE POLICY "Decide proofs" ON project_proofs FOR UPDATE TO authenticated
   USING (is_admin() OR EXISTS (SELECT 1 FROM orders o WHERE o.id = order_id AND o.user_id = auth.uid()))
   WITH CHECK (is_admin() OR EXISTS (SELECT 1 FROM orders o WHERE o.id = order_id AND o.user_id = auth.uid()));
+
+-- ============================================================
+-- Razorpay payment fields (from 20260626150000_razorpay.sql)
+-- ============================================================
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_order_id text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_payment_id text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_status text DEFAULT 'unpaid';
+UPDATE orders SET payment_status = 'unpaid' WHERE payment_status IS NULL;
