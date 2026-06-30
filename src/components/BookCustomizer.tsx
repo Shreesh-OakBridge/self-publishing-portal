@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Palette, Book, Layout, Ruler, ShoppingCart, Droplet, Layers, Sparkles } from 'lucide-react';
+import { Palette, Book, Layout, Ruler, ShoppingCart, Droplet, Layers, Sparkles, HelpCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
 import type { CustomizerSize } from '../content/defaults';
 import AuthModal from './AuthModal';
+import CustomizeGuide from './CustomizeGuide';
 import { go } from '../lib/basePath';
 
 interface CustomizationData {
@@ -88,6 +89,27 @@ export default function BookCustomizer() {
   const [isSaving, setIsSaving] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'save' | 'quote' | 'order' | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
+
+  // Auto-show the walkthrough until the visitor opts out via "Don't show again".
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem('cursive_customize_guide_dismissed')) setShowGuide(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const closeGuide = (dontShowAgain: boolean) => {
+    setShowGuide(false);
+    if (dontShowAgain) {
+      try {
+        localStorage.setItem('cursive_customize_guide_dismissed', '1');
+      } catch {
+        /* ignore */
+      }
+    }
+  };
 
   useEffect(() => {
     calculatePrice();
@@ -210,7 +232,15 @@ export default function BookCustomizer() {
             {customizer.heading}
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">{customizer.subheading}</p>
+          <button
+            onClick={() => setShowGuide(true)}
+            className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-amber-300 text-amber-700 font-semibold hover:bg-amber-50 transition-colors"
+          >
+            <HelpCircle className="w-5 h-5" /> How it works?
+          </button>
         </div>
+
+        <CustomizeGuide open={showGuide} onClose={closeGuide} />
 
         <div className="grid lg:grid-cols-2 gap-12">
           <div className="space-y-8">
