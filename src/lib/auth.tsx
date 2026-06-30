@@ -63,8 +63,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session?.user?.id]);
 
   const signOut = async () => {
-    await logActivity('auth.logout');
-    await supabase.auth.signOut();
+    try {
+      await logActivity('auth.logout');
+    } catch {
+      /* never block sign-out on logging */
+    }
+    // 'local' scope clears the session in this browser without a server
+    // round-trip, so it works even if the access token is already expired.
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    if (error) console.error('signOut error:', error.message);
+    // Clear local state immediately in case the auth event is delayed.
+    setSession(null);
   };
 
   return (
