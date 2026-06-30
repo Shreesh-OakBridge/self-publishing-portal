@@ -4,8 +4,10 @@ import {
   Edit3, BookOpen, Globe, Megaphone, Clock, Tag, ArrowRight, ArrowLeft, RotateCcw, CheckCircle,
 } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
+import { useAuth } from '../lib/auth';
 import { go } from '../lib/basePath';
 import { track } from '../lib/track';
+import TalkToUsModal from './TalkToUsModal';
 
 const priceToNumber = (p: string) => Number((p || '').replace(/[^0-9.]/g, '')) || 0;
 const inr = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
@@ -40,11 +42,13 @@ export default function Planner() {
   const journeySlug = params.get('journey');
   const journey = journeys.items.find((j) => j.slug === journeySlug);
 
+  const { user } = useAuth();
   const [step, setStep] = useState(1); // 1..4 = questions, 5 = estimate
   const [have, setHave] = useState<string[]>([]);
   const [help, setHelp] = useState<string[]>([]);
   const [copies, setCopies] = useState(100);
   const [timeline, setTimeline] = useState('flexible');
+  const [talkOpen, setTalkOpen] = useState(false);
 
   useEffect(() => {
     track('view', { page: 'planner', journey: journeySlug ?? null });
@@ -248,7 +252,7 @@ export default function Planner() {
               <button onClick={() => go('/quote')} className="border border-gray-300 text-gray-700 px-5 py-3 rounded-xl font-semibold hover:bg-gray-50">
                 Get a detailed quote
               </button>
-              <button onClick={() => go('/#contact')} className="border border-gray-300 text-gray-700 px-5 py-3 rounded-xl font-semibold hover:bg-gray-50">
+              <button onClick={() => setTalkOpen(true)} className="border border-gray-300 text-gray-700 px-5 py-3 rounded-xl font-semibold hover:bg-gray-50">
                 Talk to us
               </button>
             </div>
@@ -261,6 +265,25 @@ export default function Planner() {
           </div>
         )}
       </div>
+
+      <TalkToUsModal
+        open={talkOpen}
+        onClose={() => setTalkOpen(false)}
+        plan={estimate.plan?.name ?? null}
+        name={(user?.user_metadata?.full_name as string) || ''}
+        email={user?.email ?? ''}
+        context={[
+          journey ? `Journey: ${journey.title}` : '',
+          `Already has: ${have.map((k) => HAVE.find((x) => x.key === k)?.label).filter(Boolean).join(', ') || '—'}`,
+          `Help needed: ${help.map((k) => HELP.find((x) => x.key === k)?.label).filter(Boolean).join(', ') || '—'}`,
+          `Copies: ${copies >= 5000 ? '5000+' : copies}`,
+          `Timeline: ${TIMELINES.find((t) => t.key === timeline)?.label || timeline}`,
+          estimate.plan ? `Recommended plan: ${estimate.plan.name} (${estimate.plan.price})` : '',
+          `Indicative estimate: ${inr(estimate.low)} – ${inr(estimate.high)}`,
+        ]
+          .filter(Boolean)
+          .join('\n')}
+      />
     </section>
   );
 }
