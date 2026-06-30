@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { UploadCloud, CheckCircle, AlertCircle, Loader2, X } from 'lucide-react';
+import { UploadCloud, CheckCircle, AlertCircle, Loader2, X, Images } from 'lucide-react';
 import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
+import MediaLibrary from './MediaLibrary';
 
 const BUCKET = 'site-media';
 
@@ -22,6 +23,7 @@ export default function MediaUploadField({ value, onChange, label, accept, alt, 
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const acceptAttr = accept === 'video' ? 'video/*' : 'image/*';
   const folder = accept === 'video' ? 'videos' : 'images';
@@ -103,21 +105,57 @@ export default function MediaUploadField({ value, onChange, label, accept, alt, 
           <UploadCloud className="w-7 h-7 mx-auto text-amber-600 mb-2" />
         )}
         <p className="text-sm text-gray-600">Drag &amp; drop a {accept} here, or</p>
-        <label className="inline-block mt-2 px-4 py-2 bg-amber-600 text-white text-sm font-semibold rounded-lg cursor-pointer hover:bg-amber-700">
-          {uploading ? 'Uploading…' : 'Choose file'}
-          <input
-            type="file"
-            accept={acceptAttr}
-            className="hidden"
-            disabled={uploading}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) upload(file);
-            }}
-          />
-        </label>
+        <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
+          <label className="inline-block px-4 py-2 bg-amber-600 text-white text-sm font-semibold rounded-lg cursor-pointer hover:bg-amber-700">
+            {uploading ? 'Uploading…' : 'Choose file'}
+            <input
+              type="file"
+              accept={acceptAttr}
+              className="hidden"
+              disabled={uploading}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) upload(file);
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-amber-600 text-amber-700 text-sm font-semibold rounded-lg hover:bg-amber-50"
+          >
+            <Images className="w-4 h-4" /> Choose from gallery
+          </button>
+        </div>
         <p className="text-xs text-gray-400 mt-2">{hint}</p>
       </div>
+
+      {pickerOpen && (
+        <div
+          className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setPickerOpen(false)}
+        >
+          <div
+            className="bg-gray-50 rounded-2xl shadow-xl w-full max-w-3xl max-h-[85vh] overflow-y-auto p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-gray-900">Media gallery</h3>
+              <button onClick={() => setPickerOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <MediaLibrary
+              accept={accept}
+              onSelect={(url) => {
+                onChange(url);
+                setStatus({ type: 'ok', msg: 'Selected from gallery. Remember to Save the section.' });
+                setPickerOpen(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {status && (
         <div

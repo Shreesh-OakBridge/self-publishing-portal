@@ -44,6 +44,11 @@ const ACTION_COLOR: Record<string, string> = {
   'content.update': 'bg-indigo-100 text-indigo-800',
 };
 
+// Team = owner/admin/staff back-office actions; everything else is author/user activity.
+const isTeamAction = (a: string) =>
+  a.startsWith('admin.') || a.startsWith('content.') || a.startsWith('layout.');
+const actorType = (a: string) => (isTeamAction(a) ? 'Team' : 'Author');
+
 const fmt = (d: string) =>
   new Date(d).toLocaleString('en-IN', {
     day: '2-digit',
@@ -90,23 +95,38 @@ export default function ActivityPanel() {
 
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortState>(noSort);
+  const [cat, setCat] = useState<'all' | 'team' | 'user'>('all');
 
   const columns: Column<LogRow>[] = [
     { header: 'When', value: (r) => fmt(r.created_at) },
+    { header: 'Type', value: (r) => actorType(r.action) },
     { header: 'Who', value: (r) => r.actor_email || 'Guest' },
     { header: 'Action', value: (r) => ACTION_LABELS[r.action] ?? r.action },
     { header: 'Entity', value: (r) => r.entity || '' },
     { header: 'Details', value: (r) => summarize(r.metadata) },
   ];
 
+  const byCat =
+    cat === 'all' ? rows : rows.filter((r) => (isTeamAction(r.action) ? 'team' : 'user') === cat);
   const filtered = sortRows(
-    filterBySearch(filterByRange(rows, range, (r) => r.created_at), columns, search),
+    filterBySearch(filterByRange(byCat, range, (r) => r.created_at), columns, search),
     columns,
     sort,
   );
 
+  const segCls = (active: boolean) =>
+    `px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+      active ? 'bg-amber-600 text-white' : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-50'
+    }`;
+
   return (
     <>
+      <div className="flex gap-2 mb-3 flex-wrap">
+        <button onClick={() => setCat('all')} className={segCls(cat === 'all')}>All activity</button>
+        <button onClick={() => setCat('team')} className={segCls(cat === 'team')}>Team (owner &amp; admins)</button>
+        <button onClick={() => setCat('user')} className={segCls(cat === 'user')}>Authors (users)</button>
+      </div>
+
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <p className="text-gray-600">
           {filtered.length} {filtered.length === 1 ? 'event' : 'events'}
@@ -147,6 +167,7 @@ export default function ActivityPanel() {
             <thead>
               <tr className="text-left text-gray-500 border-b">
                 <th className="px-4 py-3 font-semibold">When</th>
+                <th className="px-4 py-3 font-semibold">Type</th>
                 <th className="px-4 py-3 font-semibold">Who</th>
                 <th className="px-4 py-3 font-semibold">Action</th>
                 <th className="px-4 py-3 font-semibold">Details</th>
@@ -156,6 +177,15 @@ export default function ActivityPanel() {
               {filtered.map((r) => (
                 <tr key={r.id} className="border-b last:border-0 align-top hover:bg-gray-50">
                   <td className="px-4 py-3 whitespace-nowrap text-gray-500">{fmt(r.created_at)}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                        isTeamAction(r.action) ? 'bg-purple-100 text-purple-800' : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {actorType(r.action)}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-gray-700">{r.actor_email || 'Guest'}</td>
                   <td className="px-4 py-3">
                     <span

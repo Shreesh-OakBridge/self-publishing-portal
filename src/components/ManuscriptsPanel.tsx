@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { RefreshCw, AlertCircle, Download, UserCheck, X, Loader2 } from 'lucide-react';
+import { RefreshCw, AlertCircle, Download, Eye, UserCheck, X, Loader2 } from 'lucide-react';
 import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
@@ -121,15 +121,33 @@ export default function ManuscriptsPanel() {
     load();
   }, []);
 
-  const download = async (m: Manuscript) => {
+  // Open the file in a new tab to preview it (PDFs/images render inline).
+  const preview = async (m: Manuscript) => {
     const { data, error: err } = await supabase.storage
       .from('manuscripts')
       .createSignedUrl(m.file_path, 120);
     if (err || !data) {
-      alert('Could not generate download link.');
+      alert('Could not open the file.');
       return;
     }
-    window.open(data.signedUrl, '_blank');
+    window.open(data.signedUrl, '_blank', 'noopener');
+  };
+
+  // Force a real file download (saves with the original filename).
+  const downloadFile = async (m: Manuscript) => {
+    const { data, error: err } = await supabase.storage.from('manuscripts').download(m.file_path);
+    if (err || !data) {
+      alert('Could not download the file.');
+      return;
+    }
+    const url = URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = m.file_name || 'manuscript';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
   };
 
   const setStatus = async (id: string, status: string) => {
@@ -215,7 +233,6 @@ export default function ManuscriptsPanel() {
                 <th className="px-4 py-3 font-semibold">File</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="px-4 py-3 font-semibold">Expert Review</th>
-                <th className="px-4 py-3 font-semibold"></th>
               </tr>
             </thead>
             <tbody>
@@ -241,19 +258,30 @@ export default function ManuscriptsPanel() {
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
                       {m.word_count != null ? m.word_count.toLocaleString('en-IN') : '—'}
                     </td>
-                    <td className="px-4 py-3 max-w-[14rem]">
+                    <td className="px-4 py-3 max-w-[18rem]">
                       {m.file_path ? (
-                        <button
-                          onClick={() => download(m)}
-                          title="Download the submitted manuscript"
-                          className="inline-flex items-center gap-1.5 text-amber-700 hover:text-amber-900 font-medium max-w-full"
-                        >
-                          <Download className="w-4 h-4 flex-shrink-0" />
-                          <span className="truncate">{m.file_name || 'manuscript'}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-gray-700" title={m.file_name || ''}>
+                            {m.file_name || 'manuscript'}
+                          </span>
                           {m.file_size ? (
-                            <span className="text-gray-400 flex-shrink-0">{kb(m.file_size)}</span>
+                            <span className="text-gray-400 text-xs flex-shrink-0">{kb(m.file_size)}</span>
                           ) : null}
-                        </button>
+                          <button
+                            onClick={() => preview(m)}
+                            title="Preview"
+                            className="inline-flex items-center gap-1 text-amber-700 hover:text-amber-900 font-semibold text-xs flex-shrink-0"
+                          >
+                            <Eye className="w-4 h-4" /> Preview
+                          </button>
+                          <button
+                            onClick={() => downloadFile(m)}
+                            title="Download"
+                            className="inline-flex items-center gap-1 text-amber-700 hover:text-amber-900 font-semibold text-xs flex-shrink-0"
+                          >
+                            <Download className="w-4 h-4" /> Download
+                          </button>
+                        </div>
                       ) : (
                         <span className="text-gray-400">—</span>
                       )}
@@ -286,15 +314,6 @@ export default function ManuscriptsPanel() {
                             <UserCheck className="w-4 h-4" /> Review
                           </span>
                         )}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => download(m)}
-                        className="flex items-center gap-1 text-amber-700 hover:text-amber-900 font-semibold"
-                      >
-                        <Download className="w-4 h-4" />
-                        <span className="hidden sm:inline">Download</span>
                       </button>
                     </td>
                   </tr>

@@ -782,3 +782,14 @@ CREATE POLICY "Referred user records referral" ON referrals FOR INSERT TO authen
 DROP POLICY IF EXISTS "Admins manage referrals" ON referrals;
 CREATE POLICY "Admins manage referrals" ON referrals FOR UPDATE TO authenticated
   USING (is_admin()) WITH CHECK (is_admin());
+
+-- Media library policies (from 20260626190000_media_policies.sql)
+INSERT INTO storage.buckets (id, name, public) VALUES ('site-media', 'site-media', true) ON CONFLICT (id) DO NOTHING;
+DROP POLICY IF EXISTS "Public read site-media" ON storage.objects;
+CREATE POLICY "Public read site-media" ON storage.objects FOR SELECT TO public USING (bucket_id = 'site-media');
+DROP POLICY IF EXISTS "Admins write site-media" ON storage.objects;
+CREATE POLICY "Admins write site-media" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'site-media' AND is_admin());
+DROP POLICY IF EXISTS "Admins update site-media" ON storage.objects;
+CREATE POLICY "Admins update site-media" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'site-media' AND is_admin()) WITH CHECK (bucket_id = 'site-media' AND is_admin());
+DROP POLICY IF EXISTS "Admins delete site-media" ON storage.objects;
+CREATE POLICY "Admins delete site-media" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'site-media' AND is_admin());

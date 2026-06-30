@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogOut, RefreshCw, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate, ShieldCheck, Menu, ClipboardList } from 'lucide-react';
+import { LogOut, RefreshCw, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate, ShieldCheck, Menu, ClipboardList, Image as ImageIcon, GripVertical } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import { logActivity } from '../lib/activity';
@@ -16,6 +16,7 @@ import BooksPanel from './BooksPanel';
 import LayoutEditor from './LayoutEditor';
 import AdminsPanel from './AdminsPanel';
 import AdminAuth from './AdminAuth';
+import MediaLibrary from './MediaLibrary';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
 
@@ -31,6 +32,7 @@ const TABS = [
   { key: 'activity', label: 'Activity', Icon: Activity, roles: ['owner', 'admin'] },
   { key: 'layout', label: 'Layout', Icon: LayoutTemplate, roles: ['owner', 'admin', 'editor'] },
   { key: 'content', label: 'Site Content', Icon: FileText, roles: ['owner', 'admin', 'editor'] },
+  { key: 'media', label: 'Media', Icon: ImageIcon, roles: ['owner', 'admin', 'editor'] },
   { key: 'admins', label: 'Admins', Icon: ShieldCheck, roles: ['owner'] },
 ] as const;
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
@@ -73,11 +75,53 @@ export default function AdminDashboard() {
   const [leadRange, setLeadRange] = useState<DateRange>(emptyRange);
   const [leadSearch, setLeadSearch] = useState('');
   const [leadSort, setLeadSort] = useState<SortState>(noSort);
-  const [tab, setTab] = useState<'leads' | 'orders' | 'quotes' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'layout' | 'content' | 'admins'>('leads');
+  const [tab, setTab] = useState<'leads' | 'orders' | 'quotes' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'layout' | 'content' | 'media' | 'admins'>('leads');
   const [adminRole, setAdminRole] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [navOrder, setNavOrder] = useState<string[]>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('cursive_admin_nav_order') || 'null');
+      if (Array.isArray(saved)) return saved as string[];
+    } catch {
+      /* ignore */
+    }
+    return TABS.map((t) => t.key);
+  });
+  const [dragKey, setDragKey] = useState<string | null>(null);
   const { branding } = useContent();
   const role = adminRole ?? 'admin';
+
+  // Saved sidebar order, reconciled with the current tab list (new tabs appended).
+  const orderedTabs = (() => {
+    const byKey = new Map(TABS.map((t) => [t.key, t]));
+    const seen = new Set<string>();
+    const list: typeof TABS = [];
+    for (const k of navOrder) {
+      const t = byKey.get(k);
+      if (t && !seen.has(k)) {
+        list.push(t);
+        seen.add(k);
+      }
+    }
+    for (const t of TABS) if (!seen.has(t.key)) list.push(t);
+    return list;
+  })();
+  const visibleTabs = orderedTabs.filter((t) => (t.roles as readonly string[]).includes(role));
+
+  const reorderNav = (fromKey: string, toKey: string) => {
+    if (fromKey === toKey) return;
+    const keys = orderedTabs.map((t) => t.key);
+    const from = keys.indexOf(fromKey);
+    const to = keys.indexOf(toKey);
+    if (from < 0 || to < 0) return;
+    keys.splice(to, 0, keys.splice(from, 1)[0]);
+    setNavOrder(keys);
+    try {
+      localStorage.setItem('cursive_admin_nav_order', JSON.stringify(keys));
+    } catch {
+      /* ignore */
+    }
+  };
   const filteredLeads = sortRows(
     filterBySearch(filterByRange(leads, leadRange, (l) => l.created_at), leadColumns, leadSearch),
     leadColumns,
@@ -208,19 +252,28 @@ export default function AdminDashboard() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {TABS.filter((t) => (t.roles as readonly string[]).includes(role)).map((t) => (
+          {visibleTabs.map((t) => (
             <button
               key={t.key}
+              draggable
+              onDragStart={() => setDragKey(t.key)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => {
+                if (dragKey) reorderNav(dragKey, t.key);
+                setDragKey(null);
+              }}
+              onDragEnd={() => setDragKey(null)}
               onClick={() => {
                 setTab(t.key);
                 setSidebarOpen(false);
               }}
-              className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+              className={`group flex items-center gap-2 w-full px-2.5 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                 tab === t.key
                   ? 'bg-amber-50 text-amber-700'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
+              } ${dragKey === t.key ? 'opacity-50' : ''}`}
             >
+              <GripVertical className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-400 cursor-grab flex-shrink-0" />
               <t.Icon className="w-4 h-4 flex-shrink-0" />
               <span>{t.label}</span>
             </button>
@@ -257,6 +310,8 @@ export default function AdminDashboard() {
         <main className="w-full px-4 sm:px-6 py-8">
         {tab === 'content' ? (
           <ContentEditor />
+        ) : tab === 'media' ? (
+          <MediaLibrary />
         ) : tab === 'manuscripts' ? (
           <ManuscriptsPanel />
         ) : tab === 'orders' ? (
