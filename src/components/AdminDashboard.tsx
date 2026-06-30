@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogOut, RefreshCw, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate, ShieldCheck, Menu, ClipboardList, Image as ImageIcon, GripVertical } from 'lucide-react';
+import { LogOut, RefreshCw, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate, ShieldCheck, Menu, ClipboardList, Image as ImageIcon, GripVertical, Save, RotateCcw } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import { logActivity } from '../lib/activity';
@@ -88,6 +88,7 @@ export default function AdminDashboard() {
     return TABS.map((t) => t.key);
   });
   const [dragKey, setDragKey] = useState<string | null>(null);
+  const [navDirty, setNavDirty] = useState(false);
   const { branding } = useContent();
   const role = adminRole ?? 'admin';
 
@@ -117,11 +118,27 @@ export default function AdminDashboard() {
     if (from < 0 || to < 0) return;
     keys.splice(to, 0, keys.splice(from, 1)[0]);
     setNavOrder(keys);
+    setNavDirty(true);
+  };
+
+  const saveNavOrder = () => {
     try {
-      localStorage.setItem('cursive_admin_nav_order', JSON.stringify(keys));
+      localStorage.setItem('cursive_admin_nav_order', JSON.stringify(navOrder));
     } catch {
       /* ignore */
     }
+    setNavDirty(false);
+  };
+
+  const resetNavOrder = () => {
+    const def = TABS.map((t) => t.key);
+    setNavOrder(def);
+    try {
+      localStorage.removeItem('cursive_admin_nav_order');
+    } catch {
+      /* ignore */
+    }
+    setNavDirty(false);
   };
   const filteredLeads = sortRows(
     filterBySearch(filterByRange(leads, leadRange, (l) => l.created_at), leadColumns, leadSearch),
@@ -282,6 +299,22 @@ export default function AdminDashboard() {
         </nav>
 
         <div className="p-3 border-t">
+          {navDirty && (
+            <div className="mb-2 space-y-1">
+              <button
+                onClick={saveNavOrder}
+                className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-lg bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700"
+              >
+                <Save className="w-4 h-4" /> Save menu order
+              </button>
+              <button
+                onClick={resetNavOrder}
+                className="flex items-center justify-center gap-1 w-full px-3 py-1.5 text-gray-500 hover:text-gray-700 text-xs"
+              >
+                <RotateCcw className="w-3.5 h-3.5" /> Reset to default
+              </button>
+            </div>
+          )}
           <button
             onClick={handleSignOut}
             className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg bg-gray-900 text-white hover:bg-gray-800 text-sm font-semibold"
