@@ -164,9 +164,24 @@ function siteJsonLd(c: SiteContent) {
     '@type': 'Organization',
     name: SITE_NAME,
     url: `${SITE_URL}/`,
-    logo: `${SITE_URL}/logo.svg`,
+    logo: `${SITE_URL}/icon-512.png`,
+    image: `${SITE_URL}/og-image.png`,
     description: 'Cursive is a self-publishing partner — an imprint of OakBridge.',
     parentOrganization: { '@type': 'Organization', name: 'OakBridge' },
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'Spaze iTech Park, Tower B3, Sector 49',
+      addressLocality: 'Gurugram',
+      addressRegion: 'Haryana',
+      postalCode: '122018',
+      addressCountry: 'IN',
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'customer service',
+      email: c.footer.email || 'info@cursivepublishing.com',
+      ...(c.footer.phone ? { telephone: c.footer.phone } : {}),
+    },
   };
   if (c.footer.email) org.email = c.footer.email;
   if (c.footer.phone) org.telephone = c.footer.phone;

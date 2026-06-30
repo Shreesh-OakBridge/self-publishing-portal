@@ -67,7 +67,6 @@ export default function AuthorHub() {
 
   const totalCopies = books.reduce((s, b) => s + (b.copies_sold || 0), 0);
   const totalEarnings = books.reduce((s, b) => s + earningsOf(b), 0);
-  const publishedCount = books.filter((b) => b.status === 'published').length || books.length;
 
   const referralLink = `${window.location.origin}/?ref=${user.id}`;
   const copyLink = async () => {
