@@ -121,16 +121,23 @@ export default function ManuscriptsPanel() {
     load();
   }, []);
 
-  // Open the file in a new tab to preview it (PDFs/images render inline).
+  // Preview in the browser. PDFs/images/text render inline directly; Office docs
+  // (.docx/.pptx/.xlsx) are rendered via Microsoft's online viewer so they don't
+  // just download. Download (below) always saves the original file to disk.
   const preview = async (m: Manuscript) => {
     const { data, error: err } = await supabase.storage
       .from('manuscripts')
-      .createSignedUrl(m.file_path, 120);
+      .createSignedUrl(m.file_path, 600);
     if (err || !data) {
       alert('Could not open the file.');
       return;
     }
-    window.open(data.signedUrl, '_blank', 'noopener');
+    const ext = (m.file_name || m.file_path).split('.').pop()?.toLowerCase() || '';
+    const officeExts = ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'];
+    const url = officeExts.includes(ext)
+      ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(data.signedUrl)}`
+      : data.signedUrl;
+    window.open(url, '_blank', 'noopener');
   };
 
   // Force a real file download (saves with the original filename).
