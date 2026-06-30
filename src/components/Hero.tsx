@@ -14,8 +14,8 @@ export default function Hero() {
   const { hero } = useContent();
 
   const goToJourneys = () => {
-    track('click_event', { label: 'hero_primary_cta', destination: 'journeys' });
-    go('/journeys');
+    track('click_event', { label: 'hero_primary_cta', destination: 'get-started' });
+    go('/get-started');
   };
 
   return (
