@@ -33,7 +33,7 @@ export default function ServicesPage() {
 
         <div className="text-center mt-12">
           <a
-            href={withBase('/#plans')}
+            href={withBase('/plans')}
             className="inline-block bg-amber-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-amber-700 transition-colors"
           >
             View Publishing Plans
