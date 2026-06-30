@@ -3,6 +3,8 @@ import { LogOut, RefreshCw, Inbox, AlertCircle, FileText, Users, Activity, BookT
 import type { Session } from '@supabase/supabase-js';
 import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import { logActivity } from '../lib/activity';
+import { useContent } from '../content/ContentProvider';
+import { withBase } from '../lib/basePath';
 import ContentEditor from './ContentEditor';
 import AuthorsPanel from './AuthorsPanel';
 import ActivityPanel from './ActivityPanel';
@@ -74,6 +76,7 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState<'leads' | 'orders' | 'quotes' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'layout' | 'content' | 'admins'>('leads');
   const [adminRole, setAdminRole] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { branding } = useContent();
   const role = adminRole ?? 'admin';
   const filteredLeads = sortRows(
     filterBySearch(filterByRange(leads, leadRange, (l) => l.created_at), leadColumns, leadSearch),
@@ -189,12 +192,14 @@ export default function AdminDashboard() {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="p-5 border-b flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
-            <Inbox className="w-5 h-5 text-white" />
-          </div>
+        <div className="p-5 border-b">
+          <img
+            src={withBase(branding.logoUrl || '/logo.svg')}
+            alt={branding.logoAlt || 'Cursive'}
+            className="h-9 w-auto object-contain mb-2"
+          />
           <div className="min-w-0">
-            <h1 className="text-lg font-bold text-gray-900 leading-tight">Cursive Admin</h1>
+            <p className="text-[11px] uppercase tracking-wide text-amber-700 font-bold">Admin panel</p>
             <p className="text-xs text-gray-500 truncate">
               {session.user.email}
               {adminRole && <span className="block capitalize text-amber-700 font-semibold">{adminRole}</span>}
@@ -249,7 +254,7 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <main className="w-full px-4 sm:px-6 py-8">
         {tab === 'content' ? (
           <ContentEditor />
         ) : tab === 'manuscripts' ? (

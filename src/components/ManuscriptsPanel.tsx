@@ -241,8 +241,22 @@ export default function ManuscriptsPanel() {
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
                       {m.word_count != null ? m.word_count.toLocaleString('en-IN') : '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 max-w-[12rem] truncate">
-                      {m.file_name || '—'} <span className="text-gray-400">{kb(m.file_size)}</span>
+                    <td className="px-4 py-3 max-w-[14rem]">
+                      {m.file_path ? (
+                        <button
+                          onClick={() => download(m)}
+                          title="Download the submitted manuscript"
+                          className="inline-flex items-center gap-1.5 text-amber-700 hover:text-amber-900 font-medium max-w-full"
+                        >
+                          <Download className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate">{m.file_name || 'manuscript'}</span>
+                          {m.file_size ? (
+                            <span className="text-gray-400 flex-shrink-0">{kb(m.file_size)}</span>
+                          ) : null}
+                        </button>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <select
