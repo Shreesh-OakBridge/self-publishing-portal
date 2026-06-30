@@ -72,8 +72,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // round-trip, so it works even if the access token is already expired.
     const { error } = await supabase.auth.signOut({ scope: 'local' });
     if (error) console.error('signOut error:', error.message);
+    // Belt-and-suspenders: hard-remove the website auth token from storage in
+    // case the SDK left it behind. (The admin panel uses key 'cursive-admin-auth'
+    // and is intentionally not touched here.)
+    try {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
+        .forEach((k) => localStorage.removeItem(k));
+    } catch {
+      /* ignore */
+    }
     // Clear local state immediately in case the auth event is delayed.
     setSession(null);
+    setIsAdmin(false);
   };
 
   return (
