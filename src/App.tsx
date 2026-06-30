@@ -110,7 +110,7 @@ function HomePage() {
       ) : (
         <Hero />
       ),
-    confidenceBar: () => (!user ? <ConfidenceBar /> : null),
+    confidenceBar: () => <ConfidenceBar />,
     about: () => <ValueProposition />,
     process: () => <VideoSection />,
     submit: () => <HomeManuscriptSection />,

@@ -116,8 +116,8 @@ export default function LayoutEditor() {
       <p className="text-gray-600 text-sm mb-4">
         You’re editing the <strong>{view === 'guest' ? 'logged-out (visitor)' : 'logged-in (member)'}</strong> homepage.
         Drag rows (or use the arrows) to reorder, and toggle the eye to show/hide. The header and footer stay fixed.
-        Note: some sections only appear for one audience (e.g. logged-in members see their dashboard in place of the
-        hero, and the Confidence Bar / Instant Estimate band show only to visitors).
+        Note: logged-in members see their personal dashboard in place of the hero — every other section appears or hides
+        exactly as you set it here for this audience.
       </p>
 
       {status && (
