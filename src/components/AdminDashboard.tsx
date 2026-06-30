@@ -93,9 +93,10 @@ export default function AdminDashboard() {
 
   // Saved sidebar order, reconciled with the current tab list (new tabs appended).
   const orderedTabs = (() => {
-    const byKey = new Map(TABS.map((t) => [t.key, t]));
+    type Tab = (typeof TABS)[number];
+    const byKey = new Map<string, Tab>(TABS.map((t) => [t.key, t]));
     const seen = new Set<string>();
-    const list: typeof TABS = [];
+    const list: Tab[] = [];
     for (const k of navOrder) {
       const t = byKey.get(k);
       if (t && !seen.has(k)) {
@@ -110,7 +111,7 @@ export default function AdminDashboard() {
 
   const reorderNav = (fromKey: string, toKey: string) => {
     if (fromKey === toKey) return;
-    const keys = orderedTabs.map((t) => t.key);
+    const keys: string[] = orderedTabs.map((t) => t.key);
     const from = keys.indexOf(fromKey);
     const to = keys.indexOf(toKey);
     if (from < 0 || to < 0) return;
