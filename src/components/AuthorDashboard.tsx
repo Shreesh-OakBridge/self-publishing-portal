@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, TrendingUp, IndianRupee, LayoutDashboard, Sparkles, ArrowRight } from 'lucide-react';
+import { BookOpen, TrendingUp, IndianRupee, LayoutDashboard, Sparkles, ArrowRight, Award } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { go } from '../lib/basePath';
@@ -93,6 +93,23 @@ export default function AuthorDashboard({ showHeading = true }: { showHeading?: 
           <p className="text-xs text-gray-400">copies × royalty per book</p>
         </div>
       </div>
+
+      {/* Author Hub entry point */}
+      <button
+        onClick={() => go('/hub')}
+        className="w-full flex items-center justify-between gap-4 bg-gradient-to-br from-amber-600 to-orange-600 text-white rounded-2xl p-5 mb-5 hover:from-amber-700 hover:to-orange-700 transition-all text-left"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
+            <Award className="w-6 h-6" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-bold">Your Author Hub</p>
+            <p className="text-white/85 text-sm">Achievements, referral rewards &amp; royalty reports — all in one place.</p>
+          </div>
+        </div>
+        <ArrowRight className="w-5 h-5 flex-shrink-0" />
+      </button>
 
       {loading ? (
         <p className="text-gray-500">Loading…</p>
