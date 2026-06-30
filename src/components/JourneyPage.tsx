@@ -17,7 +17,7 @@ export default function JourneyPage({ slug }: { slug: string }) {
           We couldn’t find that journey. Browse all the ways we can help bring your book to life.
         </p>
         <button
-          onClick={() => go('/journeys')}
+          onClick={() => go('/get-started')}
           className="bg-amber-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-amber-700"
         >
           View all journeys
@@ -34,7 +34,9 @@ export default function JourneyPage({ slug }: { slug: string }) {
     } catch {
       /* ignore */
     }
-    go(`/planner?journey=${encodeURIComponent(j.slug)}`);
+    // Unified entry: the Get Started funnel preselects this journey from
+    // sessionStorage and continues language → status → method.
+    go('/get-started');
   };
 
   return (
@@ -58,7 +60,7 @@ export default function JourneyPage({ slug }: { slug: string }) {
                 {j.ctaLabel || 'Start my project'} <ArrowRight className="w-4 h-4" />
               </button>
               <button
-                onClick={() => go('/journeys')}
+                onClick={() => go('/get-started')}
                 className="inline-flex items-center px-6 py-3 rounded-full font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50"
               >
                 Explore other journeys

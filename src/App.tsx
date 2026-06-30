@@ -23,7 +23,6 @@ import PortfolioSection from './components/PortfolioSection';
 import ServicesPage from './components/ServicesPage';
 import PortfolioPage from './components/PortfolioPage';
 import FaqPage from './components/FaqPage';
-import JourneysPage from './components/JourneysPage';
 import JourneyPage from './components/JourneyPage';
 import Planner from './components/Planner';
 import EstimateBanner from './components/EstimateBanner';
@@ -244,9 +243,10 @@ function App() {
       </SubPage>
     );
   if (path === '/journeys')
+    // Old browse page now folds into the unified Get Started funnel.
     return (
-      <SubPage crumb="Journeys">
-        <JourneysPage />
+      <SubPage>
+        <GetStarted />
       </SubPage>
     );
   if (path.startsWith('/journey/'))
