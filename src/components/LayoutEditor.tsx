@@ -33,12 +33,21 @@ function reconcile(saved: HomeLayoutSection[]): HomeLayoutSection[] {
   return list;
 }
 
+type View = 'guest' | 'member';
+
 export default function LayoutEditor() {
   const { homeLayout } = useContent();
-  const [items, setItems] = useState<HomeLayoutSection[]>(() => reconcile(homeLayout.sections));
+  const [view, setView] = useState<View>('guest');
+  const [guestItems, setGuestItems] = useState<HomeLayoutSection[]>(() => reconcile(homeLayout.sections));
+  const [memberItems, setMemberItems] = useState<HomeLayoutSection[]>(() =>
+    reconcile(homeLayout.loggedInSections?.length ? homeLayout.loggedInSections : homeLayout.sections),
+  );
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
+
+  const items = view === 'guest' ? guestItems : memberItems;
+  const setItems = view === 'guest' ? setGuestItems : setMemberItems;
 
   const dirty = () => setStatus(null);
 
@@ -65,31 +74,51 @@ export default function LayoutEditor() {
   const save = async () => {
     setSaving(true);
     setStatus(null);
-    const { error } = await supabase
-      .from('site_content')
-      .upsert({ key: 'homeLayout', value: { sections: items }, updated_at: new Date().toISOString() });
+    const { error } = await supabase.from('site_content').upsert({
+      key: 'homeLayout',
+      value: { sections: guestItems, loggedInSections: memberItems },
+      updated_at: new Date().toISOString(),
+    });
     setSaving(false);
     if (error) {
       console.error(error);
       setStatus({ type: 'err', msg: 'Could not save layout. Please try again.' });
     } else {
-      setStatus({ type: 'ok', msg: 'Saved. Refresh the homepage to see the new order.' });
+      setStatus({ type: 'ok', msg: 'Both layouts saved. Refresh the homepage to see the new order.' });
     }
   };
 
   const reset = () => {
-    setItems(reconcile(defaultContent.homeLayout.sections));
-    setStatus({ type: 'ok', msg: 'Reset to default order — remember to Save.' });
+    const def = reconcile(
+      view === 'guest' ? defaultContent.homeLayout.sections : defaultContent.homeLayout.loggedInSections,
+    );
+    setItems(def);
+    setStatus({ type: 'ok', msg: 'Reset this layout to default — remember to Save.' });
   };
+
+  const tabCls = (active: boolean) =>
+    `px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+      active ? 'bg-amber-600 text-white' : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-50'
+    }`;
 
   return (
     <div className="max-w-2xl">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-gray-600 text-sm">
-          Drag rows (or use the arrows) to reorder homepage sections. Toggle the eye to show/hide.
-          The header and footer stay fixed.
-        </p>
+      {/* Audience tabs */}
+      <div className="flex gap-2 mb-3">
+        <button onClick={() => { setView('guest'); setStatus(null); }} className={tabCls(view === 'guest')}>
+          Logged-out visitors
+        </button>
+        <button onClick={() => { setView('member'); setStatus(null); }} className={tabCls(view === 'member')}>
+          Logged-in members
+        </button>
       </div>
+
+      <p className="text-gray-600 text-sm mb-4">
+        You’re editing the <strong>{view === 'guest' ? 'logged-out (visitor)' : 'logged-in (member)'}</strong> homepage.
+        Drag rows (or use the arrows) to reorder, and toggle the eye to show/hide. The header and footer stay fixed.
+        Note: some sections only appear for one audience (e.g. logged-in members see their dashboard in place of the
+        hero, and the Confidence Bar / Instant Estimate band show only to visitors).
+      </p>
 
       {status && (
         <div
@@ -166,7 +195,7 @@ export default function LayoutEditor() {
           className="flex items-center space-x-1 px-4 py-2.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm"
         >
           <RotateCcw className="w-4 h-4" />
-          <span>Reset</span>
+          <span>Reset this layout</span>
         </button>
       </div>
     </div>

@@ -127,11 +127,15 @@ function HomePage() {
     ),
   };
 
+  // Pick the layout for this audience: logged-in members vs logged-out visitors.
+  const layoutSections =
+    user && homeLayout.loggedInSections?.length ? homeLayout.loggedInSections : homeLayout.sections;
+
   // Start from the saved order, then append any known sections not yet listed
   // (so newly added sections still appear even with an older saved layout).
   const seen = new Set<string>();
   const ordered = [
-    ...homeLayout.sections.filter((s) => {
+    ...layoutSections.filter((s) => {
       if (sectionRenderers[s.key] && !seen.has(s.key)) {
         seen.add(s.key);
         return true;

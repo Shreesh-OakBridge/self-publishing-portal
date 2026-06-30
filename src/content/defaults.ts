@@ -292,7 +292,11 @@ export interface HomeLayoutSection {
 }
 
 export interface HomeLayoutContent {
+  // Section order/visibility for logged-out visitors.
   sections: HomeLayoutSection[];
+  // Section order/visibility for logged-in members. Falls back to `sections`
+  // if not configured.
+  loggedInSections: HomeLayoutSection[];
 }
 
 // Reorderable homepage sections (header/footer are fixed and not listed).
@@ -680,6 +684,7 @@ export const defaultContent: SiteContent = {
   },
   homeLayout: {
     sections: HOME_SECTIONS.map((s) => ({ key: s.key, enabled: true })),
+    loggedInSections: HOME_SECTIONS.map((s) => ({ key: s.key, enabled: true })),
   },
   confidenceBar: {
     enabled: true,
