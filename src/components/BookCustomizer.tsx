@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { Palette, Book, Layout, Ruler, ShoppingCart, Droplet, Layers, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
+import { useContent } from '../content/ContentProvider';
+import type { CustomizerSize } from '../content/defaults';
 import AuthModal from './AuthModal';
+import { go } from '../lib/basePath';
 
 interface CustomizationData {
   paperType: string;
@@ -13,70 +16,12 @@ interface CustomizationData {
   bookSize: string;
 }
 
-const paperTypes = [
-  { id: 'glossy', name: 'Glossy Paper', desc: 'High shine finish, vibrant colors', price: 0 },
-  { id: 'matte', name: 'Matte Paper', desc: 'Professional look, no glare', price: 500 },
-  { id: 'premium', name: 'Premium Cream', desc: 'Classic feel, elegant appearance', price: 1000 },
-  { id: 'recycled', name: 'Recycled Paper', desc: 'Eco-friendly option', price: 800 },
-];
-
-const coverDesigns = [
-  { id: 'standard', name: 'Standard Design', desc: 'Clean, professional layout', price: 0 },
-  { id: 'embossed', name: 'Embossed Cover', desc: 'Raised text & patterns', price: 2000 },
-  { id: 'foil', name: 'Foil Stamping', desc: 'Metallic accents', price: 3500 },
-  { id: 'textured', name: 'Textured Cover', desc: 'Premium tactile finish', price: 2500 },
-  { id: 'full_color', name: 'Full Color HD', desc: 'Ultra-vibrant, photo-quality', price: 1500 },
-];
-
-const layoutOptions = [
-  { id: 'single', name: 'Single Column', desc: 'Traditional book layout', price: 0 },
-  { id: 'double', name: 'Two Column', desc: 'Modern, compact layout', price: 1000 },
-  { id: 'illustrated', name: 'Illustrated Layout', desc: 'With art & graphics', price: 3000 },
-  { id: 'custom', name: 'Custom Design', desc: 'Unique, personalized layout', price: 5000 },
-];
-
-// Standard Indian/UK trade book sizes (Width x Length / trim size).
-// Hardback covers run slightly larger than paperback. The spine (H) is NOT a
-// size choice — it's derived from page count (word count) by the pricing engine.
-// `price` is a placeholder until the cost matrix is finalised.
-interface BookSize {
-  id: string;
-  name: string;
-  desc: string;
-  pb: { w: number; l: number; win: number; lin: number };
-  hb: { w: number; l: number; win: number; lin: number };
-  price: number;
-}
-
-const bookSizes: BookSize[] = [
-  { id: 'demy', name: 'Demy', desc: 'Classic novel / fiction size',
-    pb: { w: 140, l: 215, win: 5.5, lin: 8.5 }, hb: { w: 145, l: 222, win: 5.7, lin: 8.75 }, price: 0 },
-  { id: 'crown1', name: 'Crown1', desc: 'Compact non-fiction',
-    pb: { w: 170, l: 240, win: 6.75, lin: 9.5 }, hb: { w: 174, l: 240, win: 6.85, lin: 9.5 }, price: 0 },
-  { id: 'royal', name: 'Royal', desc: 'Popular all-rounder',
-    pb: { w: 160, l: 240, win: 6.25, lin: 9.5 }, hb: { w: 163, l: 248, win: 6.4, lin: 9.75 }, price: 0 },
-  { id: 'crown', name: 'Crown', desc: 'Wider trim, textbooks',
-    pb: { w: 185, l: 235, win: 7.25, lin: 9.25 }, hb: { w: 188, l: 248, win: 7.4, lin: 9.75 }, price: 0 },
-  { id: 'doubledemy', name: 'Double Demy', desc: 'Coffee-table / photo books',
-    pb: { w: 215, l: 280, win: 8.5, lin: 11 }, hb: { w: 220, l: 285, win: 8.7, lin: 11.25 }, price: 0 },
-];
-
-// Width x Length string for a size in the chosen binding.
-const sizeDims = (size: BookSize, binding: string) => {
+// All option lists, prices and headings are now managed in the CMS
+// (Site Content → Book Customizer). Width x Length string for a size below.
+const sizeDims = (size: CustomizerSize, binding: string) => {
   const d = binding === 'hardback' ? size.hb : size.pb;
   return `${d.w} × ${d.l} mm (${d.win}" × ${d.lin}")`;
 };
-
-// NOTE: color/binding prices below are placeholders — adjust to your real costs.
-const colorOptions = [
-  { id: 'bw', name: 'Black & White', desc: 'Single-color interior printing', price: 0 },
-  { id: 'color', name: 'Full Color (4-Color)', desc: '4-color pages throughout', price: 2500 },
-];
-
-const bindingOptions = [
-  { id: 'paperback', name: 'Paperback', desc: 'Soft cover, lightweight', price: 0 },
-  { id: 'hardback', name: 'Hardback', desc: 'Hard cover, premium & durable', price: 1500 },
-];
 
 interface Suggestion {
   id: string;
@@ -122,26 +67,34 @@ function getSuggestions(c: CustomizationData): Suggestion[] {
 
 export default function BookCustomizer() {
   const { user } = useAuth();
-  const [customization, setCustomization] = useState<CustomizationData>({
-    paperType: 'glossy',
-    interiorColor: 'bw',
-    binding: 'paperback',
-    coverDesign: 'standard',
-    layoutOption: 'single',
-    bookSize: 'demy',
+  const { customizer } = useContent();
+  // All options/prices are CMS-managed; reuse the same names locally.
+  const { paperTypes, coverDesigns, layoutOptions, bookSizes, colorOptions, bindingOptions } =
+    customizer;
+  // Pre-load from query params when an author re-opens a saved design.
+  const [customization, setCustomization] = useState<CustomizationData>(() => {
+    const p = new URLSearchParams(window.location.search);
+    return {
+      paperType: p.get('paper') || 'glossy',
+      interiorColor: p.get('color') || 'bw',
+      binding: p.get('binding') || 'paperback',
+      coverDesign: p.get('cover') || 'standard',
+      layoutOption: p.get('layout') || 'single',
+      bookSize: p.get('size') || 'demy',
+    };
   });
 
   const [estimatedPrice, setEstimatedPrice] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<'save' | 'quote' | null>(null);
+  const [pendingAction, setPendingAction] = useState<'save' | 'quote' | 'order' | null>(null);
 
   useEffect(() => {
     calculatePrice();
   }, [customization]);
 
   const calculatePrice = () => {
-    const baseCost = 8000; // Base production cost in INR
+    const baseCost = customizer.baseCost; // CMS-managed base production cost
 
     const paperCost = paperTypes.find(p => p.id === customization.paperType)?.price || 0;
     const colorCost = colorOptions.find(c => c.id === customization.interiorColor)?.price || 0;
@@ -154,12 +107,18 @@ export default function BookCustomizer() {
     setEstimatedPrice(totalCost);
   };
 
-  const goToContact = () => {
-    if (window.location.pathname.replace(/\/+$/, '') === '') {
-      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      window.location.href = '/#contact';
-    }
+  // Carry the current configuration + estimated price to the quote request page.
+  const goToQuote = () => {
+    const q = new URLSearchParams({
+      paper: customization.paperType,
+      color: customization.interiorColor,
+      binding: customization.binding,
+      cover: customization.coverDesign,
+      layout: customization.layoutOption,
+      size: customization.bookSize,
+      price: String(estimatedPrice),
+    }).toString();
+    go(`/quote?${q}`);
   };
 
   // Require login first so every saved design is tied to a real account we can
@@ -175,44 +134,68 @@ export default function BookCustomizer() {
 
   const handleQuoteClick = () => {
     if (user) {
-      goToContact();
+      goToQuote();
     } else {
       setPendingAction('quote');
       setAuthOpen(true);
     }
   };
 
+  const handleOrderClick = () => {
+    if (user) {
+      doOrder();
+    } else {
+      setPendingAction('order');
+      setAuthOpen(true);
+    }
+  };
+
+  // Insert the current configuration and return its new id.
+  const insertCustomization = async (): Promise<string | null> => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const uid = sessionData.session?.user?.id ?? null;
+    const { data, error } = await supabase
+      .from('book_customizations')
+      .insert([
+        {
+          session_id: `session_${Date.now()}`,
+          user_id: uid,
+          paper_type: customization.paperType,
+          interior_color: customization.interiorColor,
+          binding: customization.binding,
+          cover_design: customization.coverDesign,
+          layout_option: customization.layoutOption,
+          book_size: customization.bookSize,
+          estimated_price: estimatedPrice,
+        },
+      ])
+      .select('id')
+      .single();
+    if (error) throw error;
+    return data?.id ?? null;
+  };
+
   const doSaveCustomization = async () => {
     setIsSaving(true);
     try {
-      // Read the freshest session so saves right after login attach the user id.
-      const { data: sessionData } = await supabase.auth.getSession();
-      const uid = sessionData.session?.user?.id ?? null;
-      const sessionId = `session_${Date.now()}`;
-
-      const { error } = await supabase
-        .from('book_customizations')
-        .insert([
-          {
-            session_id: sessionId,
-            user_id: uid,
-            paper_type: customization.paperType,
-            interior_color: customization.interiorColor,
-            binding: customization.binding,
-            cover_design: customization.coverDesign,
-            layout_option: customization.layoutOption,
-            book_size: customization.bookSize,
-            estimated_price: estimatedPrice,
-          },
-        ]);
-
-      if (error) throw error;
-
+      await insertCustomization();
       alert('Book customization saved! You can view it anytime under My Account.');
     } catch (err) {
       console.error('Error saving customization:', err);
       alert('Error saving customization. Please try again.');
     } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const doOrder = async () => {
+    setIsSaving(true);
+    try {
+      const id = await insertCustomization();
+      if (id) go(`/checkout?customization=${id}`);
+    } catch (err) {
+      console.error('Error starting order:', err);
+      alert('Could not start your order. Please try again.');
       setIsSaving(false);
     }
   };
@@ -224,12 +207,9 @@ export default function BookCustomizer() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Design Your Book
+            {customizer.heading}
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Customize every aspect of your book production and get real-time price estimates.
-            See exactly what you're getting before you commit.
-          </p>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">{customizer.subheading}</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12">
@@ -485,19 +465,27 @@ export default function BookCustomizer() {
                 </div>
 
                 <button
-                  onClick={handleSaveClick}
+                  onClick={handleOrderClick}
                   disabled={isSaving}
                   className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50"
                 >
                   <ShoppingCart className="w-5 h-5" />
-                  <span>{isSaving ? 'Saving...' : 'Save This Configuration'}</span>
+                  <span>{isSaving ? 'Please wait…' : 'Order This Design'}</span>
+                </button>
+
+                <button
+                  onClick={handleSaveClick}
+                  disabled={isSaving}
+                  className="w-full border-2 border-amber-600 text-amber-600 py-3 rounded-xl font-semibold hover:bg-amber-50 transition-colors mt-3 disabled:opacity-50"
+                >
+                  Save for Later
                 </button>
 
                 <button
                   onClick={handleQuoteClick}
-                  className="w-full border-2 border-amber-600 text-amber-600 py-3 rounded-xl font-semibold hover:bg-amber-50 transition-colors mt-3"
+                  className="w-full text-amber-700 hover:text-amber-900 py-2 text-sm font-semibold mt-2"
                 >
-                  Get Quote for This Design
+                  Get a quote instead
                 </button>
               </div>
             </div>
@@ -510,7 +498,8 @@ export default function BookCustomizer() {
         onClose={() => setAuthOpen(false)}
         onAuthenticated={() => {
           if (pendingAction === 'save') doSaveCustomization();
-          else if (pendingAction === 'quote') goToContact();
+          else if (pendingAction === 'quote') goToQuote();
+          else if (pendingAction === 'order') doOrder();
           setPendingAction(null);
         }}
         heading="Log in or sign up to save your design"

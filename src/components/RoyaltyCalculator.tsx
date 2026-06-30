@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingUp, DollarSign, BookOpen, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
+import { useContent } from '../content/ContentProvider';
+import { go } from '../lib/basePath';
 import AuthModal from './AuthModal';
 
 interface RoyaltyData {
@@ -10,19 +12,37 @@ interface RoyaltyData {
   planType: string;
 }
 
-const planRoyalties = {
-  Starter: { percentage: 30, description: 'Standard royalty rate' },
-  Professional: { percentage: 45, description: 'Enhanced royalty rate' },
-  Excellence: { percentage: 55, description: 'Premium royalty rate' },
-  Elite: { percentage: 60, description: 'Maximum royalty rate' },
+// Fallback royalty rates if a CMS plan is missing its rate.
+const FALLBACK_RATE: Record<string, number> = {
+  Starter: 30,
+  Professional: 45,
+  Excellence: 55,
+  Elite: 60,
 };
+const priceNum = (s: string) => Number((s || '').replace(/[^0-9.]/g, '')) || 0;
 
 export default function RoyaltyCalculator() {
-  const { user } = useAuth();
-  const [royaltyData, setRoyaltyData] = useState<RoyaltyData>({
-    bookPrice: 299,
-    expectedSales: 100,
-    planType: 'Professional',
+  const { user, loading } = useAuth();
+  const { pricing, royaltyCalc } = useContent();
+
+  const rateFor = (name: string) =>
+    pricing.plans.find((p) => p.name === name)?.royaltyRate ?? FALLBACK_RATE[name] ?? 0;
+  const costFor = (name: string) =>
+    priceNum(pricing.plans.find((p) => p.name === name)?.price || '');
+  // Royalty Calculator is for logged-in authors only.
+  useEffect(() => {
+    if (!loading && !user) {
+      go('/login');
+    }
+  }, [loading, user]);
+  // Pre-load from query params when an author re-opens a saved projection.
+  const [royaltyData, setRoyaltyData] = useState<RoyaltyData>(() => {
+    const p = new URLSearchParams(window.location.search);
+    return {
+      bookPrice: Number(p.get('price')) || 299,
+      expectedSales: Number(p.get('sales')) || 100,
+      planType: p.get('plan') || 'Professional',
+    };
   });
 
   const [results, setResults] = useState({
@@ -36,20 +56,14 @@ export default function RoyaltyCalculator() {
   const [authOpen, setAuthOpen] = useState(false);
 
   const calculateRoyalty = () => {
-    const royaltyPercentage = planRoyalties[royaltyData.planType as keyof typeof planRoyalties].percentage;
+    const royaltyPercentage = rateFor(royaltyData.planType);
     const royaltyPerBook = (royaltyData.bookPrice * royaltyPercentage) / 100;
     const monthlyEarnings = royaltyPerBook * royaltyData.expectedSales;
     const annualEarnings = monthlyEarnings * 12;
 
-    // Approximate breakeven calculation (assuming plan cost divided by monthly earnings)
-    const planCosts = {
-      Starter: 29999,
-      Professional: 79999,
-      Excellence: 159999,
-      Elite: 299999,
-    };
-
-    const monthsToBreakeven = monthlyEarnings > 0 ? Math.ceil(planCosts[royaltyData.planType as keyof typeof planCosts] / monthlyEarnings) : 0;
+    // Approximate breakeven: plan cost divided by monthly earnings.
+    const planCost = costFor(royaltyData.planType);
+    const monthsToBreakeven = monthlyEarnings > 0 ? Math.ceil(planCost / monthlyEarnings) : 0;
 
     setResults({
       royaltyPerBook: Math.round(royaltyPerBook),
@@ -58,6 +72,12 @@ export default function RoyaltyCalculator() {
       breakeven: monthsToBreakeven,
     });
   };
+
+  // Compute once on load so preloaded/default values show results immediately.
+  useEffect(() => {
+    calculateRoyalty();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Require login so saved projections are tied to an account we can follow up
   // with; otherwise nudge the visitor to log in / sign up first.
@@ -102,17 +122,20 @@ export default function RoyaltyCalculator() {
     }
   };
 
+  if (loading || !user) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center text-gray-500">Loading…</div>
+    );
+  }
+
   return (
     <section id="calculator" className="py-20 px-4 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Royalty Calculator
+            {royaltyCalc.heading}
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Understand your earning potential. Enter your expected book price and monthly sales
-            to see how much you could earn from your published work.
-          </p>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">{royaltyCalc.subheading}</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12">
@@ -129,9 +152,9 @@ export default function RoyaltyCalculator() {
                   onChange={(e) => setRoyaltyData({ ...royaltyData, planType: e.target.value })}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
                 >
-                  {Object.entries(planRoyalties).map(([plan, data]) => (
-                    <option key={plan} value={plan}>
-                      {plan} - {data.percentage}% royalty ({data.description})
+                  {pricing.plans.map((plan) => (
+                    <option key={plan.name} value={plan.name}>
+                      {plan.name} - {rateFor(plan.name)}% royalty
                     </option>
                   ))}
                 </select>
@@ -259,13 +282,7 @@ export default function RoyaltyCalculator() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white rounded-2xl shadow-lg p-6">
                 <h4 className="font-bold text-gray-900 mb-3">Your Plan Tier</h4>
-                <p className="text-3xl font-bold text-purple-600">
-                  {
-                    planRoyalties[royaltyData.planType as keyof typeof planRoyalties]
-                      .percentage
-                  }
-                  %
-                </p>
+                <p className="text-3xl font-bold text-purple-600">{rateFor(royaltyData.planType)}%</p>
                 <p className="text-sm text-gray-600 mt-2">Royalty Rate</p>
               </div>
 

@@ -1,8 +1,51 @@
 import { useEffect, useState } from 'react';
-import { LogOut, RefreshCw, Lock, Inbox, AlertCircle, FileText } from 'lucide-react';
+import { LogOut, RefreshCw, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate, ShieldCheck, Menu, ClipboardList } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
+import { logActivity } from '../lib/activity';
 import ContentEditor from './ContentEditor';
+import AuthorsPanel from './AuthorsPanel';
+import ActivityPanel from './ActivityPanel';
+import ManuscriptsPanel from './ManuscriptsPanel';
+import OrdersPanel from './OrdersPanel';
+import QuotesPanel from './QuotesPanel';
+import CouponsPanel from './CouponsPanel';
+import BooksPanel from './BooksPanel';
+import LayoutEditor from './LayoutEditor';
+import AdminsPanel from './AdminsPanel';
+import AdminAuth from './AdminAuth';
+import ExportMenu from './ExportMenu';
+import type { Column } from '../lib/exporters';
+
+// Tabs and which roles may see them. Editors are limited to leads + content.
+const TABS = [
+  { key: 'leads', label: 'Leads', Icon: Inbox, roles: ['owner', 'admin', 'editor'] },
+  { key: 'manuscripts', label: 'Manuscripts', Icon: BookText, roles: ['owner', 'admin'] },
+  { key: 'orders', label: 'Orders', Icon: ShoppingBag, roles: ['owner', 'admin'] },
+  { key: 'quotes', label: 'Quotes', Icon: ClipboardList, roles: ['owner', 'admin'] },
+  { key: 'authors', label: 'Authors', Icon: Users, roles: ['owner', 'admin'] },
+  { key: 'books', label: 'Books', Icon: Library, roles: ['owner', 'admin'] },
+  { key: 'promotions', label: 'Promotions', Icon: Tag, roles: ['owner', 'admin'] },
+  { key: 'activity', label: 'Activity', Icon: Activity, roles: ['owner', 'admin'] },
+  { key: 'layout', label: 'Layout', Icon: LayoutTemplate, roles: ['owner', 'admin', 'editor'] },
+  { key: 'content', label: 'Site Content', Icon: FileText, roles: ['owner', 'admin', 'editor'] },
+  { key: 'admins', label: 'Admins', Icon: ShieldCheck, roles: ['owner'] },
+] as const;
+import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
+import { SearchBox, SortControl } from './AdminControls';
+import { filterBySearch, sortRows, noSort, type SortState } from '../lib/adminFilter';
+
+const leadColumns: Column<Lead>[] = [
+  { header: 'Date', value: (l) => new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) },
+  { header: 'Name', value: (l) => l.full_name },
+  { header: 'Email', value: (l) => l.email },
+  { header: 'Phone', value: (l) => l.phone || '' },
+  { header: 'Manuscript Title', value: (l) => l.manuscript_title || '' },
+  { header: 'Genre', value: (l) => l.genre || '' },
+  { header: 'Status', value: (l) => l.manuscript_status },
+  { header: 'Preferred Plan', value: (l) => l.preferred_plan || '' },
+  { header: 'Message', value: (l) => l.message || '' },
+];
 
 interface Lead {
   id: string;
@@ -22,15 +65,21 @@ export default function AdminDashboard() {
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [authError, setAuthError] = useState('');
-  const [signingIn, setSigningIn] = useState(false);
-
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [leadsError, setLeadsError] = useState('');
-  const [tab, setTab] = useState<'leads' | 'content'>('leads');
+  const [leadRange, setLeadRange] = useState<DateRange>(emptyRange);
+  const [leadSearch, setLeadSearch] = useState('');
+  const [leadSort, setLeadSort] = useState<SortState>(noSort);
+  const [tab, setTab] = useState<'leads' | 'orders' | 'quotes' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'layout' | 'content' | 'admins'>('leads');
+  const [adminRole, setAdminRole] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const role = adminRole ?? 'admin';
+  const filteredLeads = sortRows(
+    filterBySearch(filterByRange(leads, leadRange, (l) => l.created_at), leadColumns, leadSearch),
+    leadColumns,
+    leadSort,
+  );
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -63,27 +112,28 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!session) {
       setIsAdmin(null);
+      setAdminRole(null);
       return;
     }
     supabase.rpc('is_admin').then(({ data }) => setIsAdmin(data === true));
+    supabase.rpc('admin_role').then(({ data }) => setAdminRole((data as string) ?? null));
   }, [session]);
+
+  // If the current tab isn't allowed for this role, fall back to Leads.
+  useEffect(() => {
+    if (adminRole) {
+      const allowed = (TABS.find((t) => t.key === tab)?.roles as readonly string[] | undefined)?.includes(adminRole);
+      if (!allowed) setTab('leads');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminRole]);
 
   useEffect(() => {
     if (session && isAdmin) fetchLeads();
   }, [session, isAdmin]);
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSigningIn(true);
-    setAuthError('');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setAuthError('Invalid email or password.');
-    }
-    setSigningIn(false);
-  };
-
   const handleSignOut = async () => {
+    await logActivity('admin.logout', {}, supabase);
     await supabase.auth.signOut();
     setLeads([]);
   };
@@ -96,61 +146,8 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 px-4">
-        <form
-          onSubmit={handleSignIn}
-          className="bg-white rounded-3xl shadow-xl p-8 md:p-10 w-full max-w-md"
-        >
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-              <Lock className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Admin Login</h1>
-              <p className="text-sm text-gray-500">OakBridge leads dashboard</p>
-            </div>
-          </div>
-
-          {authError && (
-            <div className="bg-red-50 border-2 border-red-300 text-red-800 p-3 rounded-xl mb-4 text-sm flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>{authError}</span>
-            </div>
-          )}
-
-          <label className="block text-gray-700 font-semibold mb-2">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all mb-4"
-            placeholder="admin@oakbridge.in"
-          />
-
-          <label className="block text-gray-700 font-semibold mb-2">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all mb-6"
-            placeholder="••••••••"
-          />
-
-          <button
-            type="submit"
-            disabled={signingIn}
-            className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {signingIn ? 'Signing in…' : 'Sign In'}
-          </button>
-        </form>
-      </div>
-    );
-  }
+  // ── Non-logged-in layout ──────────────────────────────────────────────
+  if (!session) return <AdminAuth mode="login" />;
 
   // Logged in but still confirming admin status.
   if (isAdmin === null) {
@@ -162,96 +159,131 @@ export default function AdminDashboard() {
   }
 
   // Logged in but not an admin — block access to the dashboard.
-  if (isAdmin === false) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="bg-white rounded-3xl shadow-xl p-8 md:p-10 w-full max-w-md text-center">
-          <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-6 h-6 text-red-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Not authorized</h1>
-          <p className="text-gray-600 mb-6">
-            This account doesn’t have admin access. Sign in with an admin account to manage leads and
-            site content.
-          </p>
-          <button
-            onClick={handleSignOut}
-            className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold hover:bg-gray-800"
-          >
-            Sign Out
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (isAdmin === false) return <AdminAuth mode="unauthorized" />;
+
+  // ── Logged-in admin layout (dashboard shell) below ────────────────────
+
+  const activeTab = TABS.find((t) => t.key === tab);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-              <Inbox className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">OakBridge Admin</h1>
-              <p className="text-xs text-gray-500">{session.user.email}</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            {tab === 'leads' && (
-              <button
-                onClick={fetchLeads}
-                disabled={loadingLeads}
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={`w-4 h-4 ${loadingLeads ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Refresh</span>
-              </button>
-            )}
-            <button
-              onClick={handleSignOut}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Sign Out</span>
-            </button>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 flex space-x-1">
-          <button
-            onClick={() => setTab('leads')}
-            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === 'leads'
-                ? 'border-amber-600 text-amber-700'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <Inbox className="w-4 h-4" />
-            <span>Leads</span>
-          </button>
-          <button
-            onClick={() => setTab('content')}
-            className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === 'content'
-                ? 'border-amber-600 text-amber-700'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span>Site Content</span>
-          </button>
-        </div>
-      </header>
+      {/* Mobile top bar */}
+      <div className="md:hidden sticky top-0 z-30 bg-white border-b flex items-center justify-between px-4 py-3">
+        <button onClick={() => setSidebarOpen(true)} className="text-gray-700">
+          <Menu className="w-6 h-6" />
+        </button>
+        <span className="font-bold text-gray-900">{activeTab?.label}</span>
+        <button onClick={handleSignOut} className="text-gray-700">
+          <LogOut className="w-5 h-5" />
+        </button>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      {/* Backdrop (mobile) */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 w-60 bg-white border-r z-40 flex flex-col transform transition-transform duration-200 md:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="p-5 border-b flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+            <Inbox className="w-5 h-5 text-white" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold text-gray-900 leading-tight">Cursive Admin</h1>
+            <p className="text-xs text-gray-500 truncate">
+              {session.user.email}
+              {adminRole && <span className="block capitalize text-amber-700 font-semibold">{adminRole}</span>}
+            </p>
+          </div>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+          {TABS.filter((t) => (t.roles as readonly string[]).includes(role)).map((t) => (
+            <button
+              key={t.key}
+              onClick={() => {
+                setTab(t.key);
+                setSidebarOpen(false);
+              }}
+              className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                tab === t.key
+                  ? 'bg-amber-50 text-amber-700'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <t.Icon className="w-4 h-4 flex-shrink-0" />
+              <span>{t.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="p-3 border-t">
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg bg-gray-900 text-white hover:bg-gray-800 text-sm font-semibold"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Content */}
+      <div className="md:ml-60">
+        <div className="hidden md:flex items-center justify-between px-6 py-4 border-b bg-white sticky top-0 z-20">
+          <h2 className="text-lg font-bold text-gray-900">{activeTab?.label}</h2>
+          {tab === 'leads' && (
+            <button
+              onClick={fetchLeads}
+              disabled={loadingLeads}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingLeads ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+          )}
+        </div>
+
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {tab === 'content' ? (
           <ContentEditor />
+        ) : tab === 'manuscripts' ? (
+          <ManuscriptsPanel />
+        ) : tab === 'orders' ? (
+          <OrdersPanel />
+        ) : tab === 'quotes' ? (
+          <QuotesPanel />
+        ) : tab === 'authors' ? (
+          <AuthorsPanel />
+        ) : tab === 'books' ? (
+          <BooksPanel />
+        ) : tab === 'promotions' ? (
+          <CouponsPanel />
+        ) : tab === 'activity' ? (
+          <ActivityPanel />
+        ) : tab === 'layout' ? (
+          <LayoutEditor />
+        ) : tab === 'admins' ? (
+          <AdminsPanel isOwner={role === 'owner'} currentEmail={session?.user?.email ?? ''} />
         ) : (
         <>
-        <p className="text-gray-600 mb-4">
-          {leads.length} {leads.length === 1 ? 'lead' : 'leads'} total
-        </p>
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <p className="text-gray-600">
+            {filteredLeads.length} {filteredLeads.length === 1 ? 'lead' : 'leads'}
+            {leadRange.from || leadRange.to ? ' in range' : ' total'}
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <SearchBox value={leadSearch} onChange={setLeadSearch} placeholder="Search name, email, plan…" />
+            <SortControl columns={leadColumns} sort={leadSort} onChange={setLeadSort} />
+            <DateRangeFilter range={leadRange} onChange={setLeadRange} />
+            <ExportMenu baseName="leads" title="Leads" columns={leadColumns} rows={filteredLeads} />
+          </div>
+        </div>
 
         {leadsError && (
           <div className="bg-red-50 border-2 border-red-300 text-red-800 p-4 rounded-xl mb-6 flex items-center space-x-2">
@@ -262,9 +294,11 @@ export default function AdminDashboard() {
 
         {loadingLeads && leads.length === 0 ? (
           <div className="text-center text-gray-500 py-16">Loading leads…</div>
-        ) : leads.length === 0 ? (
+        ) : filteredLeads.length === 0 ? (
           <div className="text-center text-gray-500 py-16 bg-white rounded-2xl border">
-            No leads yet. Submissions from the contact form will appear here.
+            {leads.length === 0
+              ? 'No leads yet. Submissions from the contact form will appear here.'
+              : 'No leads in the selected date range.'}
           </div>
         ) : (
           <div className="bg-white rounded-2xl border overflow-x-auto">
@@ -281,7 +315,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {leads.map((lead) => (
+                {filteredLeads.map((lead) => (
                   <tr key={lead.id} className="border-b last:border-0 align-top hover:bg-gray-50">
                     <td className="px-4 py-3 whitespace-nowrap text-gray-500">
                       {new Date(lead.created_at).toLocaleDateString('en-IN', {
@@ -320,7 +354,8 @@ export default function AdminDashboard() {
         )}
         </>
         )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

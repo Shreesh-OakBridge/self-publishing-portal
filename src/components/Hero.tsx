@@ -1,5 +1,7 @@
 import { Feather, Sparkles, BookOpen } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
+import { go } from '../lib/basePath';
+import { track } from '../lib/track';
 
 const cardIcons = [Feather, Sparkles, BookOpen];
 const cardGradients = [
@@ -11,13 +13,14 @@ const cardGradients = [
 export default function Hero() {
   const { hero } = useContent();
 
-  const scrollToContact = () => {
-    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+  const goToJourneys = () => {
+    track('click_event', { label: 'hero_primary_cta', destination: 'journeys' });
+    go('/journeys');
   };
 
   return (
-    <section id="home" className="pt-32 pb-20 px-4 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50">
-      <div className="max-w-7xl mx-auto">
+    <section id="home" className="pt-32 pb-20 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <div className="inline-flex items-center space-x-2 bg-amber-100 px-4 py-2 rounded-full mb-6">
             <Sparkles className="w-5 h-5 text-amber-600" />
@@ -37,28 +40,33 @@ export default function Hero() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button
-              onClick={scrollToContact}
+              onClick={goToJourneys}
               className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
               {hero.primaryCta}
             </button>
             <button
-              onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => {
+                track('click_event', { label: 'hero_view_plans' });
+                document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' });
+              }}
               className="border-2 border-amber-600 text-amber-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-amber-50 transition-all"
             >
               {hero.secondaryCta}
             </button>
           </div>
-
-          {hero.imageUrl && (
-            <img
-              src={hero.imageUrl}
-              alt=""
-              className="mt-12 mx-auto rounded-3xl shadow-2xl max-h-[28rem] w-auto object-cover"
-            />
-          )}
         </div>
+      </div>
 
+      {hero.imageUrl && (
+        <img
+          src={hero.imageUrl}
+          alt={hero.imageAlt || ''}
+          className="mt-12 w-full h-auto block"
+        />
+      )}
+
+      <div className="max-w-7xl mx-auto px-4">
         <div className="mt-16 grid md:grid-cols-3 gap-8">
           {hero.cards.map((card, index) => {
             const Icon = cardIcons[index % cardIcons.length];

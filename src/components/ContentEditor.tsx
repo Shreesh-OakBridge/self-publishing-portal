@@ -1,20 +1,85 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Save, RotateCcw, Plus, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import { useContent } from '../content/ContentProvider';
 import { defaultContent, SiteContent } from '../content/defaults';
 import MediaUploadField from './MediaUploadField';
+import { SERVICE_ICONS, SERVICE_ICON_NAMES } from '../lib/serviceIcons';
 
 type Json = unknown;
 
+// Visual grid picker for choosing a service icon by name.
+function IconPickerField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="mb-3">
+      <label className="block text-xs font-semibold text-gray-500 mb-1.5">{label}</label>
+      <div className="flex flex-wrap gap-2">
+        {SERVICE_ICON_NAMES.map((name) => {
+          const Icon = SERVICE_ICONS[name];
+          const selected = value === name;
+          return (
+            <button
+              key={name}
+              type="button"
+              title={name}
+              onClick={() => onChange(name)}
+              className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${
+                selected
+                  ? 'bg-amber-600 border-amber-600 text-white'
+                  : 'bg-white border-gray-200 text-gray-600 hover:border-amber-300 hover:bg-amber-50'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+            </button>
+          );
+        })}
+      </div>
+      {value && <p className="mt-1.5 text-xs text-gray-400">Selected: {value}</p>}
+    </div>
+  );
+}
+
 const SECTION_LABELS: Record<string, string> = {
   branding: 'Logo & Branding',
+  welcome: 'Welcome Screen (intro)',
+  getStarted: 'Get Started (funnel)',
   hero: 'Hero / Banner',
   valueProps: 'Value Proposition',
   video: 'Process & Video',
+  confidenceBar: 'Confidence Bar',
+  services: 'Services',
+  journeys: 'Journeys (Choose Your Journey)',
+  authorHub: 'Author Hub',
+  portfolio: 'Portfolio',
+  testimonials: 'Testimonials',
   pricing: 'Pricing Plans',
+  customizer: 'Book Customizer',
+  manuscript: 'Manuscript Section',
+  royaltyCalc: 'Royalty Calculator',
+  editorial: 'Editorial Review',
   contact: 'Contact Section',
+  faq: 'FAQ',
+  pages: 'Static Pages (About / Terms / Privacy)',
   footer: 'Footer',
+};
+
+// Sections whose object keys should be edited one-at-a-time via sub-tabs
+// (e.g. the Static Pages section → About / Terms / Privacy).
+const SUBSECTIONS: Record<string, Record<string, string>> = {
+  pages: {
+    about: 'About Us',
+    terms: 'Terms & Conditions',
+    privacy: 'Privacy Policy',
+    publishingAgreement: 'Publishing Agreement',
+  },
 };
 
 // Content fields that hold media — rendered as drag-and-drop uploaders.
@@ -23,6 +88,8 @@ const MEDIA_FIELDS: Record<string, { label: string; accept: 'image' | 'video' }>
   posterUrl: { label: 'Video Poster Image', accept: 'image' },
   imageUrl: { label: 'Hero Image', accept: 'image' },
   logoUrl: { label: 'Logo Image', accept: 'image' },
+  coverUrl: { label: 'Book Cover Image', accept: 'image' },
+  bannerUrl: { label: 'Banner Image', accept: 'image' },
 };
 
 function humanize(key: string): string {
@@ -196,15 +263,35 @@ function Field({
         <div className={label ? 'pl-3 border-l-2 border-amber-200 space-y-1' : 'space-y-1'}>
           {Object.entries(obj).map(([k, v]) => {
             const media = MEDIA_FIELDS[k];
-            return media ? (
-              <MediaUploadField
-                key={k}
-                label={media.label}
-                accept={media.accept}
-                value={typeof v === 'string' ? v : ''}
-                onChange={(nv) => onChange({ ...obj, [k]: nv })}
-              />
-            ) : (
+            if (k === 'icon') {
+              return (
+                <IconPickerField
+                  key={k}
+                  label="Icon"
+                  value={typeof v === 'string' ? v : ''}
+                  onChange={(nv) => onChange({ ...obj, [k]: nv })}
+                />
+              );
+            }
+            if (media) {
+              // Alt text is stored in a sibling key, e.g. coverUrl → coverAlt.
+              const altKey = k.replace(/Url$/, '') + 'Alt';
+              const altVal = typeof obj[altKey] === 'string' ? (obj[altKey] as string) : '';
+              return (
+                <MediaUploadField
+                  key={k}
+                  label={media.label}
+                  accept={media.accept}
+                  value={typeof v === 'string' ? v : ''}
+                  onChange={(nv) => onChange({ ...obj, [k]: nv })}
+                  alt={media.accept === 'image' ? altVal : undefined}
+                  onAltChange={
+                    media.accept === 'image' ? (na) => onChange({ ...obj, [altKey]: na }) : undefined
+                  }
+                />
+              );
+            }
+            return (
               <Field
                 key={k}
                 label={humanize(k)}
@@ -223,7 +310,11 @@ function Field({
 
 export default function ContentEditor() {
   const content = useContent();
-  const sections = useMemo(() => Object.keys(content) as (keyof SiteContent)[], [content]);
+  // `homeLayout` is managed in the dedicated Layout tab, not here.
+  const sections = useMemo(
+    () => (Object.keys(content) as (keyof SiteContent)[]).filter((k) => k !== 'homeLayout'),
+    [content]
+  );
   const [active, setActive] = useState<keyof SiteContent>(sections[0]);
   const [drafts, setDrafts] = useState<Record<string, Json>>(() => ({ ...content }));
   const [saving, setSaving] = useState(false);
@@ -231,9 +322,25 @@ export default function ContentEditor() {
 
   const draft = drafts[active];
 
+  // Sub-tab handling for sectioned editors (e.g. Static Pages).
+  const subConfig = SUBSECTIONS[active as string];
+  const subKeys = subConfig ? Object.keys(subConfig) : [];
+  const [subKey, setSubKey] = useState<string>('');
+  useEffect(() => {
+    if (subConfig) {
+      setSubKey((prev) => (prev && prev in subConfig ? prev : subKeys[0]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
   const setDraft = (v: Json) => {
     setDrafts((d) => ({ ...d, [active]: v }));
     setStatus(null);
+  };
+
+  const setSubDraft = (v: Json) => {
+    const obj = (draft && typeof draft === 'object' ? draft : {}) as Record<string, Json>;
+    setDraft({ ...obj, [subKey]: v });
   };
 
   const save = async () => {
@@ -316,7 +423,34 @@ export default function ContentEditor() {
           </div>
         )}
 
-        <Field label="" value={draft} onChange={setDraft} />
+        {subConfig ? (
+          <>
+            <div className="flex flex-wrap gap-2 mb-5 border-b border-gray-200 pb-3">
+              {subKeys.map((k) => (
+                <button
+                  key={k}
+                  onClick={() => setSubKey(k)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                    subKey === k
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  {subConfig[k]}
+                </button>
+              ))}
+            </div>
+            {subKey && draft && typeof draft === 'object' && (
+              <Field
+                label=""
+                value={(draft as Record<string, Json>)[subKey]}
+                onChange={setSubDraft}
+              />
+            )}
+          </>
+        ) : (
+          <Field label="" value={draft} onChange={setDraft} />
+        )}
       </div>
     </div>
   );

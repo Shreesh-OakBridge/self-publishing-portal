@@ -8,9 +8,11 @@ interface AuthModalProps {
   // Called after a successful login/signup made from the modal.
   onAuthenticated?: () => void;
   heading?: string;
+  // Where Google sign-in should return to (the email flow uses onAuthenticated).
+  redirectPath?: string;
 }
 
-export default function AuthModal({ open, onClose, onAuthenticated, heading }: AuthModalProps) {
+export default function AuthModal({ open, onClose, onAuthenticated, heading, redirectPath }: AuthModalProps) {
   // Lock body scroll while the modal is open and close on Escape.
   useEffect(() => {
     if (!open) return;
@@ -46,6 +48,7 @@ export default function AuthModal({ open, onClose, onAuthenticated, heading }: A
         )}
 
         <AuthForm
+          oauthRedirectPath={redirectPath}
           onAuthenticated={() => {
             onClose();
             onAuthenticated?.();

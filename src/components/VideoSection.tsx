@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, CheckCircle, Star } from 'lucide-react';
+import { Play, CheckCircle, Star, ChevronDown } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 
 const stepGradients = [
@@ -74,7 +74,9 @@ export default function VideoSection() {
         <div className="grid md:grid-cols-2 gap-12 mb-12">
           <div>
             <h3 className="text-3xl font-bold text-gray-900 mb-6">{video.apartHeading}</h3>
-            <div className="space-y-4">
+
+            {/* Desktop: full list */}
+            <div className="hidden md:block space-y-4">
               {video.apartItems.map((item, index) => (
                 <div key={index} className="flex items-start space-x-4">
                   <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
@@ -85,11 +87,29 @@ export default function VideoSection() {
                 </div>
               ))}
             </div>
+
+            {/* Mobile: tap-to-expand accordion */}
+            <div className="md:hidden divide-y rounded-2xl border bg-white">
+              {video.apartItems.map((item, index) => (
+                <details key={index} className="group">
+                  <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <span className="flex items-center gap-2 font-semibold text-gray-900 text-sm">
+                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                      {item.title}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 group-open:rotate-180 transition-transform" />
+                  </summary>
+                  <p className="px-4 pb-4 text-gray-600 text-sm">{item.description}</p>
+                </details>
+              ))}
+            </div>
           </div>
 
           <div>
             <h3 className="text-3xl font-bold text-gray-900 mb-6">{video.processHeading}</h3>
-            <div className="space-y-6">
+
+            {/* Desktop: numbered list */}
+            <div className="hidden md:block space-y-6">
               {video.processSteps.map((step, index) => (
                 <div key={index} className="flex space-x-4">
                   <div
@@ -103,14 +123,29 @@ export default function VideoSection() {
                   </div>
                 </div>
               ))}
+            </div>
 
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-2xl border-2 border-amber-200">
-                <div className="flex items-center space-x-3 mb-2">
-                  <Star className="w-6 h-6 text-amber-600" fill="currentColor" />
-                  <h4 className="text-lg font-bold text-gray-900">{video.partnershipTitle}</h4>
+            {/* Mobile: compact 2-column grid */}
+            <div className="grid grid-cols-2 gap-3 md:hidden">
+              {video.processSteps.map((step, index) => (
+                <div key={index} className="bg-white rounded-xl border p-3">
+                  <div
+                    className={`w-8 h-8 bg-gradient-to-br ${stepGradients[index % stepGradients.length]} rounded-lg flex items-center justify-center text-white font-bold mb-2`}
+                  >
+                    {index + 1}
+                  </div>
+                  <h4 className="text-sm font-bold text-gray-900 leading-tight mb-1">{step.title}</h4>
+                  <p className="text-gray-600 text-xs leading-snug">{step.description}</p>
                 </div>
-                <p className="text-gray-700">{video.partnershipText}</p>
+              ))}
+            </div>
+
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-2xl border-2 border-amber-200 mt-6">
+              <div className="flex items-center space-x-3 mb-2">
+                <Star className="w-6 h-6 text-amber-600" fill="currentColor" />
+                <h4 className="text-lg font-bold text-gray-900">{video.partnershipTitle}</h4>
               </div>
+              <p className="text-gray-700">{video.partnershipText}</p>
             </div>
           </div>
         </div>

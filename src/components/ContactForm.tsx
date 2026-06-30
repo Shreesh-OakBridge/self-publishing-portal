@@ -283,7 +283,7 @@ export default function ContactForm() {
       </button>
 
       <p className="text-gray-500 text-sm mt-4 text-center">
-        By submitting this form, you agree to be contacted by OakBridge Publishing regarding your
+        By submitting this form, you agree to be contacted by Cursive regarding your
         publishing project.
       </p>
     </form>
