@@ -793,3 +793,264 @@ DROP POLICY IF EXISTS "Admins update site-media" ON storage.objects;
 CREATE POLICY "Admins update site-media" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'site-media' AND is_admin()) WITH CHECK (bucket_id = 'site-media' AND is_admin());
 DROP POLICY IF EXISTS "Admins delete site-media" ON storage.objects;
 CREATE POLICY "Admins delete site-media" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'site-media' AND is_admin());
+
+
+-- ============================================================
+-- Project Workspace hardening (Tranche 1): private proofs,
+-- sender_role binding, proof-update guard, realtime.
+-- ============================================================
+
+/*
+  # Project Workspace — security & realtime hardening (Tranche 1)
+
+  1. Proof files become PRIVATE (they were world-readable). Authors and admins
+     read them via short-lived signed URLs; storage RLS scopes reads to the
+     owning author (matched on the "<orderId>/…" object path).
+  2. Message inserts bind sender_role to the real role — an author can no longer
+     post a message labelled as the "team", and vice-versa.
+  3. Authors may only approve / request-changes on a proof, not rewrite its
+     content — enforced by a BEFORE UPDATE trigger.
+  4. Realtime is enabled on the workspace tables so both sides get live updates.
+
+  Idempotent — safe to re-run.
+*/
+
+-- 1. Private proofs bucket + scoped read ------------------------------------
+UPDATE storage.buckets SET public = false WHERE id = 'proofs';
+
+DROP POLICY IF EXISTS "Public read proofs" ON storage.objects;
+DROP POLICY IF EXISTS "Read proofs on own orders" ON storage.objects;
+CREATE POLICY "Read proofs on own orders" ON storage.objects FOR SELECT TO authenticated
+  USING (
+    bucket_id = 'proofs' AND (
+      is_admin() OR EXISTS (
+        SELECT 1 FROM orders o
+        WHERE o.id = ((storage.foldername(name))[1])::uuid
+          AND o.user_id = auth.uid()
+      )
+    )
+  );
+
+-- 2. Bind message sender_role to the real role ------------------------------
+DROP POLICY IF EXISTS "Send messages on own orders" ON project_messages;
+CREATE POLICY "Send messages on own orders" ON project_messages FOR INSERT TO authenticated
+  WITH CHECK (
+    sender_id = auth.uid() AND (
+      (is_admin() AND sender_role = 'team') OR
+      (sender_role = 'author' AND EXISTS (
+        SELECT 1 FROM orders o WHERE o.id = order_id AND o.user_id = auth.uid()
+      ))
+    )
+  );
+
+-- 3. Authors can only decide on a proof, not rewrite it ---------------------
+CREATE OR REPLACE FUNCTION enforce_proof_author_update() RETURNS trigger AS $$
+BEGIN
+  IF is_admin() THEN
+    RETURN NEW;
+  END IF;
+  IF NEW.order_id      IS DISTINCT FROM OLD.order_id
+     OR NEW.title      IS DISTINCT FROM OLD.title
+     OR NEW.note       IS DISTINCT FROM OLD.note
+     OR NEW.file_url   IS DISTINCT FROM OLD.file_url
+     OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+    RAISE EXCEPTION 'Authors may only approve or request changes on a proof.';
+  END IF;
+  IF NEW.status NOT IN ('approved', 'changes_requested') THEN
+    RAISE EXCEPTION 'Invalid proof status.';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_enforce_proof_author_update ON project_proofs;
+CREATE TRIGGER trg_enforce_proof_author_update
+  BEFORE UPDATE ON project_proofs
+  FOR EACH ROW EXECUTE FUNCTION enforce_proof_author_update();
+
+-- 4. Realtime for live updates (idempotent add to the publication) -----------
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'project_messages'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE project_messages;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'project_proofs'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE project_proofs;
+  END IF;
+END $$;
+
+
+-- ============================================================
+-- Project Workspace read-tracking + triage (Tranche 2)
+-- ============================================================
+
+/*
+  # Project Workspace — read tracking + triage helpers (Tranche 2)
+
+  project_reads: per-order "last seen" timestamps for each side, powering the
+  unread badges (author + admin) and the admin Workspace queue.
+
+  Writes go only through mark_workspace_seen() (SECURITY DEFINER), which sets the
+  correct column based on the caller — so neither side can tamper the other's.
+
+  Idempotent — safe to re-run.
+*/
+
+CREATE TABLE IF NOT EXISTS project_reads (
+  order_id uuid PRIMARY KEY REFERENCES orders(id) ON DELETE CASCADE,
+  author_seen_at timestamptz,
+  team_seen_at timestamptz
+);
+
+ALTER TABLE project_reads ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Read own project reads" ON project_reads;
+CREATE POLICY "Read own project reads" ON project_reads FOR SELECT TO authenticated
+  USING (is_admin() OR EXISTS (SELECT 1 FROM orders o WHERE o.id = order_id AND o.user_id = auth.uid()));
+
+-- Mark the workspace "seen" for whichever side is calling.
+CREATE OR REPLACE FUNCTION mark_workspace_seen(p_order uuid) RETURNS void AS $$
+BEGIN
+  IF is_admin() THEN
+    INSERT INTO project_reads (order_id, team_seen_at) VALUES (p_order, now())
+    ON CONFLICT (order_id) DO UPDATE SET team_seen_at = now();
+  ELSIF EXISTS (SELECT 1 FROM orders o WHERE o.id = p_order AND o.user_id = auth.uid()) THEN
+    INSERT INTO project_reads (order_id, author_seen_at) VALUES (p_order, now())
+    ON CONFLICT (order_id) DO UPDATE SET author_seen_at = now();
+  ELSE
+    RAISE EXCEPTION 'Not allowed';
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION mark_workspace_seen(uuid) TO authenticated;
+
+-- Author-facing: unread counts for the current user's own orders.
+CREATE OR REPLACE FUNCTION my_workspace_unread()
+RETURNS TABLE (order_id uuid, unread_msgs bigint, pending_proofs bigint) AS $$
+  SELECT o.id,
+    (SELECT count(*) FROM project_messages m
+       WHERE m.order_id = o.id AND m.sender_role = 'team'
+         AND m.created_at > COALESCE(r.author_seen_at, 'epoch'::timestamptz)),
+    (SELECT count(*) FROM project_proofs p
+       WHERE p.order_id = o.id AND p.status = 'pending')
+  FROM orders o
+  LEFT JOIN project_reads r ON r.order_id = o.id
+  WHERE o.user_id = auth.uid();
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION my_workspace_unread() TO authenticated;
+
+-- Admin-facing: triage queue across all orders that have workspace activity.
+CREATE OR REPLACE FUNCTION admin_workspace_queue()
+RETURNS TABLE (
+  order_id uuid,
+  ship_name text,
+  plan text,
+  invoice_number text,
+  last_activity_at timestamptz,
+  unread_msgs bigint,
+  pending_decisions bigint
+) AS $$
+  SELECT o.id, o.ship_name, o.plan, o.invoice_number,
+    GREATEST(
+      COALESCE((SELECT max(m.created_at) FROM project_messages m WHERE m.order_id = o.id), 'epoch'::timestamptz),
+      COALESCE((SELECT max(p.created_at) FROM project_proofs p WHERE p.order_id = o.id), 'epoch'::timestamptz),
+      COALESCE((SELECT max(p.decided_at) FROM project_proofs p WHERE p.order_id = o.id), 'epoch'::timestamptz)
+    ) AS last_activity_at,
+    (SELECT count(*) FROM project_messages m
+       WHERE m.order_id = o.id AND m.sender_role = 'author'
+         AND m.created_at > COALESCE(r.team_seen_at, 'epoch'::timestamptz)),
+    (SELECT count(*) FROM project_proofs p
+       WHERE p.order_id = o.id AND p.status IN ('approved', 'changes_requested')
+         AND p.decided_at > COALESCE(r.team_seen_at, 'epoch'::timestamptz))
+  FROM orders o
+  LEFT JOIN project_reads r ON r.order_id = o.id
+  WHERE is_admin()
+    AND (
+      EXISTS (SELECT 1 FROM project_messages m WHERE m.order_id = o.id)
+      OR EXISTS (SELECT 1 FROM project_proofs p WHERE p.order_id = o.id)
+    )
+  ORDER BY last_activity_at DESC;
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION admin_workspace_queue() TO authenticated;
+
+
+-- ============================================================
+-- Project Workspace collaboration extras (Tranche 3)
+-- ============================================================
+
+/*
+  # Project Workspace — collaboration extras (Tranche 3)
+
+  1. Message attachments — authors and team can attach a file to a message.
+     Files live in a new PRIVATE bucket "workspace-files", scoped to the order.
+  2. Admins can delete/withdraw a message or proof (moderation).
+  3. Team-only private notes per project (never visible to the author).
+
+  Idempotent — safe to re-run.
+*/
+
+-- 1. Message attachments -----------------------------------------------------
+ALTER TABLE project_messages ADD COLUMN IF NOT EXISTS attachment_url text;
+ALTER TABLE project_messages ADD COLUMN IF NOT EXISTS attachment_name text;
+
+-- Private bucket for workspace attachments (both sides, scoped to the order).
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('workspace-files', 'workspace-files', false)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "Read workspace files on own orders" ON storage.objects;
+CREATE POLICY "Read workspace files on own orders" ON storage.objects FOR SELECT TO authenticated
+  USING (
+    bucket_id = 'workspace-files' AND (
+      is_admin() OR EXISTS (
+        SELECT 1 FROM orders o
+        WHERE o.id = ((storage.foldername(name))[1])::uuid AND o.user_id = auth.uid()
+      )
+    )
+  );
+
+DROP POLICY IF EXISTS "Upload workspace files on own orders" ON storage.objects;
+CREATE POLICY "Upload workspace files on own orders" ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'workspace-files' AND (
+      is_admin() OR EXISTS (
+        SELECT 1 FROM orders o
+        WHERE o.id = ((storage.foldername(name))[1])::uuid AND o.user_id = auth.uid()
+      )
+    )
+  );
+
+-- 2. Admin moderation: delete messages / proofs ------------------------------
+DROP POLICY IF EXISTS "Admins delete messages" ON project_messages;
+CREATE POLICY "Admins delete messages" ON project_messages FOR DELETE TO authenticated
+  USING (is_admin());
+
+DROP POLICY IF EXISTS "Admins delete proofs" ON project_proofs;
+CREATE POLICY "Admins delete proofs" ON project_proofs FOR DELETE TO authenticated
+  USING (is_admin());
+
+-- 3. Team-only private notes -------------------------------------------------
+CREATE TABLE IF NOT EXISTS project_notes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  author_id uuid NOT NULL DEFAULT auth.uid(),
+  body text NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS project_notes_order_idx ON project_notes (order_id, created_at);
+
+ALTER TABLE project_notes ENABLE ROW LEVEL SECURITY;
+
+-- Only admins can see or manage notes — authors have no access at all.
+DROP POLICY IF EXISTS "Admins manage notes" ON project_notes;
+CREATE POLICY "Admins manage notes" ON project_notes FOR ALL TO authenticated
+  USING (is_admin()) WITH CHECK (is_admin());

@@ -51,6 +51,18 @@ export default function OrdersPanel() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortState>(noSort);
   const [openOrder, setOpenOrder] = useState<Order | null>(null);
+  // order_id → count of items awaiting the team (unread author msgs + decisions).
+  const [awaiting, setAwaiting] = useState<Record<string, number>>({});
+
+  const loadQueue = async () => {
+    const { data } = await supabase.rpc('admin_workspace_queue');
+    const map: Record<string, number> = {};
+    ((data as { order_id: string; unread_msgs: number; pending_decisions: number }[]) ?? []).forEach((r) => {
+      const n = (Number(r.unread_msgs) || 0) + (Number(r.pending_decisions) || 0);
+      if (n > 0) map[r.order_id] = n;
+    });
+    setAwaiting(map);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -69,6 +81,7 @@ export default function OrdersPanel() {
       setAuthors(map);
     }
     setLoading(false);
+    void loadQueue();
   };
 
   useEffect(() => {
@@ -195,6 +208,11 @@ export default function OrdersPanel() {
                         className="inline-flex items-center gap-1 text-amber-700 text-xs font-semibold mt-1 hover:underline"
                       >
                         <MessagesSquare className="w-3.5 h-3.5" /> Open workspace
+                        {awaiting[o.id] > 0 && (
+                          <span className="ml-1 inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 bg-red-600 text-white text-[10px] font-bold rounded-full">
+                            {awaiting[o.id]}
+                          </span>
+                        )}
                       </button>
                     </td>
                     <td className="px-4 py-3 text-gray-700">
@@ -242,7 +260,10 @@ export default function OrdersPanel() {
       {openOrder && (
         <div
           className="fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-4 overflow-y-auto"
-          onClick={() => setOpenOrder(null)}
+          onClick={() => {
+            setOpenOrder(null);
+            void loadQueue();
+          }}
         >
           <div
             className="bg-gray-50 rounded-2xl shadow-xl w-full max-w-2xl my-8"
@@ -256,7 +277,13 @@ export default function OrdersPanel() {
                   {openOrder.plan ? ` · ${openOrder.plan}` : ''}
                 </p>
               </div>
-              <button onClick={() => setOpenOrder(null)} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+              <button
+                onClick={() => {
+                  setOpenOrder(null);
+                  void loadQueue();
+                }}
+                className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
