@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import {
-  UploadCloud, Trash2, Copy, Check, Download, RefreshCw, FileVideo, Image as ImageIcon, Loader2, FileDown,
+  UploadCloud, Trash2, Copy, Check, Download, RefreshCw, FileVideo, Music, Image as ImageIcon, Loader2, FileDown,
 } from 'lucide-react';
 import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 
 const BUCKET = 'site-media';
 
+type Folder = 'images' | 'videos' | 'audio';
 interface MediaItem {
   name: string;
-  folder: 'images' | 'videos';
+  folder: Folder;
   url: string;
   size: number | null;
 }
@@ -22,7 +23,7 @@ export default function MediaLibrary({
   accept = 'all',
   onSelect,
 }: {
-  accept?: 'image' | 'video' | 'all';
+  accept?: 'image' | 'video' | 'audio' | 'all';
   onSelect?: (url: string) => void;
 }) {
   const picker = !!onSelect;
@@ -32,8 +33,8 @@ export default function MediaLibrary({
   const [copied, setCopied] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  const folders: ('images' | 'videos')[] =
-    accept === 'image' ? ['images'] : accept === 'video' ? ['videos'] : ['images', 'videos'];
+  const folders: Folder[] =
+    accept === 'image' ? ['images'] : accept === 'video' ? ['videos'] : accept === 'audio' ? ['audio'] : ['images', 'videos', 'audio'];
 
   const load = async () => {
     setLoading(true);
@@ -74,10 +75,12 @@ export default function MediaLibrary({
     for (const file of Array.from(files)) {
       const isVideo = file.type.startsWith('video/');
       const isImage = file.type.startsWith('image/');
-      if (!isVideo && !isImage) continue;
+      const isAudio = file.type.startsWith('audio/');
+      if (!isVideo && !isImage && !isAudio) continue;
       if (accept === 'image' && !isImage) continue;
       if (accept === 'video' && !isVideo) continue;
-      const folder = isVideo ? 'videos' : 'images';
+      if (accept === 'audio' && !isAudio) continue;
+      const folder: Folder = isVideo ? 'videos' : isAudio ? 'audio' : 'images';
       const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       const path = `${folder}/${Date.now()}-${safe}`;
       const { error: err } = await supabase.storage
@@ -111,7 +114,7 @@ export default function MediaLibrary({
 
   const exportCsv = () => {
     const rows = [['Name', 'Type', 'URL', 'Size (bytes)']].concat(
-      items.map((i) => [i.name, i.folder === 'videos' ? 'video' : 'image', i.url, String(i.size ?? '')]),
+      items.map((i) => [i.name, i.folder === 'videos' ? 'video' : i.folder === 'audio' ? 'audio' : 'image', i.url, String(i.size ?? '')]),
     );
     const csv = '﻿' + rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -138,7 +141,7 @@ export default function MediaLibrary({
             <input
               type="file"
               multiple
-              accept={accept === 'video' ? 'video/*' : accept === 'image' ? 'image/*' : 'image/*,video/*'}
+              accept={accept === 'video' ? 'video/*' : accept === 'image' ? 'image/*' : accept === 'audio' ? 'audio/*' : 'image/*,video/*,audio/*'}
               className="hidden"
               disabled={uploading}
               onChange={(e) => uploadFiles(e.target.files)}
@@ -182,6 +185,8 @@ export default function MediaLibrary({
               <div className="aspect-video bg-gray-50 flex items-center justify-center overflow-hidden">
                 {item.folder === 'images' ? (
                   <img src={item.url} alt={item.name} className="w-full h-full object-contain" loading="lazy" />
+                ) : item.folder === 'audio' ? (
+                  <Music className="w-10 h-10 text-amber-500" />
                 ) : (
                   <FileVideo className="w-10 h-10 text-gray-400" />
                 )}

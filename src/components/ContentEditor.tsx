@@ -83,13 +83,14 @@ const SUBSECTIONS: Record<string, Record<string, string>> = {
 };
 
 // Content fields that hold media — rendered as drag-and-drop uploaders.
-const MEDIA_FIELDS: Record<string, { label: string; accept: 'image' | 'video' }> = {
+const MEDIA_FIELDS: Record<string, { label: string; accept: 'image' | 'video' | 'audio' }> = {
   videoUrl: { label: 'Video', accept: 'video' },
   posterUrl: { label: 'Video Poster Image', accept: 'image' },
   imageUrl: { label: 'Hero Image', accept: 'image' },
   logoUrl: { label: 'Logo Image', accept: 'image' },
   coverUrl: { label: 'Book Cover Image', accept: 'image' },
   bannerUrl: { label: 'Banner Image', accept: 'image' },
+  soundUrl: { label: 'Brand Sound (MP3)', accept: 'audio' },
 };
 
 function humanize(key: string): string {
