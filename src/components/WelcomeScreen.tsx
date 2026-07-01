@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { BookOpen, Feather, Sparkles, ArrowRight } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { BookOpen, Feather, Sparkles, ArrowRight, Volume2, VolumeX } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
+import { withBase } from '../lib/basePath';
 
 // Floating particles drifting upward behind the content.
 const PARTICLES = Array.from({ length: 14 }).map((_, i) => {
@@ -32,6 +33,55 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
   const { welcome } = useContent();
   const [phase, setPhase] = useState<'intro' | 'exit'>('intro');
 
+  // Sonic branding — preload the brand sound so it fires instantly on the CTA.
+  const soundOn = !!(welcome.soundEnabled && welcome.soundUrl);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [muted, setMuted] = useState(() => {
+    try {
+      return localStorage.getItem('cursive_sonic_muted') === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (!soundOn) return;
+    const a = new Audio(withBase(welcome.soundUrl));
+    a.preload = 'auto';
+    a.volume = Math.min(1, Math.max(0, welcome.soundVolume ?? 0.4));
+    audioRef.current = a;
+    return () => {
+      a.pause();
+      audioRef.current = null;
+    };
+  }, [soundOn, welcome.soundUrl, welcome.soundVolume]);
+
+  const toggleMute = () => {
+    setMuted((m) => {
+      const next = !m;
+      try {
+        localStorage.setItem('cursive_sonic_muted', next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
+  // Play the brand sound once per browser session — the CTA click is the user
+  // gesture that browsers require for audio to start.
+  const playSonic = () => {
+    if (!soundOn || muted || !audioRef.current) return;
+    try {
+      if (sessionStorage.getItem('cursive_sonic_played') === '1') return;
+      audioRef.current.currentTime = 0;
+      void audioRef.current.play().catch(() => {});
+      sessionStorage.setItem('cursive_sonic_played', '1');
+    } catch {
+      /* ignore */
+    }
+  };
+
   // Lock background scroll while the intro/transition is visible.
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -42,6 +92,7 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
   }, []);
 
   const enter = () => {
+    playSonic();
     setPhase('exit');
     // Let the zoom + page-flips play out fully, then reveal the homepage.
     setTimeout(onEnter, 2300);
@@ -68,6 +119,17 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-gradient-to-br from-stone-950 via-amber-950 to-orange-950 text-center">
+      {/* Sound on/off — only shown when a brand sound is configured */}
+      {soundOn && (
+        <button
+          onClick={toggleMute}
+          aria-label={muted ? 'Turn sound on' : 'Turn sound off'}
+          className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-amber-100/80 hover:text-white transition-colors"
+        >
+          {muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+        </button>
+      )}
+
       {/* Ambient glow orbs */}
       <div className="ob-orb absolute -top-24 -left-24 w-80 h-80 rounded-full bg-amber-500/20 blur-3xl" />
       <div

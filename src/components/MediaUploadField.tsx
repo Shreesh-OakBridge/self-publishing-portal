@@ -5,7 +5,7 @@ import MediaLibrary from './MediaLibrary';
 
 const BUCKET = 'site-media';
 
-type Accept = 'image' | 'video';
+type Accept = 'image' | 'video' | 'audio';
 
 interface Props {
   value: string;
@@ -25,10 +25,14 @@ export default function MediaUploadField({ value, onChange, label, accept, alt, 
   const [status, setStatus] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  const acceptAttr = accept === 'video' ? 'video/*' : 'image/*';
-  const folder = accept === 'video' ? 'videos' : 'images';
+  const acceptAttr = accept === 'video' ? 'video/*' : accept === 'audio' ? 'audio/*' : 'image/*';
+  const folder = accept === 'video' ? 'videos' : accept === 'audio' ? 'audio' : 'images';
   const hint =
-    accept === 'video' ? 'MP4, WebM or MOV. Keep files reasonably small.' : 'PNG, JPG, SVG or WebP.';
+    accept === 'video'
+      ? 'MP4, WebM or MOV. Keep files reasonably small.'
+      : accept === 'audio'
+      ? 'MP3, WAV or OGG. Keep it short (a 1–2s brand sound is ideal).'
+      : 'PNG, JPG, SVG or WebP.';
 
   const upload = async (file: File) => {
     if (!file.type.startsWith(`${accept}/`)) {
@@ -74,6 +78,8 @@ export default function MediaUploadField({ value, onChange, label, accept, alt, 
         <div className="relative mb-2 inline-block">
           {accept === 'video' ? (
             <video src={value} className="max-h-32 rounded-lg border" muted />
+          ) : accept === 'audio' ? (
+            <audio src={value} controls className="max-w-full" />
           ) : (
             <img src={value} alt="preview" className="max-h-32 rounded-lg border object-contain" />
           )}
@@ -180,7 +186,7 @@ export default function MediaUploadField({ value, onChange, label, accept, alt, 
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={accept === 'video' ? 'https://…/video.mp4' : 'https://…/image.png'}
+          placeholder={accept === 'video' ? 'https://…/video.mp4' : accept === 'audio' ? 'https://…/sound.mp3' : 'https://…/image.png'}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-300 outline-none"
         />
       </div>

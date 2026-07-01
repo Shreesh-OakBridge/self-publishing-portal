@@ -296,6 +296,11 @@ export interface WelcomeContent {
   subheading: string;
   ctaLabel: string;
   skipLabel: string;
+  // Sonic branding: a short brand sound played (on the CTA click gesture) as the
+  // visitor enters the homepage.
+  soundEnabled: boolean;
+  soundUrl: string;
+  soundVolume: number;
 }
 
 export interface HomeLayoutSection {
@@ -397,6 +402,9 @@ export const defaultContent: SiteContent = {
       'From manuscript to masterpiece — begin a publishing journey crafted around your vision, with the people who’ve guided hundreds of authors before you.',
     ctaLabel: 'Begin Your Publishing Journey',
     skipLabel: 'Skip intro',
+    soundEnabled: false,
+    soundUrl: '',
+    soundVolume: 0.4,
   },
   hero: {
     badge: 'Premium Self-Publishing Excellence',
