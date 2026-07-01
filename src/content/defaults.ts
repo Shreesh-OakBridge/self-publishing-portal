@@ -501,7 +501,7 @@ export const defaultContent: SiteContent = {
     plans: [
       {
         name: 'Starter',
-        price: '₹29,999',
+        price: '₹24,999',
         tagline: 'Perfect for first-time authors',
         popular: false,
         royaltyRate: 30,
@@ -521,7 +521,7 @@ export const defaultContent: SiteContent = {
       },
       {
         name: 'Professional',
-        price: '₹79,999',
+        price: '₹59,999',
         tagline: 'For authors ready to build a brand',
         popular: true,
         royaltyRate: 45,
@@ -546,7 +546,7 @@ export const defaultContent: SiteContent = {
       },
       {
         name: 'Excellence',
-        price: '₹1,59,999',
+        price: '₹1,09,999',
         tagline: 'Premium publishing with full support',
         popular: false,
         royaltyRate: 55,
@@ -576,7 +576,7 @@ export const defaultContent: SiteContent = {
       },
       {
         name: 'Elite',
-        price: '₹2,99,999',
+        price: '₹1,99,999',
         tagline: 'The ultimate publishing experience',
         popular: false,
         royaltyRate: 60,
@@ -615,7 +615,7 @@ export const defaultContent: SiteContent = {
     heading: 'Design Your Book',
     subheading:
       "Customize every aspect of your book production and get real-time price estimates. See exactly what you're getting before you commit.",
-    baseCost: 8000,
+    baseCost: 6999,
     paperTypes: [
       { id: 'glossy', name: 'Glossy Paper', desc: 'High shine finish, vibrant colors', price: 0 },
       { id: 'matte', name: 'Matte Paper', desc: 'Professional look, no glare', price: 500 },
@@ -633,7 +633,7 @@ export const defaultContent: SiteContent = {
     coverDesigns: [
       { id: 'standard', name: 'Standard Design', desc: 'Clean, professional layout', price: 0 },
       { id: 'embossed', name: 'Embossed Cover', desc: 'Raised text & patterns', price: 2000 },
-      { id: 'foil', name: 'Foil Stamping', desc: 'Metallic accents', price: 3500 },
+      { id: 'foil', name: 'Foil Stamping', desc: 'Metallic accents', price: 2999 },
       { id: 'textured', name: 'Textured Cover', desc: 'Premium tactile finish', price: 2500 },
       { id: 'full_color', name: 'Full Color HD', desc: 'Ultra-vibrant, photo-quality', price: 1500 },
     ],
