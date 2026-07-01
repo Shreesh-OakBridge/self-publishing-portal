@@ -6,6 +6,8 @@ import EditorialReview from './EditorialReview';
 
 const BUCKET = 'manuscripts';
 const ACCEPT = '.doc,.docx,.pdf,.rtf,.odt,.epub';
+const MAX_MB = 25;
+const MAX_BYTES = MAX_MB * 1024 * 1024;
 
 interface Manuscript {
   id: string;
@@ -53,6 +55,14 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
 
   // Auto-detect word count: native for text files, mammoth for .docx.
   const handleFile = async (f: File | null) => {
+    if (f && f.size > MAX_BYTES) {
+      setStatus({ type: 'err', msg: `That file is ${(f.size / 1024 / 1024).toFixed(1)} MB — the maximum is ${MAX_MB} MB. Please compress or split it.` });
+      setFile(null);
+      setWordCount(null);
+      setExtractedText('');
+      return;
+    }
+    setStatus(null);
     setFile(f);
     setWordCount(null);
     setExtractedText('');
@@ -108,6 +118,10 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
     }
     if (!file) {
       setStatus({ type: 'err', msg: 'Please choose a manuscript file.' });
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      setStatus({ type: 'err', msg: `That file is too large (max ${MAX_MB} MB).` });
       return;
     }
     setBusy(true);
@@ -223,6 +237,9 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
               onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
             />
           </label>
+          <p className="text-xs text-gray-500 mt-1">
+            Accepted: DOC, DOCX, PDF, RTF, ODT, EPUB · Max {MAX_MB} MB.
+          </p>
         </div>
 
         <div>

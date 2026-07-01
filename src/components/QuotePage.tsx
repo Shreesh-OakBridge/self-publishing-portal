@@ -33,6 +33,7 @@ export default function QuotePage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [hp, setHp] = useState(''); // honeypot
 
   // Quotes are tied to an account so the team can follow up — require login.
   useEffect(() => {
@@ -60,6 +61,12 @@ export default function QuotePage() {
 
   const submit = async () => {
     if (!user) return;
+    // Bot filled the hidden field — silently pretend success.
+    if (hp.trim() !== '') {
+      setSubmitted(true);
+      window.scrollTo({ top: 0 });
+      return;
+    }
     if (!name.trim() || !phone.trim()) {
       setError('Please add your name and a phone number so we can reach you.');
       return;
@@ -167,6 +174,19 @@ export default function QuotePage() {
 
         <div className="bg-white rounded-2xl border p-6 space-y-3">
           <h2 className="font-bold text-gray-900 mb-1">Your details</h2>
+          {/* Honeypot — hidden from users */}
+          <div className="absolute left-[-9999px] top-[-9999px]" aria-hidden="true">
+            <label htmlFor="q_website">Leave this field empty</label>
+            <input
+              type="text"
+              id="q_website"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={hp}
+              onChange={(e) => setHp(e.target.value)}
+            />
+          </div>
           <input className={field} placeholder="Full name *" value={name} onChange={(e) => setName(e.target.value)} />
           <input className={field} placeholder="Phone *" value={phone} onChange={(e) => setPhone(e.target.value)} />
           <input className={`${field} bg-gray-50 text-gray-500`} value={user?.email ?? ''} disabled />

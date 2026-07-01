@@ -97,12 +97,24 @@ export interface EditorialContent {
   expertReviewNote: string;
 }
 
+export interface FooterSocial {
+  facebook: string;
+  instagram: string;
+  linkedin: string;
+  twitter: string;
+  youtube: string;
+}
+
 export interface FooterContent {
   tagline: string;
   email: string;
   phone: string;
   location: string;
   copyrightName: string;
+  // Social profile URLs — an icon shows only when its URL is filled in.
+  social: FooterSocial;
+  newsletterHeading: string;
+  newsletterText: string;
 }
 
 export interface CustomizerOption {
@@ -964,6 +976,9 @@ export const defaultContent: SiteContent = {
     phone: '+91 00000 00000',
     location: 'India',
     copyrightName: 'Cursive Publishing',
+    social: { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '' },
+    newsletterHeading: 'Stay in the loop',
+    newsletterText: 'Publishing tips and author stories, now and then. No spam.',
   },
 };
 // End of default site content.

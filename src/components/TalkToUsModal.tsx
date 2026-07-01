@@ -30,12 +30,19 @@ export default function TalkToUsModal({
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
+  // Honeypot: hidden from users; bots tend to fill it.
+  const [hp, setHp] = useState('');
 
   if (!open) return null;
 
   const waNumber = (footer.phone || '').replace(/[^0-9]/g, '');
 
   const submit = async () => {
+    // Bot filled the hidden field — silently pretend success, skip the insert.
+    if (hp.trim() !== '') {
+      setDone(true);
+      return;
+    }
     if (!email.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) {
       setError('Please enter a valid email so our team can reach you.');
       return;
@@ -117,6 +124,20 @@ export default function TalkToUsModal({
             </p>
 
             {error && <div className="bg-red-50 text-red-700 text-sm p-2.5 rounded-lg mb-3">{error}</div>}
+
+            {/* Honeypot — hidden from users, excluded from tab order */}
+            <div className="absolute left-[-9999px] top-[-9999px]" aria-hidden="true">
+              <label htmlFor="ttu_website">Leave this field empty</label>
+              <input
+                type="text"
+                id="ttu_website"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                value={hp}
+                onChange={(e) => setHp(e.target.value)}
+              />
+            </div>
 
             <div className="space-y-3">
               <input className={field} placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />
