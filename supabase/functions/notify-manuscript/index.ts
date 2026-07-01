@@ -54,10 +54,27 @@ Deno.serve(async (req: Request) => {
     const NOTIFY_TO = Deno.env.get('NOTIFY_TO') ?? 'info@oakbridge.in';
     const NOTIFY_FROM = Deno.env.get('NOTIFY_FROM') ?? 'orders@oakbridge.in';
     const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET');
-    if (WEBHOOK_SECRET && req.headers.get('x-webhook-secret') !== WEBHOOK_SECRET) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    // Trim both sides — a stray space/newline on the pasted header value is the
+    // most common cause of a silent 401.
+    const gotSecret = (req.headers.get('x-webhook-secret') ?? '').trim();
+    if (WEBHOOK_SECRET && gotSecret !== WEBHOOK_SECRET.trim()) {
+      console.error(
+        `[notify-manuscript] 401: x-webhook-secret ${gotSecret ? 'does not match' : 'header is missing'}. ` +
+          `Fix: in the Database Webhook, add header 'x-webhook-secret' with the exact same value as the ` +
+          `WEBHOOK_SECRET function secret (no quotes, no trailing spaces).`,
+      );
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: x-webhook-secret header does not match WEBHOOK_SECRET' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } },
+      );
     }
-    if (!RESEND_API_KEY) return new Response(JSON.stringify({ error: 'RESEND_API_KEY missing' }), { status: 500 });
+    if (!RESEND_API_KEY) {
+      console.error('[notify-manuscript] RESEND_API_KEY is not set. Fix: supabase secrets set RESEND_API_KEY=...');
+      return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
     const payload = (await req.json()) as Payload;
     const rec = payload.record ?? {};
@@ -121,11 +138,17 @@ Deno.serve(async (req: Request) => {
     });
     results.team = rt.ok ? 'sent' : rt.detail;
 
+    // Surface the outcome in the logs so a bad Resend key / unverified sender is obvious.
+    if (results.author && results.author !== 'sent') console.error('[notify-manuscript] author email failed:', results.author);
+    if (results.team !== 'sent') console.error('[notify-manuscript] team email failed:', results.team);
+    console.log('[notify-manuscript] done', { authorEmail: authorEmail || '(none)', results });
+
     return new Response(JSON.stringify({ ok: true, results }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
+    console.error('[notify-manuscript] error:', String(err));
     return new Response(JSON.stringify({ error: String(err) }), { status: 500 });
   }
 });

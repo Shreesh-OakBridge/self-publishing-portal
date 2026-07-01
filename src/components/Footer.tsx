@@ -77,45 +77,9 @@ export default function Footer() {
                 ))}
               </div>
             )}
-
-            {/* Newsletter */}
-            <div className="mt-6">
-              <h4 className="text-sm font-bold text-white mb-1">{footer.newsletterHeading}</h4>
-              <p className="text-gray-400 text-xs mb-2">{footer.newsletterText}</p>
-              {subState === 'done' ? (
-                <p className="flex items-center gap-2 text-green-400 text-sm">
-                  <CheckCircle className="w-4 h-4" /> You’re subscribed — thank you!
-                </p>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (subState === 'err') setSubState('idle');
-                    }}
-                    onKeyDown={(e) => e.key === 'Enter' && subscribe()}
-                    placeholder="Your email"
-                    className={`flex-1 min-w-0 px-3 py-2 rounded-lg bg-white/10 border text-sm text-white placeholder-gray-500 outline-none focus:border-amber-500 ${
-                      subState === 'err' ? 'border-red-500' : 'border-white/10'
-                    }`}
-                  />
-                  <button
-                    onClick={subscribe}
-                    disabled={subState === 'saving'}
-                    aria-label="Subscribe"
-                    className="p-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 flex-shrink-0"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-              {subState === 'err' && <p className="text-red-400 text-xs mt-1">Please enter a valid email.</p>}
-            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 lg:gap-16">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           <div>
             <h4 className="text-lg font-bold mb-4">Company</h4>
             <ul className="space-y-2">
@@ -201,6 +165,42 @@ export default function Footer() {
                 <span>{footer.location}</span>
               </li>
             </ul>
+          </div>
+
+          {/* Newsletter — right-most footer column */}
+          <div className="col-span-2 lg:col-span-1">
+            <h4 className="text-lg font-bold mb-4">{footer.newsletterHeading}</h4>
+            <p className="text-gray-400 text-sm mb-3">{footer.newsletterText}</p>
+            {subState === 'done' ? (
+              <p className="flex items-center gap-2 text-green-400 text-sm">
+                <CheckCircle className="w-4 h-4" /> You’re subscribed — thank you!
+              </p>
+            ) : (
+              <div className="flex items-center gap-2 max-w-xs">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (subState === 'err') setSubState('idle');
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && subscribe()}
+                  placeholder="Your email"
+                  className={`flex-1 min-w-0 px-3 py-2 rounded-lg bg-white/10 border text-sm text-white placeholder-gray-500 outline-none focus:border-amber-500 ${
+                    subState === 'err' ? 'border-red-500' : 'border-white/10'
+                  }`}
+                />
+                <button
+                  onClick={subscribe}
+                  disabled={subState === 'saving'}
+                  aria-label="Subscribe"
+                  className="p-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 flex-shrink-0"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            {subState === 'err' && <p className="text-red-400 text-xs mt-1">Please enter a valid email.</p>}
           </div>
           </div>
         </div>
