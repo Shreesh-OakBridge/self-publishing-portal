@@ -2,7 +2,7 @@ import { useEffect, useState, ReactNode, Fragment, lazy, Suspense } from 'react'
 import { useAuth } from './lib/auth';
 import { useContent } from './content/ContentProvider';
 import { HOME_SECTIONS } from './content/defaults';
-import { stripBase } from './lib/basePath';
+import { stripBase, go } from './lib/basePath';
 import { useSeo } from './lib/seo';
 import { track } from './lib/track';
 import Navigation from './components/Navigation';
@@ -257,7 +257,7 @@ function App() {
     );
   if (path === '/planner')
     return (
-      <SubPage crumb="Plan Your Book">
+      <SubPage crumb="Price Estimate">
         <Planner />
       </SubPage>
     );
@@ -310,7 +310,25 @@ function App() {
       </SubPage>
     );
 
-  return <HomePage />;
+  if (path === '' || path === '/') return <HomePage />;
+
+  // Unknown route — a friendly not-found page instead of silently showing home.
+  return (
+    <SubPage crumb="Page not found">
+      <section className="py-20 px-4 text-center max-w-xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-3">Page not found</h1>
+        <p className="text-gray-600 mb-6">
+          The page you’re looking for doesn’t exist or may have moved.
+        </p>
+        <button
+          onClick={() => go('/')}
+          className="inline-flex items-center gap-2 bg-amber-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-amber-700"
+        >
+          Back to home
+        </button>
+      </section>
+    </SubPage>
+  );
 }
 
 export default App;

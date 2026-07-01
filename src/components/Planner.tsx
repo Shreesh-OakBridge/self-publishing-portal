@@ -103,7 +103,7 @@ export default function Planner() {
     <section className="py-10 md:py-16 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Plan your book</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Get a price estimate</h1>
           <p className="text-gray-600">
             {journey ? `For your ${journey.title.toLowerCase()} — a` : 'A'}nswer a few quick questions for an instant estimate. No commitment.
           </p>

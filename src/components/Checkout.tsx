@@ -99,6 +99,9 @@ export default function Checkout() {
   const [loadingData, setLoadingData] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [placed, setPlaced] = useState(false);
+  const [paidOnline, setPaidOnline] = useState(false);
+  // Remember the pending order so retries update it instead of creating a new one.
+  const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const [ship, setShip] = useState({ name: '', phone: '', address: '', city: '', state: '', pincode: '' });
@@ -123,6 +126,10 @@ export default function Checkout() {
 
   // Conflict: a plan AND a separate royalty selection can't be combined.
   const conflict = !!planName && !!royaltyId;
+
+  // Whether an online payment gateway is configured — drives both the flow
+  // (open Razorpay vs. "team confirms") and the copy shown to the buyer.
+  const paymentsLive = !!(import.meta.env.VITE_RAZORPAY_KEY_ID as string | undefined);
 
   useEffect(() => {
     if (!loading && !user) go('/login');
@@ -203,8 +210,8 @@ export default function Checkout() {
 
   const placeOrder = () => {
     if (!user || conflict) return;
-    if (!ship.name.trim() || !ship.address.trim() || !ship.city.trim() || !ship.pincode.trim()) {
-      setError('Please complete the required shipping fields (name, address, city, pincode).');
+    if (!ship.name.trim() || !ship.address.trim() || !ship.city.trim() || !ship.state.trim() || !ship.pincode.trim()) {
+      setError('Please complete the required shipping fields (name, address, city, state, pincode).');
       return;
     }
     if (!author.trim()) {
@@ -242,41 +249,59 @@ export default function Checkout() {
       bill_address: sameAsShip ? ship.address : bill.address,
       bill_gst: buyerGst || null,
     };
-    const { data: inserted, error: err } = await supabase
-      .from('orders')
-      .insert({
-        user_id: user.id,
-        email: user.email,
-        author_name: author.trim(),
-        plan: planName,
-        customization_id: customizationId,
-        royalty_calculation_id: royaltyId,
-        royalty_rate: royaltyRate,
-        amount: total,
-        discount,
-        coupon_code: applied?.code ?? null,
-        publish_path: onboarding?.publish_path ?? null,
-        language: onboarding?.language ?? null,
-        manuscript_status: onboarding?.manuscript_status ?? null,
-        terms_accepted_at: new Date().toISOString(),
-        publishing_agreement_accepted_at: new Date().toISOString(),
-        status: 'pending',
-        payment_status: 'unpaid',
-        ship_name: ship.name,
-        ship_phone: ship.phone,
-        ship_address: ship.address,
-        ship_city: ship.city,
-        ship_state: ship.state,
-        ship_pincode: ship.pincode,
-        ...billing,
-      })
-      .select('id')
-      .single();
-    if (err || !inserted) {
-      setPlacing(false);
-      console.error(err);
-      setError('Could not place the order. Please try again.');
-      return;
+    const orderFields = {
+      user_id: user.id,
+      email: user.email,
+      author_name: author.trim(),
+      plan: planName,
+      customization_id: customizationId,
+      royalty_calculation_id: royaltyId,
+      royalty_rate: royaltyRate,
+      amount: total,
+      discount,
+      coupon_code: applied?.code ?? null,
+      publish_path: onboarding?.publish_path ?? null,
+      language: onboarding?.language ?? null,
+      manuscript_status: onboarding?.manuscript_status ?? null,
+      terms_accepted_at: new Date().toISOString(),
+      publishing_agreement_accepted_at: new Date().toISOString(),
+      status: 'pending',
+      payment_status: 'unpaid',
+      ship_name: ship.name,
+      ship_phone: ship.phone,
+      ship_address: ship.address,
+      ship_city: ship.city,
+      ship_state: ship.state,
+      ship_pincode: ship.pincode,
+      ...billing,
+    };
+
+    // Reuse the same pending order if the buyer already tried once (e.g. closed
+    // the payment window) — updating it instead of inserting avoids duplicate
+    // orders piling up in the admin on each retry.
+    let orderId = placedOrderId;
+    if (orderId) {
+      const { error: uerr } = await supabase.from('orders').update(orderFields).eq('id', orderId);
+      if (uerr) {
+        setPlacing(false);
+        console.error(uerr);
+        setError('Could not update your order. Please try again.');
+        return;
+      }
+    } else {
+      const { data: inserted, error: err } = await supabase
+        .from('orders')
+        .insert(orderFields)
+        .select('id')
+        .single();
+      if (err || !inserted) {
+        setPlacing(false);
+        console.error(err);
+        setError('Could not place the order. Please try again.');
+        return;
+      }
+      orderId = inserted.id as string;
+      setPlacedOrderId(orderId);
     }
     try {
       sessionStorage.removeItem('ob_onboarding');
@@ -284,20 +309,21 @@ export default function Checkout() {
       /* ignore */
     }
 
-    const rzpKey = import.meta.env.VITE_RAZORPAY_KEY_ID as string | undefined;
-    if (rzpKey && total > 0) {
-      await payWithRazorpay(inserted.id as string, rzpKey);
+    if (paymentsLive && total > 0) {
+      await payWithRazorpay(orderId, import.meta.env.VITE_RAZORPAY_KEY_ID as string);
     } else {
       // No gateway configured — keep the existing "team confirms payment" flow.
-      finishPlaced();
+      finishPlaced(false);
     }
   };
 
-  const finishPlaced = () => {
+  const finishPlaced = (paid: boolean) => {
+    setPaidOnline(paid);
     track('purchase', {
       plan: planName ?? null,
       value: total,
       currency: 'INR',
+      paid_online: paid,
       publish_path: onboarding?.publish_path ?? null,
     });
     setPlacing(false);
@@ -337,7 +363,7 @@ export default function Checkout() {
           setError('Payment could not be verified. If money was deducted, please contact us — your order is saved.');
           return;
         }
-        finishPlaced();
+        finishPlaced(true);
       },
       modal: {
         ondismiss: () => {
@@ -444,9 +470,13 @@ export default function Checkout() {
         <main className="max-w-2xl mx-auto px-4 py-12">
           <div className="bg-white rounded-3xl border p-8 text-center mb-6">
             <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Order confirmed</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              {paidOnline ? 'Payment received' : 'Order confirmed'}
+            </h1>
             <p className="text-gray-600">
-              Online payment is coming soon — our team will reach out to confirm next steps.
+              {paidOnline
+                ? 'Thank you — your payment was successful and a tax invoice has been emailed to you. Our team will be in touch with the next steps.'
+                : 'Our team will reach out shortly to confirm payment and the next steps.'}
             </p>
           </div>
           <div className="bg-white rounded-2xl border p-6 mb-6">
@@ -518,23 +548,23 @@ export default function Checkout() {
           {/* Shipping */}
           <div className="bg-white rounded-2xl border p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Shipping address</h2>
-            <div className="mb-3">
-              <input className={field} placeholder="Author name *" value={author} onChange={(e) => setAuthor(e.target.value)} />
-              <p className="text-xs text-gray-400 mt-1">As it should appear on your invoice (use a pen name if your book is published under one).</p>
-            </div>
             <div className="grid sm:grid-cols-2 gap-3">
               <input className={field} placeholder="Full name *" value={ship.name} onChange={(e) => setShip({ ...ship, name: e.target.value })} />
               <input className={field} placeholder="Phone" value={ship.phone} onChange={(e) => setShip({ ...ship, phone: e.target.value })} />
               <input className={`${field} sm:col-span-2`} placeholder="Address *" value={ship.address} onChange={(e) => setShip({ ...ship, address: e.target.value })} />
               <input className={field} placeholder="City *" value={ship.city} onChange={(e) => setShip({ ...ship, city: e.target.value })} />
-              <input className={field} placeholder="State" value={ship.state} onChange={(e) => setShip({ ...ship, state: e.target.value })} />
+              <input className={field} placeholder="State *" value={ship.state} onChange={(e) => setShip({ ...ship, state: e.target.value })} />
               <input className={field} placeholder="Pincode *" value={ship.pincode} onChange={(e) => setShip({ ...ship, pincode: e.target.value })} />
             </div>
           </div>
 
-          {/* Billing */}
+          {/* Billing & invoice */}
           <div className="bg-white rounded-2xl border p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Billing details</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Billing &amp; invoice details</h2>
+            <div className="mb-4">
+              <input className={field} placeholder="Author name *" value={author} onChange={(e) => setAuthor(e.target.value)} />
+              <p className="text-xs text-gray-400 mt-1">As it should appear on your invoice (use a pen name if your book is published under one).</p>
+            </div>
             <label className="flex items-center space-x-2 mb-4 text-sm text-gray-700">
               <input type="checkbox" checked={sameAsShip} onChange={(e) => setSameAsShip(e.target.checked)} className="w-4 h-4 accent-amber-600" />
               <span>Same as shipping address</span>
@@ -567,12 +597,19 @@ export default function Checkout() {
             </div>
           </div>
 
-          {/* Payment placeholder */}
+          {/* Payment */}
           <div className="bg-white rounded-2xl border p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-2">Payment</h2>
-            <div className="flex items-center gap-2 text-gray-500 bg-gray-50 border border-dashed rounded-xl p-4">
-              <Lock className="w-5 h-5" />
-              <span>Online payment (Razorpay) is coming soon. Place your order now and our team will confirm payment.</span>
+            <div className="flex items-center gap-2 text-gray-600 bg-gray-50 border rounded-xl p-4">
+              <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              {paymentsLive ? (
+                <span>
+                  Pay securely online with <strong>Razorpay</strong> — the payment window opens right after you
+                  place your order. Cards, UPI, net banking &amp; wallets are supported.
+                </span>
+              ) : (
+                <span>Online payment is coming soon. Place your order now and our team will reach out to confirm payment.</span>
+              )}
             </div>
           </div>
         </div>
@@ -657,7 +694,7 @@ export default function Checkout() {
               className="w-full mt-6 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 disabled:opacity-50"
             >
               {placing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
-              <span>{placing ? 'Placing…' : 'Place Order'}</span>
+              <span>{placing ? 'Placing…' : paymentsLive ? 'Place Order & Pay' : 'Place Order'}</span>
             </button>
             <p className="text-xs text-gray-400 mt-2 text-center">Inclusive of 18% GST. Shipping calculated at confirmation.</p>
           </div>
