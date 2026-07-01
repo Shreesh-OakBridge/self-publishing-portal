@@ -115,6 +115,8 @@ export default function AccountPage() {
   const [customizations, setCustomizations] = useState<Customization[]>([]);
   const [calculations, setCalculations] = useState<Calculation[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  // order_id → count of workspace items needing the author (team msgs + pending proofs).
+  const [unread, setUnread] = useState<Record<string, number>>({});
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [editingProfile, setEditingProfile] = useState(false);
@@ -166,6 +168,14 @@ export default function AccountPage() {
       if (o.data) setOrders(o.data as Order[]);
       if (q.data) setQuotes(q.data as Quote[]);
       setLoadingData(false);
+      // Workspace unread counts (team messages + proofs awaiting review).
+      const { data: u } = await supabase.rpc('my_workspace_unread');
+      const map: Record<string, number> = {};
+      ((u as { order_id: string; unread_msgs: number; pending_proofs: number }[]) ?? []).forEach((row) => {
+        const n = (Number(row.unread_msgs) || 0) + (Number(row.pending_proofs) || 0);
+        if (n > 0) map[row.order_id] = n;
+      });
+      setUnread(map);
     })();
   }, [user]);
 
@@ -326,6 +336,11 @@ export default function AccountPage() {
                         className="inline-flex items-center gap-2 bg-amber-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-amber-700"
                       >
                         Open project workspace →
+                        {unread[orders[0].id] > 0 && (
+                          <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 bg-white text-amber-700 text-xs font-bold rounded-full">
+                            {unread[orders[0].id]}
+                          </span>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -387,9 +402,14 @@ export default function AccountPage() {
                             <td className="px-4 py-3 text-right">
                               <button
                                 onClick={() => go(`/project?id=${o.id}`)}
-                                className="text-amber-700 font-semibold hover:underline whitespace-nowrap"
+                                className="inline-flex items-center gap-1 text-amber-700 font-semibold hover:underline whitespace-nowrap"
                               >
                                 Open →
+                                {unread[o.id] > 0 && (
+                                  <span className="inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 bg-red-600 text-white text-[10px] font-bold rounded-full">
+                                    {unread[o.id]}
+                                  </span>
+                                )}
                               </button>
                             </td>
                           </tr>

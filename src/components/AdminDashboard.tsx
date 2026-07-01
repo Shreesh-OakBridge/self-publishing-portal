@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogOut, RefreshCw, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate, ShieldCheck, Menu, ClipboardList, Image as ImageIcon, GripVertical, Save, RotateCcw } from 'lucide-react';
+import { LogOut, RefreshCw, Inbox, AlertCircle, FileText, Users, Activity, BookText, ShoppingBag, Tag, Library, LayoutTemplate, ShieldCheck, Menu, ClipboardList, Image as ImageIcon, GripVertical, Save, RotateCcw, MessagesSquare } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import { logActivity } from '../lib/activity';
@@ -17,6 +17,7 @@ import LayoutEditor from './LayoutEditor';
 import AdminsPanel from './AdminsPanel';
 import AdminAuth from './AdminAuth';
 import MediaLibrary from './MediaLibrary';
+import WorkspaceQueue from './WorkspaceQueue';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
 
@@ -25,6 +26,7 @@ const TABS = [
   { key: 'leads', label: 'Leads', Icon: Inbox, roles: ['owner', 'admin', 'editor'] },
   { key: 'manuscripts', label: 'Manuscripts', Icon: BookText, roles: ['owner', 'admin'] },
   { key: 'orders', label: 'Orders', Icon: ShoppingBag, roles: ['owner', 'admin'] },
+  { key: 'workspace', label: 'Workspace', Icon: MessagesSquare, roles: ['owner', 'admin'] },
   { key: 'quotes', label: 'Quotes', Icon: ClipboardList, roles: ['owner', 'admin'] },
   { key: 'authors', label: 'Authors', Icon: Users, roles: ['owner', 'admin'] },
   { key: 'books', label: 'Books', Icon: Library, roles: ['owner', 'admin'] },
@@ -75,7 +77,7 @@ export default function AdminDashboard() {
   const [leadRange, setLeadRange] = useState<DateRange>(emptyRange);
   const [leadSearch, setLeadSearch] = useState('');
   const [leadSort, setLeadSort] = useState<SortState>(noSort);
-  const [tab, setTab] = useState<'leads' | 'orders' | 'quotes' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'layout' | 'content' | 'media' | 'admins'>('leads');
+  const [tab, setTab] = useState<'leads' | 'orders' | 'workspace' | 'quotes' | 'manuscripts' | 'books' | 'authors' | 'promotions' | 'activity' | 'layout' | 'content' | 'media' | 'admins'>('leads');
   const [adminRole, setAdminRole] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [navOrder, setNavOrder] = useState<string[]>(() => {
@@ -350,6 +352,8 @@ export default function AdminDashboard() {
           <ManuscriptsPanel />
         ) : tab === 'orders' ? (
           <OrdersPanel />
+        ) : tab === 'workspace' ? (
+          <WorkspaceQueue />
         ) : tab === 'quotes' ? (
           <QuotesPanel />
         ) : tab === 'authors' ? (
