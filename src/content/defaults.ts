@@ -392,7 +392,7 @@ export const defaultContent: SiteContent = {
     headlineLine2: 'Beautifully Published',
     subheading:
       "Cursive Publishing brings your literary dreams to life with 30+ years of industry expertise. We're not just a publishing service—we're your partner in creating lasting impact.",
-    primaryCta: 'Start Your Journey',
+    primaryCta: 'Get Started',
     secondaryCta: 'View Plans',
     imageUrl: '',
     cards: [
