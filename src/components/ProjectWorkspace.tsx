@@ -59,6 +59,9 @@ export default function ProjectWorkspace({
   // Short-lived signed URLs for private files, keyed by proof id / message id.
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [msgUrls, setMsgUrls] = useState<Record<string, string>>({});
+  // True once a signing pass has completed, so we can distinguish "still
+  // preparing" from "file couldn't be loaded" rather than spinning forever.
+  const [filesResolved, setFilesResolved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [body, setBody] = useState('');
@@ -128,6 +131,7 @@ export default function ProjectWorkspace({
       }),
     );
     setMsgUrls(mmap);
+    setFilesResolved(true);
     // Opening/viewing the workspace clears unread for this side.
     void client.rpc('mark_workspace_seen', { p_order: orderId });
   };
@@ -392,9 +396,13 @@ export default function ProjectWorkspace({
                           View file <ExternalLink className="w-3.5 h-3.5" />
                         </a>
                       ) : p.file_url ? (
-                        <span className="inline-flex items-center gap-1 text-gray-400 text-sm mt-1">
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Preparing file…
-                        </span>
+                        filesResolved ? (
+                          <span className="text-gray-400 text-sm mt-1">File unavailable</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-gray-400 text-sm mt-1">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Preparing file…
+                          </span>
+                        )
                       ) : null;
                     })()}
                   </div>
@@ -517,6 +525,10 @@ export default function ProjectWorkspace({
                         >
                           <Paperclip className="w-3.5 h-3.5" /> {m.attachment_name || 'Attachment'}
                         </a>
+                      ) : filesResolved ? (
+                        <span className={`inline-flex items-center gap-1 text-xs mt-1.5 ${mine ? 'text-white/70' : 'text-gray-400'}`}>
+                          <Paperclip className="w-3 h-3" /> {m.attachment_name || 'file'} (unavailable)
+                        </span>
                       ) : (
                         <span className={`inline-flex items-center gap-1 text-xs mt-1.5 ${mine ? 'text-white/70' : 'text-gray-400'}`}>
                           <Loader2 className="w-3 h-3 animate-spin" /> {m.attachment_name || 'file'}
