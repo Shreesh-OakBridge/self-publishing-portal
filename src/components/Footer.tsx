@@ -1,9 +1,38 @@
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { useState } from 'react';
+import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Twitter, Youtube, Send, CheckCircle } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
+import { supabase } from '../lib/supabase';
 import { go, withBase, stripBase } from '../lib/basePath';
 
 export default function Footer() {
   const { footer, branding } = useContent();
+
+  const socials = [
+    { url: footer.social?.facebook, Icon: Facebook, label: 'Facebook' },
+    { url: footer.social?.instagram, Icon: Instagram, label: 'Instagram' },
+    { url: footer.social?.linkedin, Icon: Linkedin, label: 'LinkedIn' },
+    { url: footer.social?.twitter, Icon: Twitter, label: 'X / Twitter' },
+    { url: footer.social?.youtube, Icon: Youtube, label: 'YouTube' },
+  ].filter((s) => s.url && s.url.trim());
+
+  const [email, setEmail] = useState('');
+  const [subState, setSubState] = useState<'idle' | 'saving' | 'done' | 'err'>('idle');
+  const subscribe = async () => {
+    const e = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+      setSubState('err');
+      return;
+    }
+    setSubState('saving');
+    const { error } = await supabase.from('newsletter_subscribers').insert({ email: e });
+    // A duplicate email (already subscribed) is still a success from the user's view.
+    if (error && !/duplicate|unique/i.test(error.message)) {
+      setSubState('err');
+      return;
+    }
+    setEmail('');
+    setSubState('done');
+  };
 
   const goToSection = (id: string) => {
     if (stripBase(window.location.pathname) === '') {
@@ -31,6 +60,59 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-gray-400 leading-relaxed">{footer.tagline}</p>
+
+            {socials.length > 0 && (
+              <div className="flex items-center gap-3 mt-5">
+                {socials.map(({ url, Icon, label }) => (
+                  <a
+                    key={label}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className="w-9 h-9 rounded-full bg-white/10 hover:bg-amber-600 flex items-center justify-center text-gray-300 hover:text-white transition-colors"
+                  >
+                    <Icon className="w-4 h-4" />
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {/* Newsletter */}
+            <div className="mt-6">
+              <h4 className="text-sm font-bold text-white mb-1">{footer.newsletterHeading}</h4>
+              <p className="text-gray-400 text-xs mb-2">{footer.newsletterText}</p>
+              {subState === 'done' ? (
+                <p className="flex items-center gap-2 text-green-400 text-sm">
+                  <CheckCircle className="w-4 h-4" /> You’re subscribed — thank you!
+                </p>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (subState === 'err') setSubState('idle');
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && subscribe()}
+                    placeholder="Your email"
+                    className={`flex-1 min-w-0 px-3 py-2 rounded-lg bg-white/10 border text-sm text-white placeholder-gray-500 outline-none focus:border-amber-500 ${
+                      subState === 'err' ? 'border-red-500' : 'border-white/10'
+                    }`}
+                  />
+                  <button
+                    onClick={subscribe}
+                    disabled={subState === 'saving'}
+                    aria-label="Subscribe"
+                    className="p-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 flex-shrink-0"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              {subState === 'err' && <p className="text-red-400 text-xs mt-1">Please enter a valid email.</p>}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 lg:gap-16">

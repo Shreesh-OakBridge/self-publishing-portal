@@ -61,7 +61,7 @@ export default function Hero() {
       {hero.imageUrl && (
         <img
           src={hero.imageUrl}
-          alt={hero.imageAlt || ''}
+          alt={hero.imageAlt || `${hero.headlineLine1} ${hero.headlineLine2} — Cursive, professional self-publishing`}
           className="mt-12 w-full h-auto block"
         />
       )}
