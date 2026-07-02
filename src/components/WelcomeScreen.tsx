@@ -242,6 +242,15 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
           {welcome.ctaLabel}
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </button>
+
+        {welcome.skipLabel && (
+          <button
+            onClick={onEnter}
+            className="ob-anim ob-d3 mt-4 text-amber-100/50 hover:text-amber-100 text-sm underline underline-offset-4 transition-colors"
+          >
+            {welcome.skipLabel}
+          </button>
+        )}
       </div>
     </div>
   );

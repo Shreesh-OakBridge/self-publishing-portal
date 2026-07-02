@@ -1,22 +1,20 @@
 import { useState } from 'react';
 import { Check, Users, Laptop, ArrowRight } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
-import { useAuth } from '../lib/auth';
 import { resolveServiceIcon } from '../lib/serviceIcons';
 import { go } from '../lib/basePath';
 import { track } from '../lib/track';
-import AuthModal from './AuthModal';
 
 // Unified onboarding funnel: (optional) journey intent → language →
 // manuscript status → publish method. Selections are stashed in sessionStorage
-// so the destination + checkout can record them. Logged-out users are prompted
-// to log in / sign up after selecting; their selection is preserved and applied
-// once they authenticate. This is the single "start here" experience — the old
-// /journeys browse page now folds in here as the first (optional) step, while
-// the rich /journey/<slug> detail pages remain reachable via "Learn more".
+// so the destination + checkout can record them. No sign-up is required to
+// explore — visitors go straight to Plans (Expert) or the Book Customizer
+// (Self); login is only asked for later, when they choose a plan or save a
+// design. This is the single "start here" experience — the old /journeys browse
+// page now folds in as the first (optional) step, and the rich
+// /journey/<slug> detail pages remain reachable via "Learn more".
 export default function GetStarted() {
   const { getStarted: g, journeys } = useContent();
-  const { user } = useAuth();
   // A journey may be pre-selected when arriving from a /journey/<slug> page.
   const [journey, setJourney] = useState(() => {
     try {
@@ -28,7 +26,6 @@ export default function GetStarted() {
   const [language, setLanguage] = useState('');
   const [status, setStatus] = useState('');
   const [method, setMethod] = useState<'expert' | 'self' | ''>('');
-  const [authOpen, setAuthOpen] = useState(false);
 
   // Journey is an optional intent hint — the funnel only requires the three
   // qualifying answers below.
@@ -54,10 +51,10 @@ export default function GetStarted() {
       manuscript_status: status,
       publish_path: method,
     });
-    // Logged in → continue straight to the chosen path. Logged out → prompt to
-    // log in / sign up first; the selection (already stashed) is applied after.
-    if (user) go(destination());
-    else setAuthOpen(true);
+    // Go straight to the chosen path — no sign-up wall. Plans is public, and the
+    // customizer lets visitors design freely; login is requested later (choosing
+    // a plan / saving a design). The selection is stashed for checkout.
+    go(destination());
   };
 
   const Radio = ({
@@ -204,6 +201,9 @@ export default function GetStarted() {
                   </li>
                 ))}
               </ul>
+              <p className="inline-flex items-center gap-1 text-amber-700 text-xs font-semibold mt-4">
+                Next: choose your package <ArrowRight className="w-3 h-3" />
+              </p>
             </button>
 
             {/* Self */}
@@ -229,6 +229,9 @@ export default function GetStarted() {
                   </li>
                 ))}
               </ul>
+              <p className="inline-flex items-center gap-1 text-amber-700 text-xs font-semibold mt-4">
+                Next: design your book <ArrowRight className="w-3 h-3" />
+              </p>
             </button>
           </div>
         </div>
@@ -248,22 +251,13 @@ export default function GetStarted() {
               Please select a language, your manuscript status, and a publishing option to continue.
             </p>
           ) : (
-            !user && (
-              <p className="text-sm text-gray-500 mt-3">
-                You’ll be asked to log in or create a free account to continue — your selection is saved.
-              </p>
-            )
+            <p className="text-sm text-gray-500 mt-3">
+              No account needed to look — you can explore
+              {method === 'expert' ? ' the plans' : ' the book designer'} right away.
+            </p>
           )}
         </div>
       </div>
-
-      <AuthModal
-        open={authOpen}
-        onClose={() => setAuthOpen(false)}
-        onAuthenticated={() => go(destination())}
-        redirectPath={destination()}
-        heading="Log in or sign up to continue"
-      />
     </section>
   );
 }
