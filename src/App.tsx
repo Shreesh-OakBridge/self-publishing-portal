@@ -150,9 +150,11 @@ function HomePage() {
       <Navigation />
       {ordered
         .filter((s) => s.enabled)
-        .map((s) => (
-          <Fragment key={s.key}>{sectionRenderers[s.key]()}</Fragment>
-        ))}
+        .map((s) => {
+          // Guard: a stale/unknown layout key must never crash the homepage.
+          const render = sectionRenderers[s.key];
+          return render ? <Fragment key={s.key}>{render()}</Fragment> : null;
+        })}
       <Footer />
     </div>
   );
