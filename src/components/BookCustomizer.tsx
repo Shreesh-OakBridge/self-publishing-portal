@@ -6,6 +6,7 @@ import { useContent } from '../content/ContentProvider';
 import type { CustomizerSize } from '../content/defaults';
 import AuthModal from './AuthModal';
 import CustomizeGuide from './CustomizeGuide';
+import Toast, { type ToastMsg } from './Toast';
 import { go } from '../lib/basePath';
 
 interface CustomizationData {
@@ -90,6 +91,7 @@ export default function BookCustomizer() {
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'save' | 'quote' | 'order' | null>(null);
   const [showGuide, setShowGuide] = useState(false);
+  const [toast, setToast] = useState<ToastMsg | null>(null);
 
   // Auto-show the walkthrough until the visitor opts out via "Don't show again".
   useEffect(() => {
@@ -201,10 +203,10 @@ export default function BookCustomizer() {
     setIsSaving(true);
     try {
       await insertCustomization();
-      alert('Book customization saved! You can view it anytime under My Account.');
+      setToast({ type: 'ok', text: 'Book customization saved! You can view it anytime under My Account.' });
     } catch (err) {
       console.error('Error saving customization:', err);
-      alert('Error saving customization. Please try again.');
+      setToast({ type: 'err', text: 'Error saving customization. Please try again.' });
     } finally {
       setIsSaving(false);
     }
@@ -217,7 +219,7 @@ export default function BookCustomizer() {
       if (id) go(`/checkout?customization=${id}`);
     } catch (err) {
       console.error('Error starting order:', err);
-      alert('Could not start your order. Please try again.');
+      setToast({ type: 'err', text: 'Could not start your order. Please try again.' });
       setIsSaving(false);
     }
   };
@@ -534,6 +536,8 @@ export default function BookCustomizer() {
         }}
         heading="Log in or sign up to save your design"
       />
+
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </section>
   );
 }
