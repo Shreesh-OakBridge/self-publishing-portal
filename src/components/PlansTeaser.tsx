@@ -27,7 +27,7 @@ const statusColor = (s: string) =>
 // plan + details and an "explore other plans" option; otherwise the two-pathway
 // teaser with a single CTA to /plans.
 export default function PlansTeaser() {
-  const { pricing, getStarted: g } = useContent();
+  const { pricing, getStarted: g, projectWorkspace } = useContent();
   const { user } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [order, setOrder] = useState<CurrentOrder | null>(null);
@@ -103,7 +103,7 @@ export default function PlansTeaser() {
                 )}
                 <span>
                   <span className="text-gray-400">Current stage: </span>
-                  <strong>{stageLabel(order!.production_stage)}</strong>
+                  <strong>{stageLabel(projectWorkspace.stages, order!.production_stage)}</strong>
                 </span>
               </div>
 

@@ -2,6 +2,8 @@
 // Supabase `site_content` stores only overrides (keyed by section); these
 // defaults always render first, so the site works even before the CMS is used.
 
+import { PRODUCTION_STAGES } from '../lib/productionStages';
+
 export interface FeatureCard {
   title: string;
   description: string;
@@ -95,6 +97,22 @@ export interface RoyaltyCalcContent {
 export interface EditorialContent {
   expertReviewPrice: number;
   expertReviewNote: string;
+}
+
+export interface ProductionStageItem {
+  key: string;
+  label: string;
+}
+
+export interface ProjectWorkspaceContent {
+  // Show/hide the project progress card (title, current stage, stepper) on
+  // the author-facing Project Workspace page (/project?id=...).
+  stepperEnabled: boolean;
+  // The pipeline stages shown in the stepper, in order. `key` should match
+  // the value Admin → Orders sets on production_stage; `label` is what
+  // authors see. Add / remove / rename freely — the Orders stage dropdown
+  // reads from this same list, so both stay in sync automatically.
+  stages: ProductionStageItem[];
 }
 
 export interface FooterSocial {
@@ -350,6 +368,7 @@ export interface SiteContent {
   manuscript: ManuscriptSectionContent;
   royaltyCalc: RoyaltyCalcContent;
   editorial: EditorialContent;
+  projectWorkspace: ProjectWorkspaceContent;
   contact: ContactContent;
   faq: FaqContent;
   pages: PagesContent;
@@ -693,6 +712,10 @@ export const defaultContent: SiteContent = {
     expertReviewPrice: 4999,
     expertReviewNote:
       'Expert Editorial Review is a paid add-on. Once you request it, our team will confirm the scope and payment details before work begins.',
+  },
+  projectWorkspace: {
+    stepperEnabled: true,
+    stages: PRODUCTION_STAGES.map((s) => ({ key: s.key, label: s.label })),
   },
   contact: {
     heading: 'Start Your Publishing Journey',

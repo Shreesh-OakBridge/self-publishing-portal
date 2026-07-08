@@ -1,10 +1,18 @@
 import { Check } from 'lucide-react';
-import { PRODUCTION_STAGES, stageIndex } from '../lib/productionStages';
+import { stageIndex, type ProductionStage } from '../lib/productionStages';
 
-// Visual progress stepper for an order's production stage.
+// Visual progress stepper for an order's production stage. `stages` comes
+// from CMS content (site_content.projectWorkspace.stages) so admins can
+// add/remove/rename stages without a code change.
 // Horizontal on desktop, vertical timeline on mobile.
-export default function StageTracker({ stageKey }: { stageKey: string | null | undefined }) {
-  const current = Math.max(0, stageIndex(stageKey));
+export default function StageTracker({
+  stageKey,
+  stages,
+}: {
+  stageKey: string | null | undefined;
+  stages: ProductionStage[];
+}) {
+  const current = Math.max(0, stageIndex(stages, stageKey));
   const dot = (done: boolean, active: boolean, n: number) => (
     <span
       className={`flex items-center justify-center rounded-full text-xs font-bold flex-shrink-0 w-6 h-6 ${
@@ -23,7 +31,7 @@ export default function StageTracker({ stageKey }: { stageKey: string | null | u
     <div>
       {/* Desktop: horizontal */}
       <ol className="hidden md:flex items-start">
-        {PRODUCTION_STAGES.map((s, i) => {
+        {stages.map((s, i) => {
           const done = i < current;
           const active = i === current;
           return (
@@ -50,10 +58,10 @@ export default function StageTracker({ stageKey }: { stageKey: string | null | u
 
       {/* Mobile: vertical timeline */}
       <ol className="md:hidden">
-        {PRODUCTION_STAGES.map((s, i) => {
+        {stages.map((s, i) => {
           const done = i < current;
           const active = i === current;
-          const last = i === PRODUCTION_STAGES.length - 1;
+          const last = i === stages.length - 1;
           return (
             <li key={s.key} className="flex gap-3">
               <div className="flex flex-col items-center">

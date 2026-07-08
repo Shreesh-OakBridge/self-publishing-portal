@@ -1,6 +1,12 @@
-// Production pipeline for a publishing order. Edit / reorder these to match your
-// real workflow — the admin control and the author progress tracker both read
-// from this single list, so changing it here updates everything.
+// Production pipeline for a publishing order.
+//
+// This file's PRODUCTION_STAGES array is only the *fallback default* — the
+// live, admin-editable list lives in CMS content at
+// site_content.projectWorkspace.stages (see src/content/defaults.ts), edited
+// from Admin → Site Content → Project Workspace. Components should read the
+// real list via useContent().projectWorkspace.stages and pass it into the
+// helpers below; PRODUCTION_STAGES here just seeds that default and acts as a
+// safety net before content has loaded.
 export interface ProductionStage {
   key: string;
   label: string;
@@ -20,8 +26,8 @@ export const PRODUCTION_STAGES: ProductionStage[] = [
 // First stage every new order starts at (must match the DB column default).
 export const FIRST_STAGE = PRODUCTION_STAGES[0].key;
 
-export const stageIndex = (key: string | null | undefined): number =>
-  PRODUCTION_STAGES.findIndex((s) => s.key === key);
+export const stageIndex = (stages: ProductionStage[], key: string | null | undefined): number =>
+  stages.findIndex((s) => s.key === key);
 
-export const stageLabel = (key: string | null | undefined): string =>
-  PRODUCTION_STAGES.find((s) => s.key === key)?.label ?? 'Order Placed';
+export const stageLabel = (stages: ProductionStage[], key: string | null | undefined): string =>
+  stages.find((s) => s.key === key)?.label ?? stages[0]?.label ?? 'Order Placed';
