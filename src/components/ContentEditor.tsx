@@ -117,6 +117,28 @@ function blankFromTemplate(template: Json): Json {
   return '';
 }
 
+// Fill in any keys missing from a previously-saved value using the matching
+// default as a template — e.g. a new field (like a service's `children`
+// sub-list) added after an admin already customized that section. Array
+// items are matched by position, falling back to the first default item's
+// shape. This only shapes the editor's initial draft so new fields become
+// visible/editable; it never overwrites the admin's actual saved values, and
+// never touches how the live site reads content.
+function backfillShape(value: Json, template: Json): Json {
+  if (Array.isArray(value)) {
+    const templateArr = Array.isArray(template) ? template : [];
+    return value.map((v, i) => backfillShape(v, templateArr[i] ?? templateArr[0] ?? v));
+  }
+  if (value && typeof value === 'object' && template && typeof template === 'object' && !Array.isArray(template)) {
+    const tmpl = template as Record<string, Json>;
+    const val = value as Record<string, Json>;
+    const out: Record<string, Json> = { ...tmpl, ...val };
+    for (const k of Object.keys(val)) out[k] = backfillShape(val[k], tmpl[k]);
+    return out;
+  }
+  return value ?? template;
+}
+
 function Field({
   label,
   value,
@@ -318,7 +340,16 @@ export default function ContentEditor() {
     [content]
   );
   const [active, setActive] = useState<keyof SiteContent>(sections[0]);
-  const [drafts, setDrafts] = useState<Record<string, Json>>(() => ({ ...content }));
+  // Backfill each section against its default shape so fields added after an
+  // admin already customized that section (e.g. a new sub-list) show up and
+  // are editable, without disturbing anything the admin already saved.
+  const [drafts, setDrafts] = useState<Record<string, Json>>(() => {
+    const out: Record<string, Json> = {};
+    for (const key of Object.keys(content) as (keyof SiteContent)[]) {
+      out[key] = backfillShape(content[key] as Json, defaultContent[key] as Json);
+    }
+    return out;
+  });
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
 

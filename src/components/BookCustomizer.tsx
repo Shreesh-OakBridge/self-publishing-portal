@@ -6,6 +6,7 @@ import { useContent } from '../content/ContentProvider';
 import type { CustomizerSize } from '../content/defaults';
 import AuthModal from './AuthModal';
 import CustomizeGuide from './CustomizeGuide';
+import CustomizeQuestionnaire from './CustomizeQuestionnaire';
 import Toast, { type ToastMsg } from './Toast';
 import { go } from '../lib/basePath';
 
@@ -234,6 +235,9 @@ export default function BookCustomizer() {
             {customizer.heading}
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">{customizer.subheading}</p>
+
+          <CustomizeQuestionnaire />
+
           <button
             onClick={() => setShowGuide(true)}
             className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-amber-300 text-amber-700 font-semibold hover:bg-amber-50 transition-colors"

@@ -127,11 +127,18 @@ function HomePage() {
     ),
   };
 
+  // Logged-in members get their own layout (order + show/hide) from the admin
+  // Layout editor's "Logged-in members" tab; logged-out visitors use
+  // `sections`. Fall back to `sections` if `loggedInSections` was never set
+  // (e.g. an older saved layout row) so the page still renders sensibly.
+  const audienceSections =
+    user && homeLayout.loggedInSections?.length ? homeLayout.loggedInSections : homeLayout.sections;
+
   // Start from the saved order, then append any known sections not yet listed
   // (so newly added sections still appear even with an older saved layout).
   const seen = new Set<string>();
   const ordered = [
-    ...homeLayout.sections.filter((s) => {
+    ...audienceSections.filter((s) => {
       if (sectionRenderers[s.key] && !seen.has(s.key)) {
         seen.add(s.key);
         return true;

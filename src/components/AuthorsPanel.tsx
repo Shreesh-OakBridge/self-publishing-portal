@@ -9,7 +9,8 @@ import { filterBySearch, sortRows, noSort, type SortState } from '../lib/adminFi
 
 interface Author {
   id: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   full_name: string | null;
   bio: string | null;
   book_scope: string | null;
@@ -75,7 +76,8 @@ export default function AuthorsPanel() {
 
   const columns: Column<Author>[] = [
     { header: 'Name', value: (a) => a.full_name || '' },
-    { header: 'Email', value: (a) => a.email },
+    { header: 'Email', value: (a) => a.email || '' },
+    { header: 'Phone', value: (a) => a.phone || '' },
     { header: 'Bio', value: (a) => a.bio || '' },
     { header: 'Book Scope', value: (a) => a.book_scope || '' },
     { header: 'Joined', value: (a) => fmt(a.created_at) },
@@ -148,9 +150,20 @@ export default function AuthorsPanel() {
                       <h3 className="text-lg font-bold text-gray-900">
                         {au.full_name || '(no name set)'}
                       </h3>
-                      <a href={`mailto:${au.email}`} className="text-sm text-amber-700 hover:underline">
-                        {au.email}
-                      </a>
+                      {au.email ? (
+                        <a href={`mailto:${au.email}`} className="text-sm text-amber-700 hover:underline">
+                          {au.email}
+                        </a>
+                      ) : (
+                        <span className="text-sm text-gray-400 italic">no email yet</span>
+                      )}
+                      {au.phone && (
+                        <div>
+                          <a href={`tel:${au.phone}`} className="text-sm text-gray-600 hover:underline">
+                            {au.phone}
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <span className="text-xs text-gray-400">Joined {fmt(au.created_at)}</span>

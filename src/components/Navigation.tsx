@@ -3,6 +3,7 @@ import {
   X,
   UserCircle,
   ChevronDown,
+  ChevronRight,
   Shield,
   ShoppingBag,
   FileText,
@@ -23,6 +24,8 @@ export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
+  // Index of the service row currently showing its second-level (child) flyout.
+  const [openChild, setOpenChild] = useState<number | null>(null);
   const { user, isAdmin, signOut } = useAuth();
   const { branding, services } = useContent();
 
@@ -140,8 +143,10 @@ export default function Navigation() {
               Home
             </button>
 
-            {/* Services — hover flyout, click goes to the landing page */}
-            <div className="relative group">
+            {/* Services — hover flyout, click goes to the landing page. Each
+                row can open its own second-level flyout (admin-editable
+                sub-items, gated by services.submenuEnabled) to the right. */}
+            <div className="relative group" onMouseLeave={() => setOpenChild(null)}>
               <button onClick={() => goTo('/services')} className={deskLink(path === '/services')}>
                 <span className="inline-flex items-center gap-1">
                   Services <ChevronDown className="w-3.5 h-3.5" />
@@ -149,16 +154,43 @@ export default function Navigation() {
               </button>
               <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3 opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200">
                 <div className="w-72 bg-white rounded-xl shadow-xl border border-gray-100 p-2">
-                  {services.items.map((s) => (
-                    <button
-                      key={s.title}
-                      onClick={() => goTo('/services')}
-                      className="block w-full text-left px-3 py-2 rounded-lg hover:bg-amber-50 transition-colors"
-                    >
-                      <span className="block text-sm font-semibold text-gray-800">{s.title}</span>
-                      <span className="block text-xs text-gray-500">{s.summary}</span>
-                    </button>
-                  ))}
+                  {services.items.map((s, i) => {
+                    const children = s.children ?? [];
+                    const hasChildren = services.submenuEnabled && children.length > 0;
+                    return (
+                      <div key={s.title} className="relative" onMouseEnter={() => setOpenChild(hasChildren ? i : null)}>
+                        <button
+                          onClick={() => goTo('/services')}
+                          className="flex w-full items-center justify-between gap-2 text-left px-3 py-2 rounded-lg hover:bg-amber-50 transition-colors"
+                        >
+                          <span>
+                            <span className="block text-sm font-semibold text-gray-800">{s.title}</span>
+                            <span className="block text-xs text-gray-500">{s.summary}</span>
+                          </span>
+                          {hasChildren && <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+                        </button>
+
+                        {hasChildren && openChild === i && (
+                          <div className="absolute left-full top-0 -ml-1 pl-2">
+                            <div className="w-64 bg-white rounded-xl shadow-xl border border-gray-100 p-2">
+                              {children.map((c) => (
+                                <button
+                                  key={c.label}
+                                  onClick={() => goTo(c.url || '/services')}
+                                  className="block w-full text-left px-3 py-2 rounded-lg hover:bg-amber-50 transition-colors"
+                                >
+                                  <span className="block text-sm font-semibold text-gray-800">{c.label}</span>
+                                  {c.description && (
+                                    <span className="block text-xs text-gray-500">{c.description}</span>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                   <div className="border-t border-gray-100 my-1" />
                   <button
                     onClick={() => goTo('/services')}

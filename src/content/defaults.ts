@@ -168,6 +168,12 @@ export interface CustomizerContent {
   coverDesigns: CustomizerOption[];
   layoutOptions: CustomizerOption[];
   bookSizes: CustomizerSize[];
+  // Rotating prompt shown between the subheading and "How it works?" — one
+  // question fades out, the next fades in. Purely a thinking-prompt (no
+  // answers collected). Add / remove / reword freely; empty list or the
+  // toggle off hides it entirely.
+  questionnaireEnabled: boolean;
+  questions: string[];
 }
 
 export interface StaticPageContent {
@@ -238,11 +244,22 @@ export interface ServiceItem {
   summary: string;
   description: string;
   icon: string;
+  // Sub-items shown in a second flyout when this service is hovered in the
+  // header nav (e.g. "Editorial & Proofreading" → "Copyediting",
+  // "Proofreading"...). Leave empty for a service with no submenu. `url`
+  // defaults to the main Services page if left blank. Optional so content
+  // saved before this field existed doesn't break — treat a missing value
+  // the same as an empty list.
+  children?: ResourceLink[];
 }
 
 export interface ServicesContent {
   heading: string;
   subheading: string;
+  // Master switch for the header nav's second-level (child) flyout. When
+  // off, the Services menu only ever shows its single top-level flyout,
+  // even if individual services have children configured.
+  submenuEnabled: boolean;
   items: ServiceItem[];
 }
 
@@ -694,6 +711,18 @@ export const defaultContent: SiteContent = {
       { id: 'doubledemy', name: 'Double Demy', desc: 'Coffee-table / photo books', price: 0,
         pb: { w: 215, l: 280, win: 8.5, lin: 11 }, hb: { w: 220, l: 285, win: 8.7, lin: 11.25 } },
     ],
+    questionnaireEnabled: true,
+    questions: [
+      'What genre best describes your book?',
+      'Who do you picture as your ideal reader?',
+      "What's your manuscript's approximate word count?",
+      'Will your book include photos, illustrations, or charts?',
+      'Do you already have a cover concept, or would you like our designers to create one?',
+      'Is this a one-time print run, or do you plan to reprint as it sells?',
+      "What's your target launch timeline?",
+      'Will you sell mainly in print, eBook, or both?',
+      'Have you settled on a trim size, or would you like a recommendation based on your genre?',
+    ],
   },
   manuscript: {
     heading: 'Submit Your Manuscript',
@@ -745,6 +774,7 @@ export const defaultContent: SiteContent = {
     heading: 'Our Publishing Services',
     subheading:
       'End-to-end support to take your manuscript from a draft to a professionally published book.',
+    submenuEnabled: true,
     items: [
       {
         title: 'Editorial & Proofreading',
@@ -752,6 +782,11 @@ export const defaultContent: SiteContent = {
         description:
           'Our experienced editors refine structure, language, and consistency—from developmental editing that shapes your narrative to meticulous proofreading that polishes every line.',
         icon: 'PenTool',
+        children: [
+          { label: 'Developmental Editing', url: '', description: 'Big-picture structure, pacing, and narrative guidance.' },
+          { label: 'Copyediting', url: '', description: 'Grammar, consistency, and clarity at the sentence level.' },
+          { label: 'Proofreading', url: '', description: 'A final polish pass before your book goes to print.' },
+        ],
       },
       {
         title: 'Cover Design',
@@ -759,6 +794,10 @@ export const defaultContent: SiteContent = {
         description:
           'Original cover concepts designed to stand out on shelves and thumbnails alike, tailored to your genre and audience.',
         icon: 'Palette',
+        children: [
+          { label: 'Custom Cover Concepts', url: '', description: 'Original designs tailored to your genre and audience.' },
+          { label: 'Cover Revisions', url: '', description: 'Refine an existing concept until it feels right.' },
+        ],
       },
       {
         title: 'Interior Formatting',
@@ -766,6 +805,10 @@ export const defaultContent: SiteContent = {
         description:
           'Professional interior layout and typesetting for paperback, hardback, and ebook formats, with attention to readability and trim size.',
         icon: 'LayoutGrid',
+        children: [
+          { label: 'Print Typesetting', url: '', description: 'Paperback & hardback interior layout for your chosen trim size.' },
+          { label: 'eBook Conversion', url: '', description: 'Clean, reflowable formatting for Kindle and other eReaders.' },
+        ],
       },
       {
         title: 'ISBN & Copyright',
@@ -773,6 +816,10 @@ export const defaultContent: SiteContent = {
         description:
           'We assign ISBNs and assist with copyright registration so your work is protected and discoverable.',
         icon: 'ShieldCheck',
+        children: [
+          { label: 'ISBN Registration', url: '', description: 'A unique ISBN assigned and registered for your book.' },
+          { label: 'Copyright Assistance', url: '', description: 'Guidance through registering copyright in your name.' },
+        ],
       },
       {
         title: 'Distribution',
@@ -780,6 +827,10 @@ export const defaultContent: SiteContent = {
         description:
           'Global and Indian distribution across major online retailers, libraries, and 40+ platforms to maximise your reach.',
         icon: 'Globe',
+        children: [
+          { label: 'Online Retailers', url: '', description: 'Amazon, Flipkart, and other major online storefronts.' },
+          { label: 'Library & Bulk Distribution', url: '', description: 'Reach libraries and institutional buyers.' },
+        ],
       },
       {
         title: 'Marketing Support',
@@ -787,6 +838,10 @@ export const defaultContent: SiteContent = {
         description:
           'Launch strategy, press materials, and promotional assets to help your book find its readers.',
         icon: 'Megaphone',
+        children: [
+          { label: 'Launch Strategy', url: '', description: 'A plan for your first weeks after publication.' },
+          { label: 'Press & Media Kit', url: '', description: 'Press releases and promotional assets ready to share.' },
+        ],
       },
     ],
   },

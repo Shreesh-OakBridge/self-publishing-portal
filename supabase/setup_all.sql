@@ -219,14 +219,19 @@ DROP POLICY IF EXISTS "Admins view all calculations" ON royalty_calculations;
 CREATE POLICY "Admins view all calculations"
   ON royalty_calculations FOR SELECT TO authenticated USING (is_admin());
 
+-- email/phone COALESCE with user_metadata: phone-first signups leave
+-- auth.users.email null until the author confirms the best-effort "add
+-- email" link, so admin views fall back to what was captured at signup.
 CREATE OR REPLACE FUNCTION admin_authors()
   RETURNS TABLE (
-    id uuid, email text, full_name text, first_name text, last_name text,
+    id uuid, email text, phone text, full_name text, first_name text, last_name text,
     bio text, book_scope text, created_at timestamptz
   )
   LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public
 AS $$
-  SELECT u.id, u.email::text,
+  SELECT u.id,
+    COALESCE(u.email, u.raw_user_meta_data ->> 'email')::text,
+    COALESCE(u.phone, u.raw_user_meta_data ->> 'phone')::text,
     u.raw_user_meta_data ->> 'full_name',
     u.raw_user_meta_data ->> 'first_name',
     u.raw_user_meta_data ->> 'last_name',
@@ -235,7 +240,10 @@ AS $$
     u.created_at
   FROM auth.users u
   WHERE is_admin()
-    AND NOT EXISTS (SELECT 1 FROM admin_users a WHERE a.email = u.email)
+    AND NOT EXISTS (
+      SELECT 1 FROM admin_users a
+      WHERE a.email = COALESCE(u.email, u.raw_user_meta_data ->> 'email')
+    )
   ORDER BY u.created_at DESC;
 $$;
 
