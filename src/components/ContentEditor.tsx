@@ -65,6 +65,7 @@ const SECTION_LABELS: Record<string, string> = {
   manuscript: 'Manuscript Section',
   royaltyCalc: 'Royalty Calculator',
   editorial: 'Editorial Review',
+  projectWorkspace: 'Project Workspace (Stage Tracker)',
   contact: 'Contact Section',
   faq: 'FAQ',
   pages: 'Static Pages (About / Terms / Privacy)',

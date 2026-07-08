@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BookOpen, ArrowLeft, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
+import { useContent } from '../content/ContentProvider';
 import { go } from '../lib/basePath';
 import StageTracker from './StageTracker';
 import ProjectWorkspace from './ProjectWorkspace';
@@ -21,6 +22,7 @@ interface ProjectOrder {
 // Author-facing project workspace page (/project?id=<orderId>).
 export default function ProjectPage() {
   const { user, loading } = useAuth();
+  const { projectWorkspace } = useContent();
   const [order, setOrder] = useState<ProjectOrder | null>(null);
   const [loadingOrder, setLoadingOrder] = useState(true);
   const orderId = new URLSearchParams(window.location.search).get('id') || '';
@@ -82,16 +84,20 @@ export default function ProjectPage() {
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-2xl border p-6 mb-6">
-              <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">
-                Project{order.invoice_number ? ` · ${order.invoice_number}` : ''}
-              </p>
-              <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-              <p className="text-gray-500 text-sm mt-1">Current stage: {stageLabel(order.production_stage)}</p>
-              <div className="mt-5">
-                <StageTracker stageKey={order.production_stage} />
+            {projectWorkspace.stepperEnabled && (
+              <div className="bg-white rounded-2xl border p-6 mb-6">
+                <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">
+                  Project{order.invoice_number ? ` · ${order.invoice_number}` : ''}
+                </p>
+                <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+                <p className="text-gray-500 text-sm mt-1">
+                  Current stage: {stageLabel(projectWorkspace.stages, order.production_stage)}
+                </p>
+                <div className="mt-5">
+                  <StageTracker stageKey={order.production_stage} stages={projectWorkspace.stages} />
+                </div>
               </div>
-            </div>
+            )}
 
             <ProjectWorkspace orderId={order.id} client={supabase} role="author" />
           </>

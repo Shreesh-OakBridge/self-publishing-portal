@@ -5,7 +5,8 @@ import ProjectWorkspace from './ProjectWorkspace';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
-import { PRODUCTION_STAGES, stageLabel } from '../lib/productionStages';
+import { useContent } from '../content/ContentProvider';
+import { stageLabel } from '../lib/productionStages';
 import { SearchBox, SortControl } from './AdminControls';
 import { filterBySearch, sortRows, noSort, type SortState } from '../lib/adminFilter';
 
@@ -43,6 +44,8 @@ const fmt = (d: string) =>
   new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
 export default function OrdersPanel() {
+  const { projectWorkspace } = useContent();
+  const stages = projectWorkspace.stages;
   const [items, setItems] = useState<Order[]>([]);
   const [authors, setAuthors] = useState<Record<string, Author>>({});
   const [loading, setLoading] = useState(true);
@@ -121,7 +124,7 @@ export default function OrdersPanel() {
     { header: 'Coupon', value: (o) => o.coupon_code || '' },
     { header: 'Discount', value: (o) => o.discount ?? 0 },
     { header: 'Amount (INR)', value: (o) => o.amount ?? 0 },
-    { header: 'Production Stage', value: (o) => stageLabel(o.production_stage) },
+    { header: 'Production Stage', value: (o) => stageLabel(stages, o.production_stage) },
     { header: 'Status', value: (o) => o.status },
     { header: 'Phone', value: (o) => o.ship_phone || '' },
     { header: 'City', value: (o) => o.ship_city || '' },
@@ -225,11 +228,11 @@ export default function OrdersPanel() {
                     </td>
                     <td className="px-4 py-3">
                       <select
-                        value={o.production_stage ?? PRODUCTION_STAGES[0].key}
+                        value={o.production_stage ?? stages[0]?.key ?? ''}
                         onChange={(e) => setStage(o.id, e.target.value)}
                         className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:border-amber-500 outline-none"
                       >
-                        {PRODUCTION_STAGES.map((s) => (
+                        {stages.map((s) => (
                           <option key={s.key} value={s.key}>
                             {s.label}
                           </option>
