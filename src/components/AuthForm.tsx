@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookOpen, AlertCircle, CheckCircle } from 'lucide-react';
+import { BookOpen, AlertCircle, CheckCircle, ArrowLeft, MessageSquareText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { logActivity } from '../lib/activity';
 import { track } from '../lib/track';
@@ -7,6 +7,13 @@ import { withBase } from '../lib/basePath';
 import { recordReferralIfAny } from '../lib/referral';
 
 type Mode = 'login' | 'signup' | 'forgot';
+// Which channel verifies a new signup. Phone (SMS OTP) is the default/primary
+// path; email is offered as a fallback for anyone who can't receive the text.
+type VerifyChannel = 'phone' | 'email';
+// Signup has two steps when verifying by phone: fill the form, then enter the
+// code that was texted. Email verification stays single-step (a link, same
+// as before).
+type SignupStage = 'form' | 'otp';
 
 interface AuthFormProps {
   // Called after a successful login (or signup that returns an active session).
@@ -16,16 +23,35 @@ interface AuthFormProps {
   oauthRedirectPath?: string;
 }
 
+// Supabase phone auth needs E.164 (e.g. +919876543210). Default to India (+91)
+// when no country code is given, since that's this business's primary market.
+const normalizePhone = (raw: string): string => {
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('+')) return `+${trimmed.slice(1).replace(/\D/g, '')}`;
+  return `+91${trimmed.replace(/\D/g, '').replace(/^0+/, '')}`;
+};
+const isValidPhone = (p: string) => /^\+\d{8,15}$/.test(p);
+
 export default function AuthForm({ onAuthenticated, initialMode = 'login', oauthRedirectPath = '/' }: AuthFormProps) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [verifyChannel, setVerifyChannel] = useState<VerifyChannel>('phone');
+  const [signupStage, setSignupStage] = useState<SignupStage>('form');
+  const [otp, setOtp] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [oauthBusy, setOauthBusy] = useState(false);
+
+  // Full reset back to a fresh signup form (used by "change number" and mode switches).
+  const resetSignupFlow = () => {
+    setSignupStage('form');
+    setOtp('');
+  };
 
   // Google sign-in: full-page redirect to Google, then back to oauthRedirectPath.
   const signInWithGoogle = async () => {
@@ -38,6 +64,62 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login', oauth
     if (oauthError) {
       setError(oauthError.message);
       setOauthBusy(false);
+    }
+  };
+
+  // Step 2 of phone signup: the author enters the 6-digit code we texted them.
+  const verifyPhoneOtp = async () => {
+    if (!otp.trim()) {
+      setError('Please enter the code we texted you.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      const normalized = normalizePhone(phone);
+      const { data, error: otpError } = await supabase.auth.verifyOtp({
+        phone: normalized,
+        token: otp.trim(),
+        type: 'sms',
+      });
+      if (otpError) throw otpError;
+
+      // Best-effort: also register the email as a verified identity on the
+      // account (triggers Supabase's own confirmation email for it). This is
+      // non-blocking — the phone account already works either way, and the
+      // email address is stored in user_metadata regardless as a fallback
+      // for admin views and order/notification emails.
+      if (email.trim()) {
+        try {
+          await supabase.auth.updateUser({ email: email.trim() });
+        } catch (err) {
+          console.error('Could not attach email to phone account:', err);
+        }
+      }
+
+      await recordReferralIfAny(data.user);
+      track('sign_up', { method: 'phone' });
+      onAuthenticated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'That code is invalid or expired. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resendPhoneOtp = async () => {
+    setBusy(true);
+    setError('');
+    setInfo('');
+    try {
+      const normalized = normalizePhone(phone);
+      const { error: resendError } = await supabase.auth.signInWithOtp({ phone: normalized });
+      if (resendError) throw resendError;
+      setInfo(`Sent a new code to ${normalized}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not resend the code. Please try again shortly.');
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -67,9 +149,27 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login', oauth
       return;
     }
 
+    if (mode === 'signup' && signupStage === 'otp') {
+      await verifyPhoneOtp();
+      return;
+    }
+
     if (mode === 'signup' && !firstName.trim()) {
       setError('First name is required.');
       return;
+    }
+
+    // Phone is mandatory for every signup, regardless of which channel is
+    // actually used to verify the account.
+    if (mode === 'signup') {
+      if (!phone.trim()) {
+        setError('Phone number is required.');
+        return;
+      }
+      if (!isValidPhone(normalizePhone(phone))) {
+        setError('Please enter a valid phone number.');
+        return;
+      }
     }
 
     if (password.length < 6) {
@@ -87,32 +187,61 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login', oauth
         } catch {
           referredBy = undefined;
         }
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              first_name: firstName.trim(),
-              last_name: lastName.trim(),
-              full_name: fullName,
-              ...(referredBy ? { referred_by: referredBy } : {}),
-            },
-          },
-        });
-        if (signUpError) throw signUpError;
-        try {
-          localStorage.removeItem('cursive_ref');
-        } catch {
-          /* ignore */
-        }
 
-        if (!data.session) {
-          setInfo('Account created. Please check your email to confirm, then log in.');
-          setMode('login');
+        if (verifyChannel === 'phone') {
+          // Primary path: sign up with phone as the identifier — Supabase
+          // texts a 6-digit OTP. Email is stashed in metadata now and
+          // best-effort promoted to a verified identity once the OTP is
+          // confirmed (see verifyPhoneOtp above).
+          const normalized = normalizePhone(phone);
+          const { error: signUpError } = await supabase.auth.signUp({
+            phone: normalized,
+            password,
+            options: {
+              data: {
+                first_name: firstName.trim(),
+                last_name: lastName.trim(),
+                full_name: fullName,
+                email: email.trim() || undefined,
+                ...(referredBy ? { referred_by: referredBy } : {}),
+              },
+            },
+          });
+          if (signUpError) throw signUpError;
+          setInfo(`We texted a 6-digit code to ${normalized}. Enter it below to finish creating your account.`);
+          setSignupStage('otp');
         } else {
-          await recordReferralIfAny(data.user);
-          track('sign_up', { method: 'email' });
-          onAuthenticated();
+          // Fallback path: today's email-confirmation-link flow. Phone is
+          // still captured and stored in metadata even though it isn't the
+          // channel being verified.
+          const { data, error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                first_name: firstName.trim(),
+                last_name: lastName.trim(),
+                full_name: fullName,
+                phone: normalizePhone(phone),
+                ...(referredBy ? { referred_by: referredBy } : {}),
+              },
+            },
+          });
+          if (signUpError) throw signUpError;
+          try {
+            localStorage.removeItem('cursive_ref');
+          } catch {
+            /* ignore */
+          }
+
+          if (!data.session) {
+            setInfo('Account created. Please check your email to confirm, then log in.');
+            setMode('login');
+          } else {
+            await recordReferralIfAny(data.user);
+            track('sign_up', { method: 'email' });
+            onAuthenticated();
+          }
         }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
@@ -155,7 +284,7 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login', oauth
         </div>
       )}
 
-      {mode !== 'forgot' && (
+      {mode !== 'forgot' && !(mode === 'signup' && signupStage === 'otp') && (
         <>
           <button
             type="button"
@@ -179,58 +308,148 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login', oauth
         </>
       )}
 
-      {mode === 'signup' && (
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              First Name <span className="text-red-500">*</span>
-            </label>
+      {mode === 'signup' && signupStage === 'otp' ? (
+        <div className="mb-2">
+          <button
+            type="button"
+            onClick={() => {
+              resetSignupFlow();
+              setError('');
+              setInfo('');
+            }}
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-amber-700 mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" /> Change number
+          </button>
+
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
+            <MessageSquareText className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-gray-700">
+              We texted a 6-digit code to <strong>{normalizePhone(phone)}</strong>. Enter it below.
+            </p>
+          </div>
+
+          <label className="block text-gray-700 font-semibold mb-2">Verification code</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={6}
+            value={otp}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+            required
+            autoFocus
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all tracking-[0.5em] text-center text-lg font-semibold"
+            placeholder="······"
+          />
+          <div className="text-right mt-2 mb-3">
+            <button
+              type="button"
+              onClick={resendPhoneOtp}
+              disabled={busy}
+              className="text-sm text-amber-700 hover:underline disabled:opacity-50"
+            >
+              Resend code
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {mode === 'signup' && (
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  First Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
+                  placeholder="Jane"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">Last Name</label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
+                  placeholder="Author"
+                />
+              </div>
+            </div>
+          )}
+
+          {mode === 'signup' && (
+            <div className="mb-4">
+              <label className="block text-gray-700 font-semibold mb-2">
+                Phone Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
+                placeholder="+91 98765 43210"
+              />
+              <p className="text-xs text-gray-500 mt-1.5">
+                {verifyChannel === 'phone' ? (
+                  <>
+                    We’ll text a verification code to this number.{' '}
+                    <button
+                      type="button"
+                      onClick={() => setVerifyChannel('email')}
+                      className="text-amber-700 font-semibold hover:underline"
+                    >
+                      Verify by email instead
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    We’ll verify your account by email instead.{' '}
+                    <button
+                      type="button"
+                      onClick={() => setVerifyChannel('phone')}
+                      className="text-amber-700 font-semibold hover:underline"
+                    >
+                      Verify by phone instead
+                    </button>
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
+          <div className="mb-4">
+            <label className="block text-gray-700 font-semibold mb-2">Email</label>
             <input
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
-              placeholder="Jane"
+              placeholder="you@example.com"
             />
           </div>
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">Last Name</label>
-            <input
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
-              placeholder="Author"
-            />
-          </div>
-        </div>
-      )}
 
-      <div className="mb-4">
-        <label className="block text-gray-700 font-semibold mb-2">Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
-          placeholder="you@example.com"
-        />
-      </div>
-
-      {mode !== 'forgot' && (
-        <div className="mb-2">
-          <label className="block text-gray-700 font-semibold mb-2">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
-            placeholder="••••••••"
-          />
-        </div>
+          {mode !== 'forgot' && (
+            <div className="mb-2">
+              <label className="block text-gray-700 font-semibold mb-2">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
+                placeholder="••••••••"
+              />
+            </div>
+          )}
+        </>
       )}
 
       {mode === 'login' && (
@@ -265,43 +484,50 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login', oauth
           : mode === 'login'
           ? 'Log In'
           : mode === 'signup'
-          ? 'Sign Up'
+          ? signupStage === 'otp'
+            ? 'Verify & Create Account'
+            : verifyChannel === 'phone'
+            ? 'Send Verification Code'
+            : 'Sign Up'
           : 'Send reset link'}
       </button>
 
-      <p className="text-center text-sm text-gray-600 mt-6">
-        {mode === 'forgot' ? (
-          <>
-            Remembered your password?{' '}
-            <button
-              type="button"
-              onClick={() => {
-                setMode('login');
-                setError('');
-                setInfo('');
-              }}
-              className="text-amber-700 font-semibold hover:underline"
-            >
-              Back to log in
-            </button>
-          </>
-        ) : (
-          <>
-            {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
-            <button
-              type="button"
-              onClick={() => {
-                setMode(mode === 'login' ? 'signup' : 'login');
-                setError('');
-                setInfo('');
-              }}
-              className="text-amber-700 font-semibold hover:underline"
-            >
-              {mode === 'login' ? 'Sign up' : 'Log in'}
-            </button>
-          </>
-        )}
-      </p>
+      {!(mode === 'signup' && signupStage === 'otp') && (
+        <p className="text-center text-sm text-gray-600 mt-6">
+          {mode === 'forgot' ? (
+            <>
+              Remembered your password?{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('login');
+                  setError('');
+                  setInfo('');
+                }}
+                className="text-amber-700 font-semibold hover:underline"
+              >
+                Back to log in
+              </button>
+            </>
+          ) : (
+            <>
+              {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(mode === 'login' ? 'signup' : 'login');
+                  resetSignupFlow();
+                  setError('');
+                  setInfo('');
+                }}
+                className="text-amber-700 font-semibold hover:underline"
+              >
+                {mode === 'login' ? 'Sign up' : 'Log in'}
+              </button>
+            </>
+          )}
+        </p>
+      )}
     </form>
   );
 }
