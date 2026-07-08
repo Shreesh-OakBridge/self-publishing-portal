@@ -2,7 +2,7 @@ import { useEffect, useState, ReactNode, Fragment, lazy, Suspense } from 'react'
 import { useAuth } from './lib/auth';
 import { useContent } from './content/ContentProvider';
 import { HOME_SECTIONS } from './content/defaults';
-import { stripBase, go } from './lib/basePath';
+import { stripBase } from './lib/basePath';
 import { useSeo } from './lib/seo';
 import { track } from './lib/track';
 import Navigation from './components/Navigation';
@@ -23,6 +23,7 @@ import PortfolioSection from './components/PortfolioSection';
 import ServicesPage from './components/ServicesPage';
 import PortfolioPage from './components/PortfolioPage';
 import FaqPage from './components/FaqPage';
+import JourneysPage from './components/JourneysPage';
 import JourneyPage from './components/JourneyPage';
 import Planner from './components/Planner';
 import EstimateBanner from './components/EstimateBanner';
@@ -109,7 +110,7 @@ function HomePage() {
       ) : (
         <Hero />
       ),
-    confidenceBar: () => <ConfidenceBar />,
+    confidenceBar: () => (!user ? <ConfidenceBar /> : null),
     about: () => <ValueProposition />,
     process: () => <VideoSection />,
     submit: () => <HomeManuscriptSection />,
@@ -126,15 +127,11 @@ function HomePage() {
     ),
   };
 
-  // Pick the layout for this audience: logged-in members vs logged-out visitors.
-  const layoutSections =
-    user && homeLayout.loggedInSections?.length ? homeLayout.loggedInSections : homeLayout.sections;
-
   // Start from the saved order, then append any known sections not yet listed
   // (so newly added sections still appear even with an older saved layout).
   const seen = new Set<string>();
   const ordered = [
-    ...layoutSections.filter((s) => {
+    ...homeLayout.sections.filter((s) => {
       if (sectionRenderers[s.key] && !seen.has(s.key)) {
         seen.add(s.key);
         return true;
@@ -150,11 +147,9 @@ function HomePage() {
       <Navigation />
       {ordered
         .filter((s) => s.enabled)
-        .map((s) => {
-          // Guard: a stale/unknown layout key must never crash the homepage.
-          const render = sectionRenderers[s.key];
-          return render ? <Fragment key={s.key}>{render()}</Fragment> : null;
-        })}
+        .map((s) => (
+          <Fragment key={s.key}>{sectionRenderers[s.key]()}</Fragment>
+        ))}
       <Footer />
     </div>
   );
@@ -245,10 +240,9 @@ function App() {
       </SubPage>
     );
   if (path === '/journeys')
-    // Old browse page now folds into the unified Get Started funnel.
     return (
-      <SubPage>
-        <GetStarted />
+      <SubPage crumb="Journeys">
+        <JourneysPage />
       </SubPage>
     );
   if (path.startsWith('/journey/'))
@@ -259,7 +253,7 @@ function App() {
     );
   if (path === '/planner')
     return (
-      <SubPage crumb="Price Estimate">
+      <SubPage crumb="Plan Your Book">
         <Planner />
       </SubPage>
     );
@@ -312,25 +306,7 @@ function App() {
       </SubPage>
     );
 
-  if (path === '' || path === '/') return <HomePage />;
-
-  // Unknown route — a friendly not-found page instead of silently showing home.
-  return (
-    <SubPage crumb="Page not found">
-      <section className="py-20 px-4 text-center max-w-xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-3">Page not found</h1>
-        <p className="text-gray-600 mb-6">
-          The page you’re looking for doesn’t exist or may have moved.
-        </p>
-        <button
-          onClick={() => go('/')}
-          className="inline-flex items-center gap-2 bg-amber-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-amber-700"
-        >
-          Back to home
-        </button>
-      </section>
-    </SubPage>
-  );
+  return <HomePage />;
 }
 
 export default App;

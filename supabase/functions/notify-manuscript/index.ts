@@ -22,6 +22,7 @@ interface Manuscript {
   title?: string;
   genre?: string;
   file_name?: string;
+  external_url?: string;
   word_count?: number;
 }
 interface Payload {
@@ -124,7 +125,13 @@ Deno.serve(async (req: Request) => {
           <tr><td style="padding:6px 12px;font-weight:600;color:#555">Author</td><td style="padding:6px 12px;color:#111">${esc(authorName || '—')}${authorEmail ? ' &lt;' + esc(authorEmail) + '&gt;' : ''}</td></tr>
           <tr><td style="padding:6px 12px;font-weight:600;color:#555">Genre</td><td style="padding:6px 12px;color:#111">${esc(rec.genre)}</td></tr>
           <tr><td style="padding:6px 12px;font-weight:600;color:#555">Word count</td><td style="padding:6px 12px;color:#111">${esc(rec.word_count)}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:600;color:#555">File</td><td style="padding:6px 12px;color:#111">${esc(rec.file_name)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:600;color:#555">File</td><td style="padding:6px 12px;color:#111">${
+            rec.file_name
+              ? esc(rec.file_name)
+              : rec.external_url
+                ? `<a href="${esc(rec.external_url)}">Download link (large file)</a>`
+                : '—'
+          }</td></tr>
         </table>
         <p style="margin-top:16px"><a href="${SITE}/admin" style="color:#b45309">Open admin</a></p>
       </div>`;

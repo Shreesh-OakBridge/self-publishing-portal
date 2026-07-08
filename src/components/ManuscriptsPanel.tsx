@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { RefreshCw, AlertCircle, Download, Eye, UserCheck, X, Loader2 } from 'lucide-react';
+import { RefreshCw, AlertCircle, Download, Eye, UserCheck, X, Loader2, Link as LinkIcon } from 'lucide-react';
 import { supabaseAdmin as supabase } from '../lib/supabaseAdmin';
 import ExportMenu from './ExportMenu';
 import type { Column } from '../lib/exporters';
@@ -15,6 +15,7 @@ interface Manuscript {
   file_path: string;
   file_name: string | null;
   file_size: number | null;
+  external_url: string | null;
   word_count: number | null;
   status: string;
   expert_review_status: string | null;
@@ -177,7 +178,7 @@ export default function ManuscriptsPanel() {
     { header: 'Title', value: (m) => m.title },
     { header: 'Genre', value: (m) => m.genre || '' },
     { header: 'Word Count', value: (m) => m.word_count ?? '' },
-    { header: 'File', value: (m) => m.file_name || '' },
+    { header: 'File', value: (m) => m.file_name || m.external_url || '' },
     { header: 'Status', value: (m) => STATUS_LABEL[m.status] ?? m.status },
   ];
 
@@ -289,6 +290,16 @@ export default function ManuscriptsPanel() {
                             <Download className="w-4 h-4" /> Download
                           </button>
                         </div>
+                      ) : m.external_url ? (
+                        <a
+                          href={m.external_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={m.external_url}
+                          className="inline-flex items-center gap-1 text-amber-700 hover:text-amber-900 font-semibold text-xs"
+                        >
+                          <LinkIcon className="w-4 h-4" /> Open link (large file)
+                        </a>
                       ) : (
                         <span className="text-gray-400">—</span>
                       )}

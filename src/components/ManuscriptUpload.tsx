@@ -1,19 +1,21 @@
 import { useEffect, useState, Fragment } from 'react';
-import { FileText, UploadCloud, Loader2, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
+import { FileText, UploadCloud, Loader2, CheckCircle, AlertCircle, ChevronDown, Link as LinkIcon, ArrowLeft } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import EditorialReview from './EditorialReview';
 
 const BUCKET = 'manuscripts';
 const ACCEPT = '.doc,.docx,.pdf,.rtf,.odt,.epub';
-const MAX_MB = 25;
+const MAX_MB = 50;
 const MAX_BYTES = MAX_MB * 1024 * 1024;
+const URL_REGEX = /^https?:\/\/.+/i;
 
 interface Manuscript {
   id: string;
   title: string;
   genre: string | null;
   file_name: string | null;
+  external_url: string | null;
   word_count: number | null;
   status: string;
   content: string | null;
@@ -52,14 +54,22 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Large-file fallback: instead of uploading, the author pastes a shareable
+  // download link (Drive/Dropbox/WeTransfer/etc.) and we store the URL.
+  const [useLink, setUseLink] = useState(false);
+  const [externalUrl, setExternalUrl] = useState('');
 
   // Auto-detect word count: native for text files, mammoth for .docx.
   const handleFile = async (f: File | null) => {
     if (f && f.size > MAX_BYTES) {
-      setStatus({ type: 'err', msg: `That file is ${(f.size / 1024 / 1024).toFixed(1)} MB — the maximum is ${MAX_MB} MB. Please compress or split it.` });
+      setStatus({
+        type: 'err',
+        msg: `That file is ${(f.size / 1024 / 1024).toFixed(1)} MB — over our ${MAX_MB} MB upload limit. No problem: paste a shareable download link below (Google Drive, Dropbox, WeTransfer, etc.) instead.`,
+      });
       setFile(null);
       setWordCount(null);
       setExtractedText('');
+      setUseLink(true);
       return;
     }
     setStatus(null);
@@ -99,7 +109,7 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
     if (!user) return;
     const { data } = await supabase
       .from('manuscripts')
-      .select('id, title, genre, file_name, word_count, status, content, expert_review_status, expert_review_feedback, expert_review_price, created_at')
+      .select('id, title, genre, file_name, external_url, word_count, status, content, expert_review_status, expert_review_feedback, expert_review_price, created_at')
       .order('created_at', { ascending: false });
     setItems((data as Manuscript[]) ?? []);
   };
@@ -116,12 +126,52 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
       setStatus({ type: 'err', msg: 'Please enter a title.' });
       return;
     }
+
+    if (useLink) {
+      const url = externalUrl.trim();
+      if (!url || !URL_REGEX.test(url)) {
+        setStatus({ type: 'err', msg: 'Please paste a valid download link (starting with http:// or https://).' });
+        return;
+      }
+      setBusy(true);
+      setStatus(null);
+      try {
+        const { error: insErr } = await supabase.from('manuscripts').insert({
+          user_id: user.id,
+          title: title.trim(),
+          genre: genre.trim() || null,
+          external_url: url,
+          word_count: wordCount,
+          content: extractedText || null,
+        });
+        if (insErr) throw insErr;
+
+        setStatus({ type: 'ok', msg: 'Manuscript submitted. Our team will review it shortly.' });
+        setTitle('');
+        setGenre('');
+        setExternalUrl('');
+        setUseLink(false);
+        setWordCount(null);
+        setExtractedText('');
+        load();
+      } catch (err) {
+        console.error('Manuscript link submit failed:', err);
+        setStatus({
+          type: 'err',
+          msg: err instanceof Error ? err.message : 'Submit failed. Please try again.',
+        });
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     if (!file) {
       setStatus({ type: 'err', msg: 'Please choose a manuscript file.' });
       return;
     }
     if (file.size > MAX_BYTES) {
-      setStatus({ type: 'err', msg: `That file is too large (max ${MAX_MB} MB).` });
+      setStatus({ type: 'err', msg: `That file is too large (max ${MAX_MB} MB) — use the download link option instead.` });
       return;
     }
     setBusy(true);
@@ -223,24 +273,72 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
           </div>
         </div>
 
-        <div>
-          <label className="block text-gray-700 font-semibold mb-2">Manuscript file</label>
-          <label className="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400">
-            <UploadCloud className="w-5 h-5 text-amber-600 flex-shrink-0" />
-            <span className="text-sm text-gray-600 truncate">
-              {file ? file.name : 'Choose a file (DOC, DOCX, PDF, RTF, ODT, EPUB)'}
-            </span>
-            <input
-              type="file"
-              accept={ACCEPT}
-              className="hidden"
-              onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
-            />
-          </label>
-          <p className="text-xs text-gray-500 mt-1">
-            Accepted: DOC, DOCX, PDF, RTF, ODT, EPUB · Max {MAX_MB} MB.
-          </p>
-        </div>
+        {useLink ? (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-gray-700 font-semibold">Download link</label>
+              <button
+                type="button"
+                onClick={() => {
+                  setUseLink(false);
+                  setExternalUrl('');
+                  setStatus(null);
+                }}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-900"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Upload a file instead
+              </button>
+            </div>
+            <div className="flex items-center gap-3 px-4 py-3 border-2 border-gray-300 rounded-xl focus-within:border-amber-500">
+              <LinkIcon className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              <input
+                type="url"
+                value={externalUrl}
+                onChange={(e) => setExternalUrl(e.target.value)}
+                className="w-full outline-none text-sm text-gray-700"
+                placeholder="https://drive.google.com/... or https://wetransfer.com/..."
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              For files over {MAX_MB} MB: share a link from Google Drive, Dropbox, WeTransfer, etc. Make sure the
+              link is set to "anyone with the link can view/download".
+            </p>
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-gray-700 font-semibold">Manuscript file</label>
+              <button
+                type="button"
+                onClick={() => {
+                  setUseLink(true);
+                  setFile(null);
+                  setWordCount(null);
+                  setExtractedText('');
+                  setStatus(null);
+                }}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-900"
+              >
+                <LinkIcon className="w-3.5 h-3.5" /> File over {MAX_MB} MB? Add a link instead
+              </button>
+            </div>
+            <label className="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400">
+              <UploadCloud className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              <span className="text-sm text-gray-600 truncate">
+                {file ? file.name : 'Choose a file (DOC, DOCX, PDF, RTF, ODT, EPUB)'}
+              </span>
+              <input
+                type="file"
+                accept={ACCEPT}
+                className="hidden"
+                onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+              />
+            </label>
+            <p className="text-xs text-gray-500 mt-1">
+              Accepted: DOC, DOCX, PDF, RTF, ODT, EPUB · Max {MAX_MB} MB.
+            </p>
+          </div>
+        )}
 
         <div>
           <label className="block text-gray-700 font-semibold mb-2">
@@ -295,7 +393,22 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
                       {m.word_count != null ? m.word_count.toLocaleString('en-IN') : '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 max-w-[14rem] truncate">{m.file_name || '—'}</td>
+                    <td className="px-4 py-3 text-gray-600 max-w-[14rem] truncate">
+                      {m.file_name ? (
+                        m.file_name
+                      ) : m.external_url ? (
+                        <a
+                          href={m.external_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-amber-700 hover:text-amber-900 font-semibold"
+                        >
+                          <LinkIcon className="w-3.5 h-3.5" /> Link
+                        </a>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-block px-2 py-1 rounded-full text-xs ${

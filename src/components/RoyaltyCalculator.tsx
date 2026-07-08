@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
 import { go } from '../lib/basePath';
 import AuthModal from './AuthModal';
+import Toast, { type ToastMsg } from './Toast';
 
 interface RoyaltyData {
   bookPrice: number;
@@ -54,6 +55,7 @@ export default function RoyaltyCalculator() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [toast, setToast] = useState<ToastMsg | null>(null);
 
   const calculateRoyalty = () => {
     const royaltyPercentage = rateFor(royaltyData.planType);
@@ -83,7 +85,7 @@ export default function RoyaltyCalculator() {
   // with; otherwise nudge the visitor to log in / sign up first.
   const handleSaveClick = () => {
     if (!royaltyData.bookPrice || !royaltyData.expectedSales) {
-      alert('Please fill in all fields');
+      setToast({ type: 'err', text: 'Please fill in all fields.' });
       return;
     }
     if (user) {
@@ -113,10 +115,10 @@ export default function RoyaltyCalculator() {
 
       if (error) throw error;
 
-      alert('Calculation saved! This helps us understand your revenue projections.');
+      setToast({ type: 'ok', text: 'Calculation saved! This helps us understand your revenue projections.' });
     } catch (err) {
       console.error('Error saving calculation:', err);
-      alert('Error saving calculation. Please try again.');
+      setToast({ type: 'err', text: 'Error saving calculation. Please try again.' });
     } finally {
       setIsSaving(false);
     }
@@ -340,6 +342,8 @@ export default function RoyaltyCalculator() {
         onAuthenticated={() => doSaveCalculation()}
         heading="Log in or sign up to save your projection"
       />
+
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </section>
   );
 }
