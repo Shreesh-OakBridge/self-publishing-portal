@@ -158,6 +158,28 @@ export interface CustomizerSize {
   hb: CustomizerSizeDim;
 }
 
+// One selectable/typeable answer for a questionnaire question. For 'choice'
+// questions this is a button option; for 'number' questions it's a pricing
+// tier (the highest tier whose minValue <= the customer's number applies).
+// priceImpact (₹) is added to the live estimate when this option/tier is hit.
+export interface CustomizerQuestionOption {
+  id: string;
+  label: string;
+  minValue?: number;
+  priceImpact: number;
+}
+
+export interface CustomizerQuestion {
+  id: string;
+  text: string;
+  // 'text' = free-typed answer, captured for the team but never affects price.
+  // 'number' = numeric answer (e.g. word count), priced via option tiers.
+  // 'choice' = pick one of the listed options, each with its own price impact.
+  type: 'text' | 'number' | 'choice';
+  placeholder?: string;
+  options?: CustomizerQuestionOption[];
+}
+
 export interface CustomizerContent {
   heading: string;
   subheading: string;
@@ -168,12 +190,14 @@ export interface CustomizerContent {
   coverDesigns: CustomizerOption[];
   layoutOptions: CustomizerOption[];
   bookSizes: CustomizerSize[];
-  // Rotating prompt shown between the subheading and "How it works?" — one
-  // question fades out, the next fades in. Purely a thinking-prompt (no
-  // answers collected). Add / remove / reword freely; empty list or the
-  // toggle off hides it entirely.
+  // Rotating question card shown between the subheading and "How it works?".
+  // The customer actually answers these (text / number / multiple-choice);
+  // answers are saved with the customization and choice/number answers can
+  // add to the live price estimate via each option's priceImpact. Fully
+  // admin-editable — add / remove / reword / reprice freely. Empty list or
+  // the toggle off hides it entirely.
   questionnaireEnabled: boolean;
-  questions: string[];
+  questions: CustomizerQuestion[];
 }
 
 export interface StaticPageContent {
@@ -713,15 +737,76 @@ export const defaultContent: SiteContent = {
     ],
     questionnaireEnabled: true,
     questions: [
-      'What genre best describes your book?',
-      'Who do you picture as your ideal reader?',
-      "What's your manuscript's approximate word count?",
-      'Will your book include photos, illustrations, or charts?',
-      'Do you already have a cover concept, or would you like our designers to create one?',
-      'Is this a one-time print run, or do you plan to reprint as it sells?',
-      "What's your target launch timeline?",
-      'Will you sell mainly in print, eBook, or both?',
-      'Have you settled on a trim size, or would you like a recommendation based on your genre?',
+      { id: 'genre', text: 'What genre best describes your book?', type: 'text', placeholder: 'e.g. Literary fiction, memoir, self-help…' },
+      { id: 'reader', text: 'Who do you picture as your ideal reader?', type: 'text', placeholder: 'e.g. Young professionals, new parents…' },
+      {
+        id: 'wordCount',
+        text: "What's your manuscript's approximate word count?",
+        type: 'number',
+        placeholder: 'e.g. 65000',
+        options: [
+          { id: 'under40k', label: 'Under 40,000 words', minValue: 0, priceImpact: 0 },
+          { id: '40to80k', label: '40,000–80,000 words', minValue: 40000, priceImpact: 0 },
+          { id: '80to120k', label: '80,000–120,000 words', minValue: 80000, priceImpact: 300 },
+          { id: 'over120k', label: 'Over 120,000 words', minValue: 120000, priceImpact: 600 },
+        ],
+      },
+      {
+        id: 'images',
+        text: 'Will your book include photos, illustrations, or charts?',
+        type: 'choice',
+        options: [
+          { id: 'none', label: 'No images', priceImpact: 0 },
+          { id: 'few', label: 'A few (under 10)', priceImpact: 200 },
+          { id: 'many', label: 'Many (10+) / heavy illustration', priceImpact: 800 },
+        ],
+      },
+      {
+        id: 'cover',
+        text: 'Do you already have a cover concept, or would you like our designers to create one?',
+        type: 'choice',
+        options: [
+          { id: 'own', label: 'I have my own concept', priceImpact: 0 },
+          { id: 'designer', label: "I'd like your designers to create one", priceImpact: 1500 },
+        ],
+      },
+      {
+        id: 'printRun',
+        text: 'Is this a one-time print run, or do you plan to reprint as it sells?',
+        type: 'choice',
+        options: [
+          { id: 'onetime', label: 'One-time print run', priceImpact: 0 },
+          { id: 'reprint', label: 'Plan to reprint as it sells', priceImpact: 0 },
+        ],
+      },
+      {
+        id: 'timeline',
+        text: "What's your target launch timeline?",
+        type: 'choice',
+        options: [
+          { id: 'standard', label: 'Standard (8–10 weeks)', priceImpact: 0 },
+          { id: 'rush', label: 'Rush — I need it sooner', priceImpact: 1000 },
+        ],
+      },
+      {
+        id: 'channel',
+        text: 'Will you sell mainly in print, eBook, or both?',
+        type: 'choice',
+        options: [
+          { id: 'print', label: 'Mainly print', priceImpact: 0 },
+          { id: 'ebook', label: 'Mainly eBook', priceImpact: 0 },
+          { id: 'both', label: 'Both print and eBook', priceImpact: 500 },
+        ],
+      },
+      {
+        id: 'trimSize',
+        text: 'Have you settled on a trim size, or would you like a recommendation based on your genre?',
+        type: 'choice',
+        options: [
+          { id: 'decided', label: "I've already decided (see Book Size below)", priceImpact: 0 },
+          { id: 'recommend', label: "I'd like a recommendation", priceImpact: 0 },
+        ],
+      },
     ],
   },
   manuscript: {

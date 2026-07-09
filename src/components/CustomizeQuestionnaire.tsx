@@ -1,46 +1,157 @@
 import { useEffect, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
+import { normalizeQuestions } from '../lib/customizerQuestions';
 
 const ROTATE_MS = 4500;
 const FADE_MS = 300;
 
-// Rotating thinking-prompt shown on the Book Customizer: one question fades
-// out, the next fades in. Purely a prompt to help the author think through
-// their book while they customize — no answers are collected. The question
-// list is fully admin-editable (Admin → Site Content → Book Customizer).
-export default function CustomizeQuestionnaire() {
+interface Props {
+  answers: Record<string, string>;
+  onAnswer: (id: string, value: string) => void;
+}
+
+// Rotating question card shown on the Book Customizer: one question fades
+// out, the next fades in — but unlike the original decorative version, the
+// customer actually answers here (text / number / multiple-choice). Answers
+// feed straight back into BookCustomizer's price calculation and are saved
+// with the customization. The question list (and each choice's price
+// impact) is fully admin-editable (Admin → Site Content → Book Customizer).
+export default function CustomizeQuestionnaire({ answers, onAnswer }: Props) {
   const { customizer } = useContent();
-  const questions = (customizer.questions ?? []).filter((q) => q.trim());
+  const questions = normalizeQuestions(customizer.questions);
+  const total = questions.length;
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
 
+  const allAnswered = total > 0 && questions.every((q) => (answers[q.id] ?? '').trim());
+
+  // Auto-advance through unanswered questions. Once everything has an
+  // answer, stop rotating so the customer can review in peace — they can
+  // still jump around manually via the dots or Back/Next.
   useEffect(() => {
-    if (questions.length <= 1) return;
+    if (total <= 1 || allAnswered) return;
     const timer = setInterval(() => {
       setVisible(false);
       setTimeout(() => {
-        setIndex((i) => (i + 1) % questions.length);
+        setIndex((i) => (i + 1) % total);
         setVisible(true);
       }, FADE_MS);
     }, ROTATE_MS);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questions.length]);
+  }, [total, allAnswered]);
 
-  if (!customizer.questionnaireEnabled || questions.length === 0) return null;
+  if (!customizer.questionnaireEnabled || total === 0) return null;
+
+  const q = questions[index % total];
+  const answeredCount = questions.filter((qq) => (answers[qq.id] ?? '').trim()).length;
+
+  const goTo = (i: number) => {
+    setVisible(false);
+    setTimeout(() => {
+      setIndex(((i % total) + total) % total);
+      setVisible(true);
+    }, FADE_MS);
+  };
 
   return (
-    <div className="max-w-xl mx-auto mt-6">
-      <div className="flex items-center justify-center gap-2.5 bg-amber-50 border border-amber-200 rounded-2xl px-6 py-4 min-h-[64px]">
-        <Sparkles className="w-5 h-5 text-amber-600 flex-shrink-0" />
-        <p
-          className={`text-gray-800 font-medium text-center transition-opacity duration-300 ${
-            visible ? 'opacity-100' : 'opacity-0'
-          }`}
+    <div className="max-w-xl mx-auto mt-6 text-left">
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl px-6 py-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 text-amber-700 text-xs font-semibold uppercase tracking-wide">
+            <Sparkles className="w-4 h-4" />
+            Tell us about your book
+          </div>
+          <span className="text-xs text-gray-500">
+            {answeredCount}/{total} answered
+          </span>
+        </div>
+
+        <div
+          className={`transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
         >
-          {questions[index % questions.length]}
-        </p>
+          <p className="text-gray-900 font-semibold mb-3">{q.text}</p>
+
+          {q.type === 'text' && (
+            <input
+              type="text"
+              value={answers[q.id] ?? ''}
+              onChange={(e) => onAnswer(q.id, e.target.value)}
+              placeholder={q.placeholder || 'Your answer'}
+              className="w-full px-4 py-2.5 border-2 border-amber-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all bg-white"
+            />
+          )}
+
+          {q.type === 'number' && (
+            <input
+              type="number"
+              min={0}
+              value={answers[q.id] ?? ''}
+              onChange={(e) => onAnswer(q.id, e.target.value)}
+              placeholder={q.placeholder || 'Enter a number'}
+              className="w-full px-4 py-2.5 border-2 border-amber-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all bg-white"
+            />
+          )}
+
+          {q.type === 'choice' && (
+            <div className="flex flex-wrap gap-2">
+              {(q.options ?? []).map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => onAnswer(q.id, opt.id)}
+                  className={`px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
+                    answers[q.id] === opt.id
+                      ? 'border-amber-500 bg-amber-100 text-amber-900'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-amber-300'
+                  }`}
+                >
+                  {opt.label}
+                  {opt.priceImpact > 0 && (
+                    <span className="ml-1.5 text-xs text-amber-600">+₹{opt.priceImpact}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {total > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <button
+              type="button"
+              onClick={() => goTo(index - 1)}
+              className="text-sm text-gray-500 hover:text-amber-700"
+            >
+              ← Back
+            </button>
+            <div className="flex gap-1.5">
+              {questions.map((qq, i) => (
+                <button
+                  key={qq.id}
+                  type="button"
+                  onClick={() => goTo(i)}
+                  aria-label={`Question ${i + 1}`}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    i === index
+                      ? 'bg-amber-600'
+                      : (answers[qq.id] ?? '').trim()
+                      ? 'bg-amber-300'
+                      : 'bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => goTo(index + 1)}
+              className="text-sm text-gray-500 hover:text-amber-700"
+            >
+              Next →
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
