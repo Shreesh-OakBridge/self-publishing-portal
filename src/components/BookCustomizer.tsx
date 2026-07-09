@@ -133,7 +133,7 @@ function SectionHelp({ section }: { section: keyof typeof SECTION_INFO }) {
 
 export default function BookCustomizer() {
   const { user } = useAuth();
-  const { customizer } = useContent();
+  const { customizer, pricing } = useContent();
   // All options/prices are CMS-managed; reuse the same names locally.
   const { paperTypes, coverDesigns, layoutOptions, bookSizes, colorOptions, bindingOptions } =
     customizer;
@@ -151,6 +151,12 @@ export default function BookCustomizer() {
   });
 
   const [estimatedPrice, setEstimatedPrice] = useState(0);
+  // The publishing plan the author is buying. Add-ons stack on top of this
+  // plan's price, so a plan must be chosen before ordering. Pre-loaded from ?plan=.
+  const [selectedPlanName, setSelectedPlanName] = useState<string>(() => {
+    const p = new URLSearchParams(window.location.search);
+    return p.get('plan') || '';
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'save' | 'quote' | 'order' | null>(null);
@@ -163,6 +169,14 @@ export default function BookCustomizer() {
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState<Record<string, string>>({});
   const questions = normalizeQuestions(customizer.questions);
   const questionnaireImpact = questionnairePriceImpact(questions, questionnaireAnswers);
+
+  // Selected plan → its price. Custom (no digits in price) is quote-based, so it
+  // has no fixed total here; ordering it routes to the quote flow instead.
+  const planPriceToNumber = (p: string) => Number((p || '').replace(/[^0-9.]/g, '')) || 0;
+  const selectedPlan = pricing.plans.find((p) => p.name === selectedPlanName) || null;
+  const planIsQuote = !!selectedPlan && !/[0-9]/.test(selectedPlan.price);
+  const planPrice = selectedPlan && !planIsQuote ? planPriceToNumber(selectedPlan.price) : 0;
+  const grandTotal = planPrice + estimatedPrice;
 
   // Auto-show the walkthrough until the visitor opts out via "Don't show again".
   useEffect(() => {
@@ -208,6 +222,7 @@ export default function BookCustomizer() {
   // Carry the current configuration + estimated price to the quote request page.
   const goToQuote = () => {
     const q = new URLSearchParams({
+      ...(selectedPlanName ? { plan: selectedPlanName } : {}),
       paper: customization.paperType,
       color: customization.interiorColor,
       binding: customization.binding,
@@ -288,10 +303,19 @@ export default function BookCustomizer() {
   };
 
   const doOrder = async () => {
+    if (!selectedPlanName) {
+      setToast({ type: 'err', text: 'Please choose a plan first — add-ons are added on top of your plan.' });
+      return;
+    }
+    // Custom (quote-based) plan → send the plan + add-ons config to the quote flow.
+    if (planIsQuote) {
+      goToQuote();
+      return;
+    }
     setIsSaving(true);
     try {
       const id = await insertCustomization();
-      if (id) go(`/checkout?customization=${id}`);
+      if (id) go(`/checkout?plan=${encodeURIComponent(selectedPlanName)}&customization=${id}`);
     } catch (err) {
       console.error('Error starting order:', err);
       setToast({ type: 'err', text: 'Could not start your order. Please try again.' });
@@ -495,6 +519,32 @@ export default function BookCustomizer() {
           <div className="sticky top-24 h-fit">
             <div className="bg-white rounded-3xl shadow-xl p-8 space-y-6">
               <div>
+                <div className="mb-6 pb-6 border-b-2 border-gray-200">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">Choose your plan</h3>
+                  <p className="text-sm text-gray-500 mb-3">Your add-ons are added on top of the plan price.</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {pricing.plans.map((pl) => {
+                      const sel = selectedPlanName === pl.name;
+                      return (
+                        <button
+                          key={pl.name}
+                          type="button"
+                          onClick={() => setSelectedPlanName(pl.name)}
+                          className={`text-left rounded-xl border-2 px-3 py-2 transition-all ${
+                            sel ? 'border-amber-500 bg-amber-50' : 'border-gray-200 bg-white hover:border-amber-300'
+                          }`}
+                        >
+                          <span className="block text-sm font-bold text-gray-900">{pl.name}</span>
+                          <span className="block text-xs font-semibold text-amber-600">{pl.price}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {!selectedPlanName && (
+                    <p className="text-xs text-red-500 mt-2">Select a plan to see your total and order.</p>
+                  )}
+                </div>
+
                 <h3 className="text-2xl font-bold text-gray-900 mb-6">Your Selection</h3>
 
                 <div className="space-y-3 mb-6 pb-6 border-b-2 border-gray-200">
@@ -542,17 +592,35 @@ export default function BookCustomizer() {
                 </div>
 
                 <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-2xl mb-6">
-                  <p className="text-gray-600 text-sm mb-2">Add-ons subtotal</p>
-                  <p className="text-4xl font-bold text-amber-600">
-                    {estimatedPrice > 0 ? `+₹${estimatedPrice.toLocaleString()}` : 'Included'}
-                  </p>
+                  <p className="text-gray-600 text-sm font-semibold mb-3">Price breakup</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-700">{selectedPlan ? `Plan: ${selectedPlan.name}` : 'Plan'}</span>
+                      <span className="font-semibold text-gray-900">
+                        {!selectedPlan ? 'Not selected' : planIsQuote ? 'Custom quote' : `₹${planPrice.toLocaleString()}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-700">Add-ons</span>
+                      <span className="font-semibold text-gray-900">
+                        {estimatedPrice > 0 ? `+₹${estimatedPrice.toLocaleString()}` : 'Included'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-baseline mt-3 pt-3 border-t border-amber-200">
+                    <span className="text-gray-800 font-semibold">Total</span>
+                    <span className="text-3xl font-bold text-amber-600">
+                      {!selectedPlan ? '—' : planIsQuote ? 'Custom quote' : `₹${grandTotal.toLocaleString()}`}
+                    </span>
+                  </div>
                   <p className="text-xs text-gray-600 mt-2">
-                    These are optional upgrades on top of your publishing plan. Pick a plan and see the
-                    combined total at checkout — the standard choice in each section is included free.
+                    {planIsQuote
+                      ? 'Custom plans are priced to scope — request a quote and we’ll include your add-ons.'
+                      : 'Your plan price plus optional add-ons. Taxes are shown at checkout.'}
                   </p>
                   {questionnaireImpact > 0 && (
                     <p className="text-xs text-amber-700 mt-1">
-                      Includes ₹{questionnaireImpact.toLocaleString()} based on your answers above (e.g. word count, images).
+                      Includes ₹{questionnaireImpact.toLocaleString()} in add-ons from your answers above (e.g. word count, images).
                     </p>
                   )}
                 </div>
@@ -587,19 +655,27 @@ export default function BookCustomizer() {
                 <div className="space-y-3 p-4 bg-blue-50 rounded-xl mb-6 border border-blue-200">
                   <p className="text-sm text-blue-900 font-semibold">Good to know:</p>
                   <ul className="text-sm text-blue-800 space-y-1">
+                    <li>✓ Choose a plan — your add-ons stack on top of it</li>
                     <li>✓ The standard choice in each section is included free</li>
-                    <li>✓ Only upgrades add to your add-ons subtotal</li>
-                    <li>✓ Add-ons combine with your plan price at checkout</li>
+                    <li>✓ Your full total shows here and again at checkout</li>
                   </ul>
                 </div>
 
                 <button
                   onClick={handleOrderClick}
-                  disabled={isSaving}
-                  className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50"
+                  disabled={isSaving || !selectedPlanName}
+                  className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart className="w-5 h-5" />
-                  <span>{isSaving ? 'Please wait…' : 'Order This Design'}</span>
+                  <span>
+                    {isSaving
+                      ? 'Please wait…'
+                      : !selectedPlanName
+                      ? 'Select a plan to continue'
+                      : planIsQuote
+                      ? 'Request a quote'
+                      : 'Proceed to checkout'}
+                  </span>
                 </button>
 
                 <button
