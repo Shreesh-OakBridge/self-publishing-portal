@@ -145,7 +145,17 @@ function PlanCard({
 }
 
 export default function PricingPlans() {
-  const { pricing } = useContent();
+  const { pricing, customizer } = useContent();
+  // Featured add-ons for the banner, priced live from the Customizer options so
+  // the figures always match what an author actually pays (never hardcoded).
+  const priceOf = (list: { id: string; price: number }[], id: string) =>
+    list.find((o) => o.id === id)?.price;
+  const addonHighlights = [
+    { label: 'Hardback', price: priceOf(customizer.bindingOptions, 'hardback') },
+    { label: 'Foil cover', price: priceOf(customizer.coverDesigns, 'foil') },
+    { label: 'Full colour', price: priceOf(customizer.colorOptions, 'color') },
+    { label: 'Premium paper', price: priceOf(customizer.paperTypes, 'cream90') },
+  ].filter((h): h is { label: string; price: number } => typeof h.price === 'number' && h.price > 0);
   const { user } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
@@ -211,10 +221,14 @@ export default function PricingPlans() {
                     make your book truly yours.
                   </p>
                   <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">Hardback +₹1,500</span>
-                    <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">Foil cover +₹3,500</span>
-                    <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">Full colour +₹2,500</span>
-                    <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">Premium paper +₹600</span>
+                    {addonHighlights.map((h) => (
+                      <span
+                        key={h.label}
+                        className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-3 py-1"
+                      >
+                        {h.label} +₹{h.price.toLocaleString()}
+                      </span>
+                    ))}
                   </div>
                 </div>
                 <div className="flex-shrink-0 w-full lg:w-auto">

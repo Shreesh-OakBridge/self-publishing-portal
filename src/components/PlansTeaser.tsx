@@ -90,6 +90,17 @@ export default function PlansTeaser() {
     list.find((o) => o.id === id)?.name || id || '—';
   const isQuotePlan = (price: string) => !/[0-9]/.test(price);
 
+  // Featured add-ons for the showcase, priced live from the Customizer options
+  // so the figures always match the real prices (never hardcoded / drifting).
+  const priceOf = (list: { id: string; price: number }[], id: string) =>
+    list.find((o) => o.id === id)?.price;
+  const addonHighlights = [
+    { icon: '📗', label: 'Hardback', price: priceOf(customizer.bindingOptions, 'hardback') },
+    { icon: '✨', label: 'Foil cover', price: priceOf(customizer.coverDesigns, 'foil') },
+    { icon: '🌈', label: 'Full colour', price: priceOf(customizer.colorOptions, 'color') },
+    { icon: '📄', label: 'Premium paper', price: priceOf(customizer.paperTypes, 'cream90') },
+  ].filter((h): h is { icon: string; label: string; price: number } => typeof h.price === 'number' && h.price > 0);
+
   const planDetails = order?.plan ? pricing.plans.find((p) => p.name === order.plan) : null;
   const hasCurrentPlan = !!order?.plan;
 
@@ -276,12 +287,7 @@ export default function PlansTeaser() {
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { icon: '📗', label: 'Hardback', price: '+₹1,500' },
-                    { icon: '✨', label: 'Foil cover', price: '+₹3,500' },
-                    { icon: '🌈', label: 'Full colour', price: '+₹2,500' },
-                    { icon: '📄', label: 'Premium paper', price: '+₹600' },
-                  ].map((a) => (
+                  {addonHighlights.map((a) => (
                     <div
                       key={a.label}
                       className="rounded-2xl bg-white shadow-sm px-4 py-4 text-center"
@@ -290,7 +296,7 @@ export default function PlansTeaser() {
                         {a.icon}
                       </div>
                       <div className="text-sm font-semibold text-gray-900">{a.label}</div>
-                      <div className="text-xs font-semibold text-amber-600 mt-0.5">{a.price}</div>
+                      <div className="text-xs font-semibold text-amber-600 mt-0.5">+₹{a.price.toLocaleString()}</div>
                     </div>
                   ))}
                 </div>

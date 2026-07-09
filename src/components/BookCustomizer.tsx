@@ -5,7 +5,6 @@ import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
 import type { CustomizerSize } from '../content/defaults';
 import AuthModal from './AuthModal';
-import CustomizeGuide from './CustomizeGuide';
 import CustomizeQuestionnaire from './CustomizeQuestionnaire';
 import Toast, { type ToastMsg } from './Toast';
 import { go } from '../lib/basePath';
@@ -83,39 +82,11 @@ function getSuggestions(c: CustomizationData): Suggestion[] {
   return out.slice(0, 3);
 }
 
-// Plain-language explainers for a first-time author who may know nothing about
-// publishing. Each section shows a one-line subtitle plus an expandable
-// "What's this?" with a friendly, jargon-free explanation.
-const SECTION_INFO: Record<string, { subtitle: string; body: string }> = {
-  paper: {
-    subtitle: 'GSM is simply how thick and heavy the paper is.',
-    body: 'GSM (grams per square metre) tells you how thick the paper is. 70–80 GSM is normal for novels — light and easy to hold. 90 GSM feels more premium. 130 GSM art paper is thick and coated, which keeps photos and colours crisp. When in doubt, 70 GSM Natural is the safe, classic choice.',
-  },
-  cover: {
-    subtitle: 'The look and finish of the outside of your book.',
-    body: "The cover is what a reader sees first. 'Standard' is a clean, professional cover at no extra cost. Lamination (matte or gloss) protects it and changes how it feels. Embossing and foil add premium, touchable details — lovely for gifts, but not needed for a simple novel.",
-  },
-  layout: {
-    subtitle: 'How the words and pictures sit on each page.',
-    body: 'Layout is how your pages are arranged inside. Almost every novel and non-fiction book uses a single column. Two columns suit reference or academic books. Illustrated layouts are for books where pictures matter as much as the words.',
-  },
-  size: {
-    subtitle: "The width and height of your finished book (its 'trim size').",
-    body: 'Trim size is how big the finished book is. Demy is the classic novel size and a safe default. Larger sizes like Double Demy suit photo and coffee-table books. Not sure? Demy or Royal works for most fiction and non-fiction.',
-  },
-  colour: {
-    subtitle: 'Black & white pages, or full colour throughout.',
-    body: "This is the colour of the pages inside — not the cover. Black & white is standard and much cheaper, and it's all a text-only book needs. Choose full colour only if your inside pages have photos, illustrations or colour charts.",
-  },
-  binding: {
-    subtitle: 'Soft cover (paperback) or hard cover (hardback).',
-    body: 'Binding is how the book is held together. Paperback — also called softback — has a flexible card cover, so it is lighter and more affordable. Hardback (hardcover) has a stiff board cover: more durable and premium, and it lasts for years. Most first books start as paperback.',
-  },
-};
-
-function SectionHelp({ section }: { section: keyof typeof SECTION_INFO }) {
-  const info = SECTION_INFO[section];
-  if (!info) return null;
+// Plain-language "What's this?" helper shown under each section. The copy is
+// admin-editable (Site Content → Book Customizer → Explainers); this component
+// just renders whatever the CMS provides for that section.
+function SectionHelp({ info }: { info?: { subtitle: string; body: string } }) {
+  if (!info || (!info.subtitle && !info.body)) return null;
   return (
     <div className="-mt-2 mb-4">
       <p className="text-sm text-gray-600 mb-1">{info.subtitle}</p>
@@ -160,7 +131,6 @@ export default function BookCustomizer() {
   const [isSaving, setIsSaving] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'save' | 'quote' | 'order' | null>(null);
-  const [showGuide, setShowGuide] = useState(false);
   const [toast, setToast] = useState<ToastMsg | null>(null);
   // Answers to the "Tell us about your book" questionnaire, keyed by question
   // id. Choice/number answers can add to the estimate below (each option's
@@ -177,26 +147,6 @@ export default function BookCustomizer() {
   const planIsQuote = !!selectedPlan && !/[0-9]/.test(selectedPlan.price);
   const planPrice = selectedPlan && !planIsQuote ? planPriceToNumber(selectedPlan.price) : 0;
   const grandTotal = planPrice + estimatedPrice;
-
-  // Auto-show the walkthrough until the visitor opts out via "Don't show again".
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem('cursive_customize_guide_dismissed')) setShowGuide(true);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  const closeGuide = (dontShowAgain: boolean) => {
-    setShowGuide(false);
-    if (dontShowAgain) {
-      try {
-        localStorage.setItem('cursive_customize_guide_dismissed', '1');
-      } catch {
-        /* ignore */
-      }
-    }
-  };
 
   useEffect(() => {
     calculatePrice();
@@ -340,16 +290,7 @@ export default function BookCustomizer() {
               setQuestionnaireAnswers((prev) => ({ ...prev, [id]: value }))
             }
           />
-
-          <button
-            onClick={() => setShowGuide(true)}
-            className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-amber-300 text-amber-700 font-semibold hover:bg-amber-50 transition-colors"
-          >
-            <HelpCircle className="w-5 h-5" /> How it works?
-          </button>
         </div>
-
-        <CustomizeGuide open={showGuide} onClose={closeGuide} />
 
         <div className="grid lg:grid-cols-2 gap-12">
           <div className="space-y-8">
@@ -358,7 +299,7 @@ export default function BookCustomizer() {
                 <Palette className="w-6 h-6 text-amber-600" />
                 <h3 className="text-2xl font-bold text-gray-900">Paper Type</h3>
               </div>
-              <SectionHelp section="paper" />
+              <SectionHelp info={customizer.explainers.paper} />
               <div className="grid grid-cols-2 gap-4">
                 {paperTypes.map((paper) => (
                   <button
@@ -385,7 +326,7 @@ export default function BookCustomizer() {
                 <Book className="w-6 h-6 text-rose-600" />
                 <h3 className="text-2xl font-bold text-gray-900">Cover Design</h3>
               </div>
-              <SectionHelp section="cover" />
+              <SectionHelp info={customizer.explainers.cover} />
               <div className="grid grid-cols-2 gap-4">
                 {coverDesigns.map((cover) => (
                   <button
@@ -412,7 +353,7 @@ export default function BookCustomizer() {
                 <Layout className="w-6 h-6 text-orange-600" />
                 <h3 className="text-2xl font-bold text-gray-900">Layout Style</h3>
               </div>
-              <SectionHelp section="layout" />
+              <SectionHelp info={customizer.explainers.layout} />
               <div className="grid grid-cols-2 gap-4">
                 {layoutOptions.map((layout) => (
                   <button
@@ -439,7 +380,7 @@ export default function BookCustomizer() {
                 <Ruler className="w-6 h-6 text-purple-600" />
                 <h3 className="text-2xl font-bold text-gray-900">Book Size</h3>
               </div>
-              <SectionHelp section="size" />
+              <SectionHelp info={customizer.explainers.size} />
               <div className="grid grid-cols-2 gap-4">
                 {bookSizes.map((size) => (
                   <button
@@ -470,7 +411,7 @@ export default function BookCustomizer() {
                 <Droplet className="w-6 h-6 text-blue-600" />
                 <h3 className="text-2xl font-bold text-gray-900">Interior Color</h3>
               </div>
-              <SectionHelp section="colour" />
+              <SectionHelp info={customizer.explainers.colour} />
               <div className="grid grid-cols-2 gap-4">
                 {colorOptions.map((opt) => (
                   <button
@@ -495,7 +436,7 @@ export default function BookCustomizer() {
                 <Layers className="w-6 h-6 text-green-600" />
                 <h3 className="text-2xl font-bold text-gray-900">Binding</h3>
               </div>
-              <SectionHelp section="binding" />
+              <SectionHelp info={customizer.explainers.binding} />
               <div className="grid grid-cols-2 gap-4">
                 {bindingOptions.map((opt) => (
                   <button

@@ -198,6 +198,23 @@ export interface CustomizerContent {
   // the toggle off hides it entirely.
   questionnaireEnabled: boolean;
   questions: CustomizerQuestion[];
+  // Plain-language "What's this?" helper shown under each customizer section
+  // for first-time authors. Fully admin-editable, keyed by section.
+  explainers: CustomizerExplainers;
+}
+
+export interface CustomizerExplainer {
+  subtitle: string;
+  body: string;
+}
+
+export interface CustomizerExplainers {
+  paper: CustomizerExplainer;
+  cover: CustomizerExplainer;
+  layout: CustomizerExplainer;
+  size: CustomizerExplainer;
+  colour: CustomizerExplainer;
+  binding: CustomizerExplainer;
 }
 
 export interface StaticPageContent {
@@ -337,13 +354,6 @@ export interface GetStartedContent {
   languages: string[];
   statusHeading: string;
   statuses: string[];
-  methodHeading: string;
-  expertTitle: string;
-  expertTagline: string;
-  expertPoints: string[];
-  selfTitle: string;
-  selfTagline: string;
-  selfPoints: string[];
   ctaLabel: string;
 }
 
@@ -433,23 +443,6 @@ export const defaultContent: SiteContent = {
       'I am still writing',
       'Finished writing, adding final touches',
       'Finished writing, ready to publish',
-    ],
-    methodHeading: 'How do you want to publish your book?',
-    expertTitle: 'Expert Publishing',
-    expertTagline: 'Get your own expert publishing team',
-    expertPoints: [
-      'Dedicated team for editing, design & marketing',
-      'Get published in 30 days',
-      'End-to-end guidance from our experts',
-      'Choose from our curated publishing packages',
-    ],
-    selfTitle: 'Publish on your own',
-    selfTagline: 'Use our online tools to design & publish',
-    selfPoints: [
-      'Design your book with our customizer',
-      'Transparent, itemised pricing',
-      'Publish print & eBook',
-      'Sell across 150+ countries and 20,000+ stores',
     ],
     ctaLabel: 'Continue',
   },
@@ -795,6 +788,32 @@ export const defaultContent: SiteContent = {
         ],
       },
     ],
+    explainers: {
+      paper: {
+        subtitle: 'GSM is simply how thick and heavy the paper is.',
+        body: 'GSM (grams per square metre) tells you how thick the paper is. 70–80 GSM is normal for novels — light and easy to hold. 90 GSM feels more premium. 130 GSM art paper is thick and coated, which keeps photos and colours crisp. When in doubt, 70 GSM Natural is the safe, classic choice.',
+      },
+      cover: {
+        subtitle: 'The look and finish of the outside of your book.',
+        body: "The cover is what a reader sees first. 'Standard' is a clean, professional cover at no extra cost. Lamination (matte or gloss) protects it and changes how it feels. Embossing and foil add premium, touchable details — lovely for gifts, but not needed for a simple novel.",
+      },
+      layout: {
+        subtitle: 'How the words and pictures sit on each page.',
+        body: 'Layout is how your pages are arranged inside. Almost every novel and non-fiction book uses a single column. Two columns suit reference or academic books. Illustrated layouts are for books where pictures matter as much as the words.',
+      },
+      size: {
+        subtitle: "The width and height of your finished book (its 'trim size').",
+        body: 'Trim size is how big the finished book is. Demy is the classic novel size and a safe default. Larger sizes like Double Demy suit photo and coffee-table books. Not sure? Demy or Royal works for most fiction and non-fiction.',
+      },
+      colour: {
+        subtitle: 'Black & white pages, or full colour throughout.',
+        body: "This is the colour of the pages inside — not the cover. Black & white is standard and much cheaper, and it's all a text-only book needs. Choose full colour only if your inside pages have photos, illustrations or colour charts.",
+      },
+      binding: {
+        subtitle: 'Soft cover (paperback) or hard cover (hardback).',
+        body: 'Binding is how the book is held together. Paperback — also called softback — has a flexible card cover, so it is lighter and more affordable. Hardback (hardcover) has a stiff board cover: more durable and premium, and it lasts for years. Most first books start as paperback.',
+      },
+    },
   },
   manuscript: {
     heading: 'Submit Your Manuscript',
