@@ -169,6 +169,47 @@ export default function PlansTeaser() {
               </div>
             </div>
 
+            {/* Creative add-ons showcase — makes clear you can (and should) enhance any plan */}
+            <div className="max-w-4xl mx-auto mb-12">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 via-orange-500 to-orange-600 p-6 sm:p-8 text-white shadow-xl">
+                <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/10" />
+                <div className="absolute -bottom-10 -left-6 w-32 h-32 rounded-full bg-white/10" />
+                <div className="relative">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="w-5 h-5" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-white/90">Then make it yours</span>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-extrabold mb-1">Add premium finishing touches</h3>
+                  <p className="text-white/90 text-sm sm:text-base max-w-2xl">
+                    Every plan can be customised. Choose your paper, cover finish, binding and colour — and watch your
+                    book come to life. You only pay for the upgrades you love.
+                  </p>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
+                    {[
+                      { icon: '📗', label: 'Hardback', price: '+₹1,500' },
+                      { icon: '✨', label: 'Foil cover', price: '+₹3,500' },
+                      { icon: '🌈', label: 'Full colour', price: '+₹2,500' },
+                      { icon: '📄', label: 'Premium paper', price: '+₹600' },
+                    ].map((a) => (
+                      <div key={a.label} className="bg-white/15 backdrop-blur rounded-2xl px-3 py-3 text-center">
+                        <div className="text-2xl mb-1">{a.icon}</div>
+                        <div className="text-sm font-bold leading-tight">{a.label}</div>
+                        <div className="text-xs text-white/85">{a.price}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => go('/customize')}
+                    className="mt-6 inline-flex items-center gap-2 bg-white text-orange-700 px-7 py-3.5 rounded-full text-base font-bold hover:bg-amber-50 transition-all shadow-md"
+                  >
+                    Explore add-ons <ArrowRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div className="text-center">
               <button
                 onClick={explorePlans}

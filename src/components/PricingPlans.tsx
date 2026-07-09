@@ -188,6 +188,49 @@ export default function PricingPlans() {
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">{pricing.subheading}</p>
         </div>
 
+        {/* Add-ons highlight — prominent, above the plans so authors know they can enhance any plan */}
+        <div className="mb-12">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-500 to-orange-600 p-[2px] shadow-lg">
+            <div className="rounded-[calc(1.5rem-2px)] bg-white px-6 py-6 sm:px-8 sm:py-7">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-5">
+                <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow">
+                  <Sparkles className="w-7 h-7 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="inline-flex items-center gap-2 mb-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-white bg-amber-500 rounded-full px-2.5 py-0.5">
+                      Make it yours
+                    </span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Optional add-ons</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900">
+                    Personalise your book with premium add-ons
+                  </h3>
+                  <p className="text-gray-600 text-sm mt-1 max-w-2xl">
+                    Upgrade the paper, cover finish, binding and colour — added on top of any plan. Mix and match to
+                    make your book truly yours.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">Hardback +₹1,500</span>
+                    <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">Foil cover +₹3,500</span>
+                    <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">Full colour +₹2,500</span>
+                    <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">Premium paper +₹600</span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0 w-full lg:w-auto">
+                  <button
+                    onClick={() => go('/customize')}
+                    className="inline-flex items-center justify-center gap-2 w-full lg:w-auto bg-gradient-to-r from-amber-600 to-orange-600 text-white px-7 py-3.5 rounded-full text-base font-bold hover:from-amber-700 hover:to-orange-700 transition-all shadow-md"
+                  >
+                    Customize your book <ArrowRight className="w-5 h-5" />
+                  </button>
+                  <p className="text-center text-xs text-gray-400 mt-2">Free to explore · pay only for what you pick</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <>
         {/* Desktop / tablet: full cards */}
         <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
@@ -259,16 +302,6 @@ export default function PricingPlans() {
               </details>
             ))}
           </div>
-        </div>
-        <div className="mt-10 text-center">
-          <p className="text-gray-500 mb-3">Optional — enhance any plan with add-ons.</p>
-          <button
-            onClick={() => go('/customize')}
-            className="inline-flex items-center gap-2 border-2 border-amber-500 text-amber-700 px-6 py-3 rounded-full font-semibold hover:bg-amber-50 transition-colors"
-          >
-            Customize your book — optional add-ons
-            <ArrowRight className="w-4 h-4" />
-          </button>
         </div>
         </>
       </div>
