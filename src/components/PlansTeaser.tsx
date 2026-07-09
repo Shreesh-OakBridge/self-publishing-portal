@@ -251,43 +251,48 @@ export default function PlansTeaser() {
               })}
             </div>
 
-            {/* Creative add-ons showcase — makes clear you can (and should) enhance any plan */}
+            {/* Add-ons showcase — clean, modern, high-contrast */}
             <div className="max-w-4xl mx-auto mb-12">
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 via-orange-500 to-orange-600 p-6 sm:p-8 text-white shadow-xl">
-                <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/10" />
-                <div className="absolute -bottom-10 -left-6 w-32 h-32 rounded-full bg-white/10" />
-                <div className="relative">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-5 h-5" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-white/90">Then make it yours</span>
+              <div className="rounded-3xl border border-gray-200 bg-white shadow-sm p-6 sm:p-8">
+                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+                  <div>
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-3 py-1 mb-3">
+                      <Sparkles className="w-3.5 h-3.5" /> Then make it yours
+                    </span>
+                    <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                      Add premium finishing touches
+                    </h3>
+                    <p className="text-gray-500 text-sm sm:text-base mt-1.5 max-w-xl">
+                      Every plan can be customised — paper, cover finish, binding and colour. You only pay for the
+                      upgrades you love.
+                    </p>
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-extrabold mb-1">Add premium finishing touches</h3>
-                  <p className="text-white/90 text-sm sm:text-base max-w-2xl">
-                    Every plan can be customised. Choose your paper, cover finish, binding and colour — and watch your
-                    book come to life. You only pay for the upgrades you love.
-                  </p>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
-                    {[
-                      { icon: '📗', label: 'Hardback', price: '+₹1,500' },
-                      { icon: '✨', label: 'Foil cover', price: '+₹3,500' },
-                      { icon: '🌈', label: 'Full colour', price: '+₹2,500' },
-                      { icon: '📄', label: 'Premium paper', price: '+₹600' },
-                    ].map((a) => (
-                      <div key={a.label} className="bg-white/15 backdrop-blur rounded-2xl px-3 py-3 text-center">
-                        <div className="text-2xl mb-1">{a.icon}</div>
-                        <div className="text-sm font-bold leading-tight">{a.label}</div>
-                        <div className="text-xs text-white/85">{a.price}</div>
-                      </div>
-                    ))}
-                  </div>
-
                   <button
                     onClick={() => go('/customize')}
-                    className="mt-6 inline-flex items-center gap-2 bg-white text-orange-700 px-7 py-3.5 rounded-full text-base font-bold hover:bg-amber-50 transition-all shadow-md"
+                    className="flex-shrink-0 inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-gray-800 transition-colors"
                   >
-                    Explore add-ons <ArrowRight className="w-5 h-5" />
+                    Explore add-ons <ArrowRight className="w-4 h-4" />
                   </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { icon: '📗', label: 'Hardback', price: '+₹1,500' },
+                    { icon: '✨', label: 'Foil cover', price: '+₹3,500' },
+                    { icon: '🌈', label: 'Full colour', price: '+₹2,500' },
+                    { icon: '📄', label: 'Premium paper', price: '+₹600' },
+                  ].map((a) => (
+                    <div
+                      key={a.label}
+                      className="group rounded-2xl border border-gray-200 bg-gray-50 hover:bg-white hover:border-amber-300 hover:shadow-md transition-all px-4 py-4 text-center"
+                    >
+                      <div className="w-11 h-11 mx-auto mb-2.5 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-xl group-hover:border-amber-200">
+                        {a.icon}
+                      </div>
+                      <div className="text-sm font-semibold text-gray-900">{a.label}</div>
+                      <div className="text-xs font-semibold text-amber-600 mt-0.5">{a.price}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
