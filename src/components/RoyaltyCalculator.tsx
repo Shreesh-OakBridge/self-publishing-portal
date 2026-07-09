@@ -16,9 +16,9 @@ interface RoyaltyData {
 // Fallback royalty rates if a CMS plan is missing its rate.
 const FALLBACK_RATE: Record<string, number> = {
   Starter: 30,
-  Professional: 45,
-  Excellence: 55,
-  Elite: 60,
+  Essential: 45,
+  Professional: 55,
+  Custom: 60,
 };
 const priceNum = (s: string) => Number((s || '').replace(/[^0-9.]/g, '')) || 0;
 
@@ -301,8 +301,8 @@ export default function RoyaltyCalculator() {
               <h4 className="font-bold text-gray-900 mb-3">Understanding Break-Even</h4>
               <p className="text-gray-700 text-sm leading-relaxed">
                 Break-even is when your cumulative royalties equal your plan investment. For
-                example, with the Professional plan (₹79,999), if you earn ₹2,000/month, you'd
-                break even in ~40 months. After that, all earnings are profit!
+                example, with the Professional plan (₹89,999), if you earn ₹2,000/month, you'd
+                break even in ~45 months. After that, all earnings are profit!
               </p>
             </div>
           </div>
@@ -328,8 +328,8 @@ export default function RoyaltyCalculator() {
             <div>
               <h4 className="font-bold text-amber-700 mb-2">Build Your Author Brand</h4>
               <p className="text-gray-700 text-sm">
-                Elite plan includes author website and media outreach. Build your platform for
-                long-term success.
+                Higher tiers and the Custom plan include an author website and media outreach.
+                Build your platform for long-term success.
               </p>
             </div>
           </div>
