@@ -9,6 +9,7 @@ import CustomizeGuide from './CustomizeGuide';
 import CustomizeQuestionnaire from './CustomizeQuestionnaire';
 import Toast, { type ToastMsg } from './Toast';
 import { go } from '../lib/basePath';
+import { normalizeQuestions, questionnairePriceImpact } from '../lib/customizerQuestions';
 
 interface CustomizationData {
   paperType: string;
@@ -93,6 +94,13 @@ export default function BookCustomizer() {
   const [pendingAction, setPendingAction] = useState<'save' | 'quote' | 'order' | null>(null);
   const [showGuide, setShowGuide] = useState(false);
   const [toast, setToast] = useState<ToastMsg | null>(null);
+  // Answers to the "Tell us about your book" questionnaire, keyed by question
+  // id. Choice/number answers can add to the estimate below (each option's
+  // priceImpact, admin-editable); text answers are captured for the team
+  // but never change the price.
+  const [questionnaireAnswers, setQuestionnaireAnswers] = useState<Record<string, string>>({});
+  const questions = normalizeQuestions(customizer.questions);
+  const questionnaireImpact = questionnairePriceImpact(questions, questionnaireAnswers);
 
   // Auto-show the walkthrough until the visitor opts out via "Don't show again".
   useEffect(() => {
@@ -116,7 +124,8 @@ export default function BookCustomizer() {
 
   useEffect(() => {
     calculatePrice();
-  }, [customization]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customization, questionnaireAnswers]);
 
   const calculatePrice = () => {
     const baseCost = customizer.baseCost; // CMS-managed base production cost
@@ -127,8 +136,10 @@ export default function BookCustomizer() {
     const coverCost = coverDesigns.find(c => c.id === customization.coverDesign)?.price || 0;
     const layoutCost = layoutOptions.find(l => l.id === customization.layoutOption)?.price || 0;
     const sizeCost = bookSizes.find(s => s.id === customization.bookSize)?.price || 0;
+    const questionnaireCost = questionnairePriceImpact(questions, questionnaireAnswers);
 
-    const totalCost = baseCost + paperCost + colorCost + bindingCost + coverCost + layoutCost + sizeCost;
+    const totalCost =
+      baseCost + paperCost + colorCost + bindingCost + coverCost + layoutCost + sizeCost + questionnaireCost;
     setEstimatedPrice(totalCost);
   };
 
@@ -192,6 +203,7 @@ export default function BookCustomizer() {
           layout_option: customization.layoutOption,
           book_size: customization.bookSize,
           estimated_price: estimatedPrice,
+          questionnaire_answers: questionnaireAnswers,
         },
       ])
       .select('id')
@@ -236,7 +248,12 @@ export default function BookCustomizer() {
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">{customizer.subheading}</p>
 
-          <CustomizeQuestionnaire />
+          <CustomizeQuestionnaire
+            answers={questionnaireAnswers}
+            onAnswer={(id, value) =>
+              setQuestionnaireAnswers((prev) => ({ ...prev, [id]: value }))
+            }
+          />
 
           <button
             onClick={() => setShowGuide(true)}
@@ -462,6 +479,11 @@ export default function BookCustomizer() {
                   <p className="text-xs text-gray-600 mt-2">
                     This is the production cost per unit. Varies by order quantity and plan tier.
                   </p>
+                  {questionnaireImpact > 0 && (
+                    <p className="text-xs text-amber-700 mt-1">
+                      Includes ₹{questionnaireImpact.toLocaleString()} based on your answers above (e.g. cover design, word count, images).
+                    </p>
+                  )}
                 </div>
 
                 {suggestions.length > 0 && (

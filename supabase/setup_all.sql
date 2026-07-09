@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS book_customizations (
   layout_option text,
   book_size text,
   estimated_price numeric DEFAULT 0,
+  questionnaire_answers jsonb DEFAULT '{}'::jsonb,
   created_at timestamptz DEFAULT now()
 );
 
@@ -364,6 +365,7 @@ ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS expert_review_at timestamptz;
 ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS expert_review_price numeric;
 ALTER TABLE manuscripts ADD COLUMN IF NOT EXISTS external_url text;
 ALTER TABLE manuscripts ALTER COLUMN file_path DROP NOT NULL;
+ALTER TABLE book_customizations ADD COLUMN IF NOT EXISTS questionnaire_answers jsonb DEFAULT '{}'::jsonb;
 ALTER TABLE manuscripts ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Authors insert own manuscripts" ON manuscripts;

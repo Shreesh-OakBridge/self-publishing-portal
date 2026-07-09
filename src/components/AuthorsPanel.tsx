@@ -6,6 +6,8 @@ import type { Column } from '../lib/exporters';
 import DateRangeFilter, { DateRange, emptyRange, filterByRange } from './DateRangeFilter';
 import { SearchBox, SortControl } from './AdminControls';
 import { filterBySearch, sortRows, noSort, type SortState } from '../lib/adminFilter';
+import { useContent } from '../content/ContentProvider';
+import { normalizeQuestions, describeAnswers } from '../lib/customizerQuestions';
 
 interface Author {
   id: string;
@@ -25,6 +27,7 @@ interface Cust {
   binding: string | null;
   interior_color: string | null;
   estimated_price: number | null;
+  questionnaire_answers: Record<string, string> | null;
 }
 interface Calc {
   id: string;
@@ -41,6 +44,9 @@ const fmt = (d: string) =>
   new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
 export default function AuthorsPanel() {
+  const { customizer } = useContent();
+  const questionnaireQuestions = normalizeQuestions(customizer.questions);
+  const [expandedCustId, setExpandedCustId] = useState<string | null>(null);
   const [authors, setAuthors] = useState<Author[]>([]);
   const [custs, setCusts] = useState<Cust[]>([]);
   const [calcs, setCalcs] = useState<Calc[]>([]);
@@ -194,13 +200,41 @@ export default function AuthorsPanel() {
                     {ac.length === 0 ? (
                       <p className="text-xs text-gray-400">None saved.</p>
                     ) : (
-                      <ul className="space-y-1 text-sm">
-                        {ac.map((c) => (
-                          <li key={c.id} className="text-gray-700">
-                            {fmt(c.created_at)} — {c.book_size || '—'}, {c.binding || '—'},{' '}
-                            {c.interior_color || '—'} · <span className="font-semibold">{inr(c.estimated_price)}</span>
-                          </li>
-                        ))}
+                      <ul className="space-y-1.5 text-sm">
+                        {ac.map((c) => {
+                          const answers = describeAnswers(questionnaireQuestions, c.questionnaire_answers);
+                          const expanded = expandedCustId === c.id;
+                          return (
+                            <li key={c.id} className="text-gray-700">
+                              <div className="flex items-center justify-between gap-2">
+                                <span>
+                                  {fmt(c.created_at)} — {c.book_size || '—'}, {c.binding || '—'},{' '}
+                                  {c.interior_color || '—'} ·{' '}
+                                  <span className="font-semibold">{inr(c.estimated_price)}</span>
+                                </span>
+                                {answers.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedCustId(expanded ? null : c.id)}
+                                    className="text-xs text-amber-700 font-semibold hover:underline flex-shrink-0"
+                                  >
+                                    {expanded ? 'Hide answers' : `Answers (${answers.length})`}
+                                  </button>
+                                )}
+                              </div>
+                              {expanded && (
+                                <ul className="mt-1.5 ml-3 space-y-1 text-xs bg-amber-50 border border-amber-100 rounded-lg p-2.5">
+                                  {answers.map((a, i) => (
+                                    <li key={i}>
+                                      <span className="text-gray-500">{a.question}</span>{' '}
+                                      <span className="font-semibold text-gray-900">— {a.answer}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </div>
