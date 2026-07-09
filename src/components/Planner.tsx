@@ -13,6 +13,10 @@ const priceToNumber = (p: string) => Number((p || '').replace(/[^0-9.]/g, '')) |
 const isQuote = (p: string) => !/[0-9]/.test(p || '');
 const inr = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
 
+// Authors think in words; printing is priced per page. Convert with a typical
+// trade-paperback density (~300 words/page). Clearly an estimate either way.
+const WORDS_PER_PAGE = 300;
+
 // Indicative per-copy printing rates (₹). Deliberately conservative and clearly
 // labelled as an estimate — the final quote is always confirmed by the team.
 // Referenced against typical Indian print-on-demand pricing.
@@ -59,7 +63,7 @@ export default function Planner() {
   const [step, setStep] = useState(1);
   const [have, setHave] = useState<string[]>([]);
   const [help, setHelp] = useState<string[]>([]);
-  const [pages, setPages] = useState(200);
+  const [words, setWords] = useState(60000);
   const [colour, setColour] = useState<'bw' | 'colour'>('bw');
   const [binding, setBinding] = useState<'paperback' | 'hardback'>('paperback');
   const [copies, setCopies] = useState(100);
@@ -83,7 +87,8 @@ export default function Planner() {
     const planIsQuote = !plan || isQuote(plan.price);
     const base = planIsQuote ? 0 : priceToNumber(plan.price);
 
-    // Printing only counts if the author wants us to print & bind.
+    // Word count → approximate printed pages → printing cost.
+    const pages = Math.max(1, Math.ceil(words / WORDS_PER_PAGE));
     const wantsPrint = help.includes('printing');
     const perPage = colour === 'colour' ? PRINT.colourPerPage : PRINT.bwPerPage;
     const perCopy = pages * perPage + (binding === 'hardback' ? PRINT.hardbackPerCopy : 0) + PRINT.handlingPerCopy;
@@ -93,13 +98,13 @@ export default function Planner() {
     const low = subtotal;
     const high = Math.round(subtotal * 1.2);
     const tl = TIMELINES.find((t) => t.key === timeline)?.note || '';
-    return { plan, planIsQuote, base, printing, low, high, tl, wantsPrint };
-  }, [help, copies, pages, colour, binding, timeline, pricing.plans]);
+    return { plan, planIsQuote, base, printing, low, high, tl, wantsPrint, pages };
+  }, [help, copies, words, colour, binding, timeline, pricing.plans]);
 
   const next = () => setStep((s) => Math.min(LAST_STEP, s + 1));
   const back = () => setStep((s) => Math.max(1, s - 1));
   const reset = () => {
-    setHave([]); setHelp([]); setPages(200); setColour('bw'); setBinding('paperback');
+    setHave([]); setHelp([]); setWords(60000); setColour('bw'); setBinding('paperback');
     setCopies(100); setTimeline('flexible'); setStep(1);
   };
 
@@ -107,7 +112,7 @@ export default function Planner() {
     track('planner_complete', {
       journey: journeySlug ?? null,
       help: help.join(','),
-      pages,
+      words,
       colour,
       binding,
       copies,
@@ -187,15 +192,17 @@ export default function Planner() {
                   <p className="text-gray-500 text-sm mb-5">These shape your printing estimate — a rough idea is fine.</p>
                   <div className="space-y-5">
                     <div>
-                      <label className="block text-gray-700 font-semibold mb-2 text-sm">Approximate page count</label>
+                      <label className="block text-gray-700 font-semibold mb-2 text-sm">Approximate word count</label>
                       <input
                         type="number"
                         min={1}
-                        value={pages}
-                        onChange={(e) => setPages(Math.max(1, Number(e.target.value) || 0))}
+                        step={1000}
+                        value={words}
+                        onChange={(e) => setWords(Math.max(1, Number(e.target.value) || 0))}
                         className={field}
-                        placeholder="200"
+                        placeholder="60000"
                       />
+                      <p className="text-xs text-gray-400 mt-1">≈ {estimate.pages.toLocaleString()} printed pages</p>
                     </div>
                     <div>
                       <label className="block text-gray-700 font-semibold mb-2 text-sm">Interior colour</label>
@@ -312,13 +319,13 @@ export default function Planner() {
               </div>
               <p className="text-gray-600 mb-4">
                 Based on your selections, the <strong>{estimate.plan?.name}</strong> plan ({estimate.plan?.price}) is the best fit.
-                {estimate.printing > 0 && ` A print run of ${copies >= 5000 ? '5000+' : copies} copies (${pages} pages, ${colour === 'colour' ? 'full colour' : 'black & white'}, ${binding}) is included in the figures above.`}
+                {estimate.printing > 0 && ` A print run of ${copies >= 5000 ? '5000+' : copies} copies (${words.toLocaleString()} words ≈ ${estimate.pages} pages, ${colour === 'colour' ? 'full colour' : 'black & white'}, ${binding}) is included in the figures above.`}
               </p>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-sm">
                 <div className="rounded-xl bg-gray-50 border border-gray-200 px-3 py-2">
-                  <div className="text-gray-400 text-xs">Pages</div>
-                  <div className="font-semibold text-gray-800">{pages}</div>
+                  <div className="text-gray-400 text-xs">Words</div>
+                  <div className="font-semibold text-gray-800">{words.toLocaleString()}</div>
                 </div>
                 <div className="rounded-xl bg-gray-50 border border-gray-200 px-3 py-2">
                   <div className="text-gray-400 text-xs">Interior</div>
@@ -382,7 +389,7 @@ export default function Planner() {
           journey ? `Journey: ${journey.title}` : '',
           `Already has: ${have.map((k) => HAVE.find((x) => x.key === k)?.label).filter(Boolean).join(', ') || '—'}`,
           `Help needed: ${help.map((k) => HELP.find((x) => x.key === k)?.label).filter(Boolean).join(', ') || '—'}`,
-          `Book: ${pages} pages, ${colour === 'colour' ? 'full colour' : 'black & white'}, ${binding}`,
+          `Book: ${words.toLocaleString()} words (≈ ${estimate.pages} pages), ${colour === 'colour' ? 'full colour' : 'black & white'}, ${binding}`,
           `Copies: ${copies >= 5000 ? '5000+' : copies}`,
           `Timeline: ${TIMELINES.find((t) => t.key === timeline)?.label || timeline}`,
           estimate.plan ? `Recommended plan: ${estimate.plan.name} (${estimate.plan.price})` : '',
