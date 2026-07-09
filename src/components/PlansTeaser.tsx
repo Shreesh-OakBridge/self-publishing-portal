@@ -251,25 +251,25 @@ export default function PlansTeaser() {
               })}
             </div>
 
-            {/* Add-ons showcase — clean, modern, high-contrast */}
+            {/* Add-ons showcase — orange brand card, high-contrast white tiles */}
             <div className="max-w-4xl mx-auto mb-12">
-              <div className="rounded-3xl border border-gray-200 bg-white shadow-sm p-6 sm:p-8">
+              <div className="rounded-3xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg p-6 sm:p-8">
                 <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
                   <div>
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-3 py-1 mb-3">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-orange-700 bg-white rounded-full px-3 py-1 mb-3 shadow-sm">
                       <Sparkles className="w-3.5 h-3.5" /> Then make it yours
                     </span>
-                    <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                    <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                       Add premium finishing touches
                     </h3>
-                    <p className="text-gray-500 text-sm sm:text-base mt-1.5 max-w-xl">
+                    <p className="text-white/90 text-sm sm:text-base mt-1.5 max-w-xl">
                       Every plan can be customised — paper, cover finish, binding and colour. You only pay for the
                       upgrades you love.
                     </p>
                   </div>
                   <button
                     onClick={() => go('/customize')}
-                    className="flex-shrink-0 inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-gray-800 transition-colors"
+                    className="flex-shrink-0 inline-flex items-center gap-2 bg-white text-orange-700 px-6 py-3 rounded-full text-sm font-semibold hover:bg-amber-50 transition-colors shadow-sm"
                   >
                     Explore add-ons <ArrowRight className="w-4 h-4" />
                   </button>
@@ -284,9 +284,9 @@ export default function PlansTeaser() {
                   ].map((a) => (
                     <div
                       key={a.label}
-                      className="group rounded-2xl border border-gray-200 bg-gray-50 hover:bg-white hover:border-amber-300 hover:shadow-md transition-all px-4 py-4 text-center"
+                      className="rounded-2xl bg-white shadow-sm px-4 py-4 text-center"
                     >
-                      <div className="w-11 h-11 mx-auto mb-2.5 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-xl group-hover:border-amber-200">
+                      <div className="w-11 h-11 mx-auto mb-2.5 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-xl">
                         {a.icon}
                       </div>
                       <div className="text-sm font-semibold text-gray-900">{a.label}</div>
