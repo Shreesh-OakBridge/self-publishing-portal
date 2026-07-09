@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Users, Check, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Sparkles } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
@@ -14,6 +14,18 @@ interface CurrentOrder {
   amount: number | null;
   status: string;
   production_stage: string | null;
+  customization_id: string | null;
+}
+
+// Add-ons the author purchased alongside their plan (from book_customizations).
+interface PurchasedAddons {
+  paper_type: string | null;
+  interior_color: string | null;
+  binding: string | null;
+  cover_design: string | null;
+  layout_option: string | null;
+  book_size: string | null;
+  estimated_price: number | null;
 }
 
 const statusColor = (s: string) =>
@@ -27,15 +39,17 @@ const statusColor = (s: string) =>
 // plan + details and an "explore other plans" option; otherwise the two-pathway
 // teaser with a single CTA to /plans.
 export default function PlansTeaser() {
-  const { pricing, getStarted: g, projectWorkspace } = useContent();
+  const { pricing, customizer, projectWorkspace } = useContent();
   const { user } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [order, setOrder] = useState<CurrentOrder | null>(null);
+  const [addons, setAddons] = useState<PurchasedAddons | null>(null);
   const [loadingOrder, setLoadingOrder] = useState(!!user);
 
   useEffect(() => {
     if (!user) {
       setOrder(null);
+      setAddons(null);
       setLoadingOrder(false);
       return;
     }
@@ -43,13 +57,24 @@ export default function PlansTeaser() {
     (async () => {
       const { data } = await supabase
         .from('orders')
-        .select('id, plan, amount, status, production_stage, created_at')
+        .select('id, plan, amount, status, production_stage, customization_id, created_at')
         .eq('user_id', user.id)
         .not('plan', 'is', null)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      setOrder((data as CurrentOrder) ?? null);
+      const ord = (data as CurrentOrder) ?? null;
+      setOrder(ord);
+      if (ord?.customization_id) {
+        const { data: c } = await supabase
+          .from('book_customizations')
+          .select('paper_type, interior_color, binding, cover_design, layout_option, book_size, estimated_price')
+          .eq('id', ord.customization_id)
+          .maybeSingle();
+        setAddons((c as PurchasedAddons) ?? null);
+      } else {
+        setAddons(null);
+      }
       setLoadingOrder(false);
     })();
   }, [user]);
@@ -59,6 +84,11 @@ export default function PlansTeaser() {
     if (user) go('/plans');
     else setAuthOpen(true);
   };
+
+  // Map a customization option id to its friendly CMS name.
+  const optName = (list: { id: string; name: string }[], id: string | null | undefined) =>
+    list.find((o) => o.id === id)?.name || id || '—';
+  const isQuotePlan = (price: string) => !/[0-9]/.test(price);
 
   const planDetails = order?.plan ? pricing.plans.find((p) => p.name === order.plan) : null;
   const hasCurrentPlan = !!order?.plan;
@@ -118,6 +148,35 @@ export default function PlansTeaser() {
                 </ul>
               )}
 
+              {/* Add-ons purchased alongside this plan */}
+              {addons && (
+                <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4" /> Add-ons purchased
+                  </p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                    {([
+                      ['Paper', optName(customizer.paperTypes, addons.paper_type)],
+                      ['Interior', optName(customizer.colorOptions, addons.interior_color)],
+                      ['Binding', optName(customizer.bindingOptions, addons.binding)],
+                      ['Cover', optName(customizer.coverDesigns, addons.cover_design)],
+                      ['Layout', optName(customizer.layoutOptions, addons.layout_option)],
+                      ['Size', optName(customizer.bookSizes, addons.book_size)],
+                    ] as [string, string][]).map(([k, v]) => (
+                      <div key={k} className="flex justify-between gap-2">
+                        <span className="text-gray-500">{k}</span>
+                        <span className="text-gray-800 font-medium text-right">{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {addons.estimated_price ? (
+                    <p className="text-sm text-amber-800 mt-2 font-semibold">
+                      Add-ons total: +₹{addons.estimated_price.toLocaleString()}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => go('/account#orders')}
@@ -148,25 +207,48 @@ export default function PlansTeaser() {
               <strong className="text-gray-700"> customize your book with optional add-ons</strong>.
             </p>
 
-            <div className="max-w-2xl mx-auto mb-12">
-              <div className="bg-white rounded-3xl border-2 border-amber-300 ring-1 ring-amber-200 p-7 flex flex-col">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-white" />
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
+              {pricing.plans.map((plan) => {
+                const quote = isQuotePlan(plan.price);
+                return (
+                  <div
+                    key={plan.name}
+                    className={`bg-white rounded-3xl border-2 p-6 flex flex-col ${
+                      plan.popular ? 'border-amber-400 ring-1 ring-amber-200' : 'border-gray-200'
+                    }`}
+                  >
+                    {plan.popular && (
+                      <span className="self-start text-[10px] font-bold uppercase tracking-wide text-white bg-amber-500 rounded-full px-2.5 py-0.5 mb-2">
+                        Most popular
+                      </span>
+                    )}
+                    <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+                    <div className="mt-1 mb-3 flex items-baseline gap-1.5 flex-wrap">
+                      <span className="text-2xl font-extrabold text-gray-900">{plan.price}</span>
+                      <span className="text-xs text-gray-500">{quote ? 'tailored quote' : 'one-time'}</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-4">{plan.tagline}</p>
+                    <ul className="space-y-1.5 mb-5 flex-1">
+                      {plan.features.slice(0, 4).map((f, j) => (
+                        <li key={j} className="flex items-start gap-2 text-xs text-gray-700">
+                          <Check className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      onClick={explorePlans}
+                      className={`w-full py-2.5 rounded-full text-sm font-semibold transition-all ${
+                        plan.popular
+                          ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-700 hover:to-orange-700'
+                          : 'border-2 border-amber-500 text-amber-700 hover:bg-amber-50'
+                      }`}
+                    >
+                      {quote ? 'Request a quote' : 'Get Started'}
+                    </button>
                   </div>
-                  <span className="text-xs font-semibold text-amber-600 uppercase tracking-wide">Done for you</span>
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900">{g.expertTitle}</h3>
-                <p className="text-gray-500 mb-4">{g.expertTagline}</p>
-                <ul className="space-y-2">
-                  {g.expertPoints.map((p, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                      <Check className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                );
+              })}
             </div>
 
             {/* Creative add-ons showcase — makes clear you can (and should) enhance any plan */}
