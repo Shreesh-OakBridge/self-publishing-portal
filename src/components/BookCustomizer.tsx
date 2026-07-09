@@ -130,7 +130,7 @@ export default function BookCustomizer() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<'save' | 'quote' | 'order' | null>(null);
+  const [pendingAction, setPendingAction] = useState<'quote' | 'order' | null>(null);
   const [toast, setToast] = useState<ToastMsg | null>(null);
   // Answers to the "Tell us about your book" questionnaire, keyed by question
   // id. Choice/number answers can add to the estimate below (each option's
@@ -184,17 +184,6 @@ export default function BookCustomizer() {
     go(`/quote?${q}`);
   };
 
-  // Require login first so every saved design is tied to a real account we can
-  // follow up with (name/email). Otherwise nudge the visitor to log in/sign up.
-  const handleSaveClick = () => {
-    if (user) {
-      doSaveCustomization();
-    } else {
-      setPendingAction('save');
-      setAuthOpen(true);
-    }
-  };
-
   const handleQuoteClick = () => {
     if (user) {
       goToQuote();
@@ -237,19 +226,6 @@ export default function BookCustomizer() {
       .single();
     if (error) throw error;
     return data?.id ?? null;
-  };
-
-  const doSaveCustomization = async () => {
-    setIsSaving(true);
-    try {
-      await insertCustomization();
-      setToast({ type: 'ok', text: 'Book customization saved! You can view it anytime under My Account.' });
-    } catch (err) {
-      console.error('Error saving customization:', err);
-      setToast({ type: 'err', text: 'Error saving customization. Please try again.' });
-    } finally {
-      setIsSaving(false);
-    }
   };
 
   const doOrder = async () => {
@@ -620,14 +596,6 @@ export default function BookCustomizer() {
                 </button>
 
                 <button
-                  onClick={handleSaveClick}
-                  disabled={isSaving}
-                  className="w-full border-2 border-amber-600 text-amber-600 py-3 rounded-xl font-semibold hover:bg-amber-50 transition-colors mt-3 disabled:opacity-50"
-                >
-                  Save for Later
-                </button>
-
-                <button
                   onClick={handleQuoteClick}
                   className="w-full text-amber-700 hover:text-amber-900 py-2 text-sm font-semibold mt-2"
                 >
@@ -643,12 +611,11 @@ export default function BookCustomizer() {
         open={authOpen}
         onClose={() => setAuthOpen(false)}
         onAuthenticated={() => {
-          if (pendingAction === 'save') doSaveCustomization();
-          else if (pendingAction === 'quote') goToQuote();
+          if (pendingAction === 'quote') goToQuote();
           else if (pendingAction === 'order') doOrder();
           setPendingAction(null);
         }}
-        heading="Log in or sign up to save your design"
+        heading="Log in or sign up to continue"
       />
 
       <Toast toast={toast} onDismiss={() => setToast(null)} />

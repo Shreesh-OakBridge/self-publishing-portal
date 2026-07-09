@@ -1,8 +1,7 @@
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   BookOpen,
   LogOut,
-  Palette,
   Calculator,
   Home,
   Pencil,
@@ -19,20 +18,6 @@ import ManuscriptUpload from './ManuscriptUpload';
 import StageTracker from './StageTracker';
 import { stageLabel } from '../lib/productionStages';
 import { go, withBase } from '../lib/basePath';
-import { normalizeQuestions, describeAnswers } from '../lib/customizerQuestions';
-
-interface Customization {
-  id: string;
-  paper_type: string | null;
-  interior_color: string | null;
-  binding: string | null;
-  cover_design: string | null;
-  layout_option: string | null;
-  book_size: string | null;
-  estimated_price: number | null;
-  questionnaire_answers: Record<string, string> | null;
-  created_at: string;
-}
 
 interface Calculation {
   id: string;
@@ -98,7 +83,6 @@ const TABS = [
   { key: 'orders', label: 'My Orders', icon: ShoppingBag },
   { key: 'quotes', label: 'Quote Requests', icon: FileText },
   { key: 'manuscripts', label: 'Manuscripts', icon: FileUp },
-  { key: 'customizations', label: 'Customizations', icon: Palette },
   { key: 'royalty', label: 'Royalty', icon: Calculator },
 ] as const;
 type TabKey = (typeof TABS)[number]['key'];
@@ -115,10 +99,7 @@ function PanelHeading({ icon: Icon, title }: { icon: typeof User; title: string 
 
 export default function AccountPage() {
   const { user, loading, signOut } = useAuth();
-  const { projectWorkspace, customizer } = useContent();
-  const questionnaireQuestions = normalizeQuestions(customizer.questions);
-  const [customizations, setCustomizations] = useState<Customization[]>([]);
-  const [expandedCustomizationId, setExpandedCustomizationId] = useState<string | null>(null);
+  const { projectWorkspace } = useContent();
   const [calculations, setCalculations] = useState<Calculation[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   // order_id → count of workspace items needing the author (team msgs + pending proofs).
@@ -147,12 +128,7 @@ export default function AccountPage() {
     if (!user) return;
     (async () => {
       setLoadingData(true);
-      const [c, r, o, q] = await Promise.all([
-        supabase
-          .from('book_customizations')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false }),
+      const [r, o, q] = await Promise.all([
         supabase
           .from('royalty_calculations')
           .select('*')
@@ -169,7 +145,6 @@ export default function AccountPage() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false }),
       ]);
-      if (c.data) setCustomizations(c.data as Customization[]);
       if (r.data) setCalculations(r.data as Calculation[]);
       if (o.data) setOrders(o.data as Order[]);
       if (q.data) setQuotes(q.data as Quote[]);
@@ -199,18 +174,6 @@ export default function AccountPage() {
   const initial = (fullName || user.email || '?').charAt(0).toUpperCase();
 
   // Re-open a saved item on its page, pre-loaded via query params.
-  const openCustomization = (c: Customization) => {
-    const params = new URLSearchParams({
-      paper: c.paper_type ?? '',
-      color: c.interior_color ?? '',
-      binding: c.binding ?? '',
-      cover: c.cover_design ?? '',
-      layout: c.layout_option ?? '',
-      size: c.book_size ?? '',
-    });
-    go(`/customize?${params.toString()}`);
-  };
-
   const openCalculation = (r: Calculation) => {
     const params = new URLSearchParams({
       price: String(r.book_price ?? ''),
@@ -483,97 +446,6 @@ export default function AccountPage() {
 
             {tab === 'manuscripts' && <ManuscriptUpload />}
 
-            {tab === 'customizations' && (
-              <section>
-                <PanelHeading icon={Palette} title="Saved Book Customizations" />
-                {loadingData ? (
-                  <p className="text-gray-500">Loading…</p>
-                ) : customizations.length === 0 ? (
-                  <div className="bg-white rounded-2xl border p-6 text-gray-500">
-                    No saved customizations yet.{' '}
-                    <a href={withBase('/customize')} className="text-amber-700 font-semibold hover:underline">
-                      Customize a book →
-                    </a>
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-2xl border overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left text-gray-500 border-b">
-                          <th className="px-4 py-3 font-semibold">Date</th>
-                          <th className="px-4 py-3 font-semibold">Paper</th>
-                          <th className="px-4 py-3 font-semibold">Cover</th>
-                          <th className="px-4 py-3 font-semibold">Layout</th>
-                          <th className="px-4 py-3 font-semibold">Size</th>
-                          <th className="px-4 py-3 font-semibold">Est. Price</th>
-                          <th className="px-4 py-3 font-semibold">Your Answers</th>
-                          <th className="px-4 py-3 font-semibold text-right">Edit</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {customizations.map((c) => {
-                          const answers = describeAnswers(questionnaireQuestions, c.questionnaire_answers);
-                          const expanded = expandedCustomizationId === c.id;
-                          return (
-                            <Fragment key={c.id}>
-                              <tr
-                                onClick={() => openCustomization(c)}
-                                title="Open this design in the customizer to edit"
-                                className="border-b last:border-0 hover:bg-amber-50 cursor-pointer"
-                              >
-                                <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(c.created_at)}</td>
-                                <td className="px-4 py-3">{c.paper_type || '—'}</td>
-                                <td className="px-4 py-3">{c.cover_design || '—'}</td>
-                                <td className="px-4 py-3">{c.layout_option || '—'}</td>
-                                <td className="px-4 py-3">{c.book_size || '—'}</td>
-                                <td className="px-4 py-3 font-semibold text-amber-700">{inr(c.estimated_price)}</td>
-                                <td className="px-4 py-3">
-                                  {answers.length === 0 ? (
-                                    <span className="text-gray-400">—</span>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setExpandedCustomizationId(expanded ? null : c.id);
-                                      }}
-                                      className="text-amber-700 font-semibold hover:underline"
-                                    >
-                                      {expanded ? 'Hide' : `View (${answers.length})`}
-                                    </button>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                  <span className="inline-flex items-center gap-1 text-amber-700 font-semibold">
-                                    <Pencil className="w-4 h-4" />
-                                    <span className="hidden sm:inline">Edit</span>
-                                  </span>
-                                </td>
-                              </tr>
-                              {expanded && answers.length > 0 && (
-                                <tr key={`${c.id}-answers`} className="border-b last:border-0 bg-amber-50/50">
-                                  <td colSpan={7} className="px-4 py-3">
-                                    <ul className="space-y-1.5 text-sm">
-                                      {answers.map((a, i) => (
-                                        <li key={i}>
-                                          <span className="text-gray-500">{a.question}</span>{' '}
-                                          <span className="font-semibold text-gray-900">— {a.answer}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </td>
-                                </tr>
-                              )}
-                            </Fragment>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </section>
-            )}
-
             {tab === 'royalty' && (
               <section>
                 <PanelHeading icon={Calculator} title="Saved Royalty Calculations" />
@@ -634,3 +506,4 @@ export default function AccountPage() {
     </div>
   );
 }
+
