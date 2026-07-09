@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Check, Crown, Zap, Rocket, Sparkles, ChevronDown, ChevronUp, X, Users, Laptop, ArrowRight } from 'lucide-react';
+import { Check, Crown, Zap, Rocket, Sparkles, ChevronDown, ChevronUp, X, ArrowRight } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import type { PricingPlan } from '../content/defaults';
 import { useAuth } from '../lib/auth';
@@ -17,6 +17,10 @@ const planColors = [
 
 // Number of features shown before the list collapses.
 const COLLAPSED_COUNT = 5;
+
+// A plan whose price has no digits (e.g. "Custom") is quote-based: it routes to
+// the Request-a-quote flow instead of straight to checkout.
+const isQuotePlan = (price: string) => !/[0-9]/.test(price);
 
 
 function PlanCard({
@@ -38,6 +42,7 @@ function PlanCard({
   const Icon = planIcons[planIndex % planIcons.length];
   const color = planColors[planIndex % planColors.length];
   const canCollapse = plan.features.length > COLLAPSED_COUNT;
+  const quote = isQuotePlan(plan.price);
   // Selected card shows everything; others stay compact.
   const visibleFeatures = isSelected ? plan.features : plan.features.slice(0, COLLAPSED_COUNT);
 
@@ -91,7 +96,7 @@ function PlanCard({
 
         <div className="mb-6 flex items-baseline gap-x-2 whitespace-nowrap">
           <span className="text-3xl font-bold text-gray-900">{plan.price}</span>
-          <span className="text-sm text-gray-500">one-time</span>
+          <span className="text-sm text-gray-500">{quote ? 'tailored quote' : 'one-time'}</span>
         </div>
 
         <button
@@ -101,7 +106,7 @@ function PlanCard({
           }}
           className={`w-full bg-gradient-to-r ${color} text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all mb-6`}
         >
-          Get Started
+          {quote ? 'Request a quote' : 'Get Started'}
         </button>
 
         <div className="space-y-4">
@@ -140,7 +145,7 @@ function PlanCard({
 }
 
 export default function PricingPlans() {
-  const { pricing, getStarted: g } = useContent();
+  const { pricing } = useContent();
   const { user } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
@@ -148,9 +153,6 @@ export default function PricingPlans() {
   const planParam = new URLSearchParams(window.location.search).get('plan');
   const [selectedPlan, setSelectedPlan] = useState<string | null>(planParam);
   const [detailPlan, setDetailPlan] = useState<PricingPlan | null>(null);
-  // Two-plan model: "Publish on your own" (basic) shows first; Expert Publishing
-  // second. A pre-selected plan (a tier package) opens the Expert view.
-  const [view, setView] = useState<'expert' | 'self'>(planParam ? 'expert' : 'self');
 
   // Funnel step: viewing the plans/pricing (product view).
   useEffect(() => {
@@ -162,8 +164,14 @@ export default function PricingPlans() {
   };
 
   // Logged-in users go straight to checkout for the plan; visitors log in /
-  // sign up first, then continue to checkout for the chosen plan.
+  // sign up first, then continue to checkout for the chosen plan. Quote-based
+  // plans (e.g. Custom) route to the Request-a-quote flow instead.
   const handleGetStarted = (plan: string) => {
+    const p = pricing.plans.find((pl) => pl.name === plan);
+    if (p && isQuotePlan(p.price)) {
+      go(`/quote?plan=${encodeURIComponent(plan)}`);
+      return;
+    }
     if (user) {
       goToCheckout(plan);
     } else {
@@ -180,55 +188,6 @@ export default function PricingPlans() {
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">{pricing.subheading}</p>
         </div>
 
-        {/* Two-plan toggle */}
-        <div className="flex justify-center mb-12">
-          <div className="inline-flex bg-white border rounded-full p-1 shadow-sm">
-            <button
-              onClick={() => setView('self')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors ${
-                view === 'self' ? 'bg-amber-600 text-white' : 'text-gray-600 hover:text-amber-700'
-              }`}
-            >
-              <Laptop className="w-4 h-4" />
-              {g.selfTitle}
-            </button>
-            <button
-              onClick={() => setView('expert')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors ${
-                view === 'expert' ? 'bg-amber-600 text-white' : 'text-gray-600 hover:text-amber-700'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              {g.expertTitle}
-            </button>
-          </div>
-        </div>
-
-        {view === 'self' ? (
-          <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl p-8 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mx-auto mb-4">
-              <Laptop className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">{g.selfTitle}</h3>
-            <p className="text-gray-500 mb-6">{g.selfTagline}</p>
-            <ul className="space-y-3 text-left max-w-md mx-auto mb-8">
-              {g.selfPoints.map((p, i) => (
-                <li key={i} className="flex items-start gap-2 text-gray-700">
-                  <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  {p}
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={() => go('/customize')}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-8 py-3.5 rounded-full text-lg font-semibold hover:from-amber-700 hover:to-orange-700 transition-all"
-            >
-              Start designing your book
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            <p className="text-sm text-gray-400 mt-3">Transparent, itemised pricing — pay only for what you choose.</p>
-          </div>
-        ) : (
         <>
         {/* Desktop / tablet: full cards */}
         <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
@@ -267,7 +226,7 @@ export default function PricingPlans() {
                 <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
                 <div className="mt-1 flex items-baseline gap-1 flex-wrap">
                   <span className="text-xl font-bold text-gray-900">{plan.price}</span>
-                  <span className="text-xs text-gray-500">one-time</span>
+                  <span className="text-xs text-gray-500">{isQuotePlan(plan.price) ? 'tailored quote' : 'one-time'}</span>
                 </div>
                 <span className="mt-3 text-xs font-semibold text-amber-700">View details →</span>
               </button>
@@ -301,8 +260,17 @@ export default function PricingPlans() {
             ))}
           </div>
         </div>
+        <div className="mt-10 text-center">
+          <p className="text-gray-500 mb-3">Optional — enhance any plan with add-ons.</p>
+          <button
+            onClick={() => go('/customize')}
+            className="inline-flex items-center gap-2 border-2 border-amber-500 text-amber-700 px-6 py-3 rounded-full font-semibold hover:bg-amber-50 transition-colors"
+          >
+            Customize your book — optional add-ons
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
         </>
-        )}
       </div>
 
       {/* Mobile plan details popup */}
@@ -336,7 +304,7 @@ export default function PricingPlans() {
               <p className="text-white/90 text-sm mt-1">{detailPlan.tagline}</p>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="text-3xl font-bold">{detailPlan.price}</span>
-                <span className="text-sm text-white/80">one-time</span>
+                <span className="text-sm text-white/80">{isQuotePlan(detailPlan.price) ? 'tailored quote' : 'one-time'}</span>
               </div>
             </div>
 
@@ -359,7 +327,7 @@ export default function PricingPlans() {
                 }}
                 className="w-full mt-6 bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700"
               >
-                Get Started
+                {isQuotePlan(detailPlan.price) ? 'Request a quote' : 'Get Started'}
               </button>
             </div>
           </div>

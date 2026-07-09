@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Laptop, Users, Check, Sparkles } from 'lucide-react';
+import { ArrowRight, Users, Check, Sparkles } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
@@ -144,30 +144,11 @@ export default function PlansTeaser() {
           /* ── Default teaser (logged out, or no plan yet) ── */
           <>
             <p className="text-center text-gray-500 mb-12 mt-3">
-              Two ways to publish — go the <strong className="text-gray-700">complete self-publishing</strong> route with
-              our tools, or pick one of our <strong className="text-gray-700">curated packages</strong>.
+              Pick one of our <strong className="text-gray-700">curated publishing packages</strong> — then, if you like,
+              <strong className="text-gray-700"> customize your book with optional add-ons</strong>.
             </p>
 
-            <div className="grid md:grid-cols-2 gap-6 mb-12">
-              <div className="bg-white rounded-3xl border-2 border-gray-200 p-7 flex flex-col">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center">
-                    <Laptop className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Do it yourself</span>
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900">{g.selfTitle}</h3>
-                <p className="text-gray-500 mb-4">{g.selfTagline}</p>
-                <ul className="space-y-2">
-                  {g.selfPoints.map((p, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                      <Check className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
+            <div className="max-w-2xl mx-auto mb-12">
               <div className="bg-white rounded-3xl border-2 border-amber-300 ring-1 ring-amber-200 p-7 flex flex-col">
                 <div className="flex items-center justify-between mb-3">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
@@ -197,7 +178,7 @@ export default function PlansTeaser() {
               </button>
               <p className="text-sm text-gray-500 mt-3">
                 {user
-                  ? 'Compare both routes and choose what fits your book.'
+                  ? 'Pick the package that fits your book.'
                   : 'Sign in or create a free account to explore plans and continue.'}
               </p>
             </div>

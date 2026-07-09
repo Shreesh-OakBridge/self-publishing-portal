@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Users, Laptop, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import { resolveServiceIcon } from '../lib/serviceIcons';
 import { go } from '../lib/basePath';
@@ -25,22 +25,17 @@ export default function GetStarted() {
   });
   const [language, setLanguage] = useState('');
   const [status, setStatus] = useState('');
-  const [method, setMethod] = useState<'expert' | 'self' | ''>('');
 
-  // Journey is an optional intent hint — the funnel only requires the three
-  // qualifying answers below.
-  const ready = language && status && method;
-
-  // Expert → dedicated plans page with Expert view preselected (choose a
-  // package); Self → book customizer.
-  const destination = () => (method === 'expert' ? '/plans?plan=expert' : '/customize');
+  // Journey is an optional intent hint — the funnel only requires the two
+  // qualifying answers below, then sends the visitor to the plans.
+  const ready = language && status;
 
   const proceed = () => {
     if (!ready) return;
     try {
       sessionStorage.setItem(
         'ob_onboarding',
-        JSON.stringify({ journey, language, manuscript_status: status, publish_path: method })
+        JSON.stringify({ journey, language, manuscript_status: status, publish_path: 'expert' })
       );
     } catch {
       /* ignore */
@@ -49,12 +44,11 @@ export default function GetStarted() {
       journey,
       language,
       manuscript_status: status,
-      publish_path: method,
+      publish_path: 'expert',
     });
-    // Go straight to the chosen path — no sign-up wall. Plans is public, and the
-    // customizer lets visitors design freely; login is requested later (choosing
-    // a plan / saving a design). The selection is stashed for checkout.
-    go(destination());
+    // Go straight to the plans — no sign-up wall. Plans is public; login is
+    // requested later (choosing a plan). The selection is stashed for checkout.
+    go('/plans');
   };
 
   const Radio = ({
@@ -172,70 +166,6 @@ export default function GetStarted() {
           </div>
         </div>
 
-        {/* Publish method */}
-        <div className="mb-10">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">
-            {g.methodHeading} <span className="text-red-500">*</span>
-          </h2>
-          <div className="grid md:grid-cols-2 gap-5">
-            {/* Expert */}
-            <button
-              type="button"
-              onClick={() => setMethod('expert')}
-              className={`text-left rounded-2xl border-2 p-6 transition-all ${
-                method === 'expert'
-                  ? 'border-amber-500 ring-2 ring-amber-200 bg-amber-50/40'
-                  : 'border-gray-200 hover:border-amber-300'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">{g.expertTitle}</h3>
-                <Users className="w-8 h-8 text-amber-600" />
-              </div>
-              <p className="text-sm text-gray-500 mb-4">{g.expertTagline}</p>
-              <ul className="space-y-2">
-                {g.expertPoints.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2 text-gray-700 text-sm">
-                    <Check className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                    {p}
-                  </li>
-                ))}
-              </ul>
-              <p className="inline-flex items-center gap-1 text-amber-700 text-xs font-semibold mt-4">
-                Next: choose your package <ArrowRight className="w-3 h-3" />
-              </p>
-            </button>
-
-            {/* Self */}
-            <button
-              type="button"
-              onClick={() => setMethod('self')}
-              className={`text-left rounded-2xl border-2 p-6 transition-all ${
-                method === 'self'
-                  ? 'border-amber-500 ring-2 ring-amber-200 bg-amber-50/40'
-                  : 'border-gray-200 hover:border-amber-300'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">{g.selfTitle}</h3>
-                <Laptop className="w-8 h-8 text-amber-600" />
-              </div>
-              <p className="text-sm text-gray-500 mb-4">{g.selfTagline}</p>
-              <ul className="space-y-2">
-                {g.selfPoints.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2 text-gray-700 text-sm">
-                    <Check className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                    {p}
-                  </li>
-                ))}
-              </ul>
-              <p className="inline-flex items-center gap-1 text-amber-700 text-xs font-semibold mt-4">
-                Next: design your book <ArrowRight className="w-3 h-3" />
-              </p>
-            </button>
-          </div>
-        </div>
-
         {/* CTA */}
         <div className="text-center">
           <button
@@ -248,12 +178,11 @@ export default function GetStarted() {
           </button>
           {!ready ? (
             <p className="text-sm text-gray-400 mt-3">
-              Please select a language, your manuscript status, and a publishing option to continue.
+              Please select a language and your manuscript status to continue.
             </p>
           ) : (
             <p className="text-sm text-gray-500 mt-3">
-              No account needed to look — you can explore
-              {method === 'expert' ? ' the plans' : ' the book designer'} right away.
+              No account needed to look — you can explore the plans right away.
             </p>
           )}
         </div>
