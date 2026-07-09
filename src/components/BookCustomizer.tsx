@@ -36,37 +36,99 @@ interface Suggestion {
 }
 
 // Rule-based suggestions: contextual nudges based on what the author has picked.
-// Each rule only fires when the recommended option isn't already selected.
+//
+// Conflict-free by construction: candidates are generated in priority order,
+// then we keep at most ONE suggestion per field. Each rule's target value is
+// chosen so it can never be "undone" by another rule (e.g. the hardback paper
+// nudge accepts 130 GSM art paper, so a colour+hardback book settles on art
+// paper instead of ping-ponging between two paper suggestions).
 function getSuggestions(c: CustomizationData): Suggestion[] {
-  const s: Suggestion[] = [];
+  const candidates: Suggestion[] = [];
   const isLarge = c.bookSize === 'doubledemy';
-  const premiumCover = ['foil', 'embossed', 'textured'].includes(c.coverDesign);
+  const isColour = c.interiorColor === 'color';
+  const premiumCover = ['foil', 'embossed'].includes(c.coverDesign);
 
-  if (c.interiorColor === 'color' && !['glossy', 'matte'].includes(c.paperType))
-    s.push({ id: 'color-paper', text: 'Full-colour interiors look sharpest on glossy paper.', ctaLabel: 'Use Glossy Paper', field: 'paperType', value: 'glossy' });
+  // --- Paper (one winner) ---
+  if (isColour && c.paperType !== 'art130')
+    candidates.push({ id: 'colour-paper', text: 'Full-colour pages look sharpest on coated 130 GSM art paper.', ctaLabel: 'Use 130 GSM Art Paper', field: 'paperType', value: 'art130' });
+  else if (c.binding === 'hardback' && !['cream90', 'art130'].includes(c.paperType))
+    candidates.push({ id: 'hardback-paper', text: 'Hardbacks feel best on heavier 90 GSM premium cream paper.', ctaLabel: 'Use 90 GSM Premium Cream', field: 'paperType', value: 'cream90' });
+  else if (!isLarge && !isColour && c.coverDesign === 'standard' && c.paperType === 'std70')
+    candidates.push({ id: 'novel-paper', text: 'For a classic novel, 90 GSM cream paper gives a more refined reading feel.', ctaLabel: 'Try 90 GSM Cream', field: 'paperType', value: 'cream90' });
 
-  if (c.interiorColor === 'color' && c.binding !== 'hardback')
-    s.push({ id: 'color-hardback', text: 'Colour photo books hold up better as a hardback.', ctaLabel: 'Make it Hardback', field: 'binding', value: 'hardback' });
+  // --- Binding (one winner) ---
+  if (isColour && c.binding !== 'hardback')
+    candidates.push({ id: 'colour-hardback', text: 'Colour photo books hold up much better as a hardback.', ctaLabel: 'Make it Hardback', field: 'binding', value: 'hardback' });
+  else if (premiumCover && c.binding !== 'hardback')
+    candidates.push({ id: 'cover-hardback', text: 'A premium cover feels best on a hardback.', ctaLabel: 'Make it Hardback', field: 'binding', value: 'hardback' });
 
-  if (isLarge && c.interiorColor !== 'color')
-    s.push({ id: 'large-color', text: 'Large formats really shine in full colour.', ctaLabel: 'Switch to Full Colour', field: 'interiorColor', value: 'color' });
+  // --- Interior colour (one winner) ---
+  if (isLarge && !isColour)
+    candidates.push({ id: 'large-colour', text: 'Large coffee-table sizes really shine in full colour.', ctaLabel: 'Switch to Full Colour', field: 'interiorColor', value: 'color' });
+  else if (c.layoutOption === 'illustrated' && !isColour)
+    candidates.push({ id: 'illus-colour', text: 'Illustrated layouts come alive in full colour.', ctaLabel: 'Switch to Full Colour', field: 'interiorColor', value: 'color' });
 
+  // --- Layout (one winner) ---
   if (isLarge && c.layoutOption !== 'illustrated')
-    s.push({ id: 'large-illustrated', text: 'Coffee-table sizes pair well with an illustrated layout.', ctaLabel: 'Use Illustrated Layout', field: 'layoutOption', value: 'illustrated' });
+    candidates.push({ id: 'large-illustrated', text: 'Coffee-table sizes pair well with an illustrated layout.', ctaLabel: 'Use Illustrated Layout', field: 'layoutOption', value: 'illustrated' });
 
-  if (c.layoutOption === 'illustrated' && c.interiorColor !== 'color')
-    s.push({ id: 'illus-color', text: 'Illustrated layouts come alive in full colour.', ctaLabel: 'Switch to Full Colour', field: 'interiorColor', value: 'color' });
+  // Keep at most one suggestion per field, then cap the list so it stays focused.
+  const seen = new Set<keyof CustomizationData>();
+  const out: Suggestion[] = [];
+  for (const s of candidates) {
+    if (seen.has(s.field)) continue;
+    seen.add(s.field);
+    out.push(s);
+  }
+  return out.slice(0, 3);
+}
 
-  if (premiumCover && c.binding !== 'hardback')
-    s.push({ id: 'cover-hardback', text: 'A premium cover feels best on a hardback.', ctaLabel: 'Make it Hardback', field: 'binding', value: 'hardback' });
+// Plain-language explainers for a first-time author who may know nothing about
+// publishing. Each section shows a one-line subtitle plus an expandable
+// "What's this?" with a friendly, jargon-free explanation.
+const SECTION_INFO: Record<string, { subtitle: string; body: string }> = {
+  paper: {
+    subtitle: 'GSM is simply how thick and heavy the paper is.',
+    body: 'GSM (grams per square metre) tells you how thick the paper is. 70–80 GSM is normal for novels — light and easy to hold. 90 GSM feels more premium. 130 GSM art paper is thick and coated, which keeps photos and colours crisp. When in doubt, 70 GSM Natural is the safe, classic choice.',
+  },
+  cover: {
+    subtitle: 'The look and finish of the outside of your book.',
+    body: "The cover is what a reader sees first. 'Standard' is a clean, professional cover at no extra cost. Lamination (matte or gloss) protects it and changes how it feels. Embossing and foil add premium, touchable details — lovely for gifts, but not needed for a simple novel.",
+  },
+  layout: {
+    subtitle: 'How the words and pictures sit on each page.',
+    body: 'Layout is how your pages are arranged inside. Almost every novel and non-fiction book uses a single column. Two columns suit reference or academic books. Illustrated layouts are for books where pictures matter as much as the words.',
+  },
+  size: {
+    subtitle: "The width and height of your finished book (its 'trim size').",
+    body: 'Trim size is how big the finished book is. Demy is the classic novel size and a safe default. Larger sizes like Double Demy suit photo and coffee-table books. Not sure? Demy or Royal works for most fiction and non-fiction.',
+  },
+  colour: {
+    subtitle: 'Black & white pages, or full colour throughout.',
+    body: "This is the colour of the pages inside — not the cover. Black & white is standard and much cheaper, and it's all a text-only book needs. Choose full colour only if your inside pages have photos, illustrations or colour charts.",
+  },
+  binding: {
+    subtitle: 'Soft cover (paperback) or hard cover (hardback).',
+    body: 'Binding is how the book is held together. Paperback — also called softback — has a flexible card cover, so it is lighter and more affordable. Hardback (hardcover) has a stiff board cover: more durable and premium, and it lasts for years. Most first books start as paperback.',
+  },
+};
 
-  if (c.binding === 'hardback' && c.paperType !== 'premium')
-    s.push({ id: 'hardback-paper', text: 'Hardbacks pair beautifully with Premium Cream paper.', ctaLabel: 'Use Premium Cream', field: 'paperType', value: 'premium' });
-
-  if (!isLarge && c.interiorColor === 'bw' && c.coverDesign === 'standard' && c.paperType === 'glossy')
-    s.push({ id: 'novel-paper', text: 'For a classic novel, Premium Cream paper gives a refined reading feel.', ctaLabel: 'Use Premium Cream', field: 'paperType', value: 'premium' });
-
-  return s.slice(0, 3); // keep it focused
+function SectionHelp({ section }: { section: keyof typeof SECTION_INFO }) {
+  const info = SECTION_INFO[section];
+  if (!info) return null;
+  return (
+    <div className="-mt-2 mb-4">
+      <p className="text-sm text-gray-600 mb-1">{info.subtitle}</p>
+      <details className="group">
+        <summary className="inline-flex items-center gap-1 text-sm font-medium text-amber-700 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          <HelpCircle className="w-4 h-4" /> New to this? What’s this?
+        </summary>
+        <p className="mt-2 text-sm text-gray-600 bg-amber-50 border border-amber-100 rounded-xl p-3">
+          {info.body}
+        </p>
+      </details>
+    </div>
+  );
 }
 
 export default function BookCustomizer() {
@@ -79,7 +141,7 @@ export default function BookCustomizer() {
   const [customization, setCustomization] = useState<CustomizationData>(() => {
     const p = new URLSearchParams(window.location.search);
     return {
-      paperType: p.get('paper') || 'glossy',
+      paperType: p.get('paper') || 'std70',
       interiorColor: p.get('color') || 'bw',
       binding: p.get('binding') || 'paperback',
       coverDesign: p.get('cover') || 'standard',
@@ -272,6 +334,7 @@ export default function BookCustomizer() {
                 <Palette className="w-6 h-6 text-amber-600" />
                 <h3 className="text-2xl font-bold text-gray-900">Paper Type</h3>
               </div>
+              <SectionHelp section="paper" />
               <div className="grid grid-cols-2 gap-4">
                 {paperTypes.map((paper) => (
                   <button
@@ -298,6 +361,7 @@ export default function BookCustomizer() {
                 <Book className="w-6 h-6 text-rose-600" />
                 <h3 className="text-2xl font-bold text-gray-900">Cover Design</h3>
               </div>
+              <SectionHelp section="cover" />
               <div className="grid grid-cols-2 gap-4">
                 {coverDesigns.map((cover) => (
                   <button
@@ -324,6 +388,7 @@ export default function BookCustomizer() {
                 <Layout className="w-6 h-6 text-orange-600" />
                 <h3 className="text-2xl font-bold text-gray-900">Layout Style</h3>
               </div>
+              <SectionHelp section="layout" />
               <div className="grid grid-cols-2 gap-4">
                 {layoutOptions.map((layout) => (
                   <button
@@ -350,6 +415,7 @@ export default function BookCustomizer() {
                 <Ruler className="w-6 h-6 text-purple-600" />
                 <h3 className="text-2xl font-bold text-gray-900">Book Size</h3>
               </div>
+              <SectionHelp section="size" />
               <div className="grid grid-cols-2 gap-4">
                 {bookSizes.map((size) => (
                   <button
@@ -380,6 +446,7 @@ export default function BookCustomizer() {
                 <Droplet className="w-6 h-6 text-blue-600" />
                 <h3 className="text-2xl font-bold text-gray-900">Interior Color</h3>
               </div>
+              <SectionHelp section="colour" />
               <div className="grid grid-cols-2 gap-4">
                 {colorOptions.map((opt) => (
                   <button
@@ -404,6 +471,7 @@ export default function BookCustomizer() {
                 <Layers className="w-6 h-6 text-green-600" />
                 <h3 className="text-2xl font-bold text-gray-900">Binding</h3>
               </div>
+              <SectionHelp section="binding" />
               <div className="grid grid-cols-2 gap-4">
                 {bindingOptions.map((opt) => (
                   <button
@@ -474,14 +542,17 @@ export default function BookCustomizer() {
                 </div>
 
                 <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-2xl mb-6">
-                  <p className="text-gray-600 text-sm mb-2">Estimated Production Cost (Per Book)</p>
-                  <p className="text-4xl font-bold text-amber-600">₹{estimatedPrice.toLocaleString()}</p>
+                  <p className="text-gray-600 text-sm mb-2">Add-ons subtotal</p>
+                  <p className="text-4xl font-bold text-amber-600">
+                    {estimatedPrice > 0 ? `+₹${estimatedPrice.toLocaleString()}` : 'Included'}
+                  </p>
                   <p className="text-xs text-gray-600 mt-2">
-                    This is the production cost per unit. Varies by order quantity and plan tier.
+                    These are optional upgrades on top of your publishing plan. Pick a plan and see the
+                    combined total at checkout — the standard choice in each section is included free.
                   </p>
                   {questionnaireImpact > 0 && (
                     <p className="text-xs text-amber-700 mt-1">
-                      Includes ₹{questionnaireImpact.toLocaleString()} based on your answers above (e.g. cover design, word count, images).
+                      Includes ₹{questionnaireImpact.toLocaleString()} based on your answers above (e.g. word count, images).
                     </p>
                   )}
                 </div>
@@ -514,11 +585,11 @@ export default function BookCustomizer() {
                 )}
 
                 <div className="space-y-3 p-4 bg-blue-50 rounded-xl mb-6 border border-blue-200">
-                  <p className="text-sm text-blue-900 font-semibold">Pro Tip:</p>
+                  <p className="text-sm text-blue-900 font-semibold">Good to know:</p>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>✓ Larger orders reduce per-unit cost</li>
-                    <li>✓ Premium options add ₹500-5000</li>
-                    <li>✓ Professional plans include free design</li>
+                    <li>✓ The standard choice in each section is included free</li>
+                    <li>✓ Only upgrades add to your add-ons subtotal</li>
+                    <li>✓ Add-ons combine with your plan price at checkout</li>
                   </ul>
                 </div>
 

@@ -18,6 +18,10 @@ const planColors = [
 // Number of features shown before the list collapses.
 const COLLAPSED_COUNT = 5;
 
+// A plan whose price has no digits (e.g. "Custom") is quote-based: it routes to
+// the Request-a-quote flow instead of straight to checkout.
+const isQuotePlan = (price: string) => !/[0-9]/.test(price);
+
 
 function PlanCard({
   plan,
@@ -38,6 +42,7 @@ function PlanCard({
   const Icon = planIcons[planIndex % planIcons.length];
   const color = planColors[planIndex % planColors.length];
   const canCollapse = plan.features.length > COLLAPSED_COUNT;
+  const quote = isQuotePlan(plan.price);
   // Selected card shows everything; others stay compact.
   const visibleFeatures = isSelected ? plan.features : plan.features.slice(0, COLLAPSED_COUNT);
 
@@ -91,7 +96,7 @@ function PlanCard({
 
         <div className="mb-6 flex items-baseline gap-x-2 whitespace-nowrap">
           <span className="text-3xl font-bold text-gray-900">{plan.price}</span>
-          <span className="text-sm text-gray-500">one-time</span>
+          <span className="text-sm text-gray-500">{quote ? 'tailored quote' : 'one-time'}</span>
         </div>
 
         <button
@@ -101,7 +106,7 @@ function PlanCard({
           }}
           className={`w-full bg-gradient-to-r ${color} text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all mb-6`}
         >
-          Get Started
+          {quote ? 'Request a quote' : 'Get Started'}
         </button>
 
         <div className="space-y-4">
@@ -162,8 +167,14 @@ export default function PricingPlans() {
   };
 
   // Logged-in users go straight to checkout for the plan; visitors log in /
-  // sign up first, then continue to checkout for the chosen plan.
+  // sign up first, then continue to checkout for the chosen plan. Quote-based
+  // plans (e.g. Custom) route to the Request-a-quote flow instead.
   const handleGetStarted = (plan: string) => {
+    const p = pricing.plans.find((pl) => pl.name === plan);
+    if (p && isQuotePlan(p.price)) {
+      go(`/quote?plan=${encodeURIComponent(plan)}`);
+      return;
+    }
     if (user) {
       goToCheckout(plan);
     } else {
@@ -267,7 +278,7 @@ export default function PricingPlans() {
                 <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
                 <div className="mt-1 flex items-baseline gap-1 flex-wrap">
                   <span className="text-xl font-bold text-gray-900">{plan.price}</span>
-                  <span className="text-xs text-gray-500">one-time</span>
+                  <span className="text-xs text-gray-500">{isQuotePlan(plan.price) ? 'tailored quote' : 'one-time'}</span>
                 </div>
                 <span className="mt-3 text-xs font-semibold text-amber-700">View details →</span>
               </button>
@@ -336,7 +347,7 @@ export default function PricingPlans() {
               <p className="text-white/90 text-sm mt-1">{detailPlan.tagline}</p>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="text-3xl font-bold">{detailPlan.price}</span>
-                <span className="text-sm text-white/80">one-time</span>
+                <span className="text-sm text-white/80">{isQuotePlan(detailPlan.price) ? 'tailored quote' : 'one-time'}</span>
               </div>
             </div>
 
@@ -359,7 +370,7 @@ export default function PricingPlans() {
                 }}
                 className="w-full mt-6 bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700"
               >
-                Get Started
+                {isQuotePlan(detailPlan.price) ? 'Request a quote' : 'Get Started'}
               </button>
             </div>
           </div>

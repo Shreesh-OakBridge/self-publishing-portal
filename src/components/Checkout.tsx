@@ -12,9 +12,9 @@ const priceToNumber = (p: string) => Number((p || '').replace(/[^0-9.]/g, '')) |
 // Fallback royalty rates by plan, used only if a CMS plan is missing its rate.
 const PLAN_ROYALTY_FALLBACK: Record<string, number> = {
   Starter: 30,
-  Professional: 45,
-  Excellence: 55,
-  Elite: 60,
+  Essential: 45,
+  Professional: 55,
+  Custom: 60,
 };
 
 interface Customization {
