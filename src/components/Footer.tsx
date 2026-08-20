@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Twitter, Youtube, Send, CheckCircle } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
+import type { NavLink } from '../content/defaults';
 import { supabase } from '../lib/supabase';
 import { go, withBase, stripBase } from '../lib/basePath';
+import { linkKind } from '../lib/navLinks';
 
 export default function Footer() {
-  const { footer, branding } = useContent();
+  const { footer, branding, navigation } = useContent();
 
   const socials = [
     { url: footer.social?.facebook, Icon: Facebook, label: 'Facebook' },
@@ -45,6 +47,16 @@ export default function Footer() {
   const heading = 'text-xs font-bold uppercase tracking-wider text-gray-500 mb-5';
   const link = 'text-gray-300 hover:text-amber-500 transition-colors';
 
+  // Renders a content-managed footer link as the right element for its kind.
+  const FooterLink = ({ item }: { item: NavLink }) => {
+    const kind = linkKind(item.url);
+    if (kind === 'external')
+      return <a href={item.url} target="_blank" rel="noopener noreferrer" className={link}>{item.label}</a>;
+    if (kind === 'section')
+      return <button onClick={() => goToSection(item.url.slice(1))} className={link}>{item.label}</button>;
+    return <a href={withBase(item.url)} className={link}>{item.label}</a>;
+  };
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-16 md:py-20">
@@ -66,7 +78,7 @@ export default function Footer() {
             </div>
             <p className="text-gray-400 text-sm leading-relaxed max-w-xs">{footer.tagline}</p>
 
-            {socials.length > 0 && (
+            {navigation.showSocial && socials.length > 0 && (
               <div className="flex items-center gap-2.5 mt-6">
                 {socials.map(({ url, Icon, label }) => (
                   <a
@@ -84,50 +96,47 @@ export default function Footer() {
             )}
           </div>
 
-          {/* Company */}
-          <nav className="lg:col-span-2">
-            <h4 className={heading}>Company</h4>
-            <ul className="space-y-3 text-sm">
-              <li><a href={withBase('/about')} className={link}>About Us</a></li>
-              <li><a href={withBase('/services')} className={link}>Services</a></li>
-              <li><a href={withBase('/blog')} className={link}>Blog</a></li>
-              <li><button onClick={() => goToSection('process')} className={link}>Our Process</button></li>
-              <li><a href={withBase('/faq')} className={link}>FAQ</a></li>
-            </ul>
-          </nav>
-
-          {/* Useful Links */}
-          <nav className="lg:col-span-2">
-            <h4 className={heading}>Explore</h4>
-            <ul className="space-y-3 text-sm">
-              <li><button onClick={() => goToSection('home')} className={link}>Home</button></li>
-              <li><button onClick={() => goToSection('plans')} className={link}>Pricing Plans</button></li>
-              <li><a href={withBase('/customize')} className={link}>Customize a Book</a></li>
-              <li><a href={withBase('/royalty-calculator')} className={link}>Royalty Calculator</a></li>
-              <li><button onClick={() => goToSection('submit')} className={link}>Submit Manuscript</button></li>
-            </ul>
-          </nav>
+          {/* Link columns — content-driven (Admin → Navigation Management) */}
+          {navigation.footerColumns
+            .filter((c) => c.enabled)
+            .map((col) => (
+              <nav key={col.heading} className="lg:col-span-2">
+                <h4 className={heading}>{col.heading}</h4>
+                <ul className="space-y-3 text-sm">
+                  {col.links
+                    .filter((l) => l.enabled)
+                    .map((l, i) => (
+                      <li key={`${l.label}-${i}`}>
+                        <FooterLink item={l} />
+                      </li>
+                    ))}
+                </ul>
+              </nav>
+            ))}
 
           {/* Contact */}
-          <div className="col-span-2 lg:col-span-2">
-            <h4 className={heading}>Contact</h4>
-            <ul className="space-y-3.5 text-sm text-gray-300">
-              <li className="flex items-start gap-3">
-                <Mail className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                <a href={`mailto:${footer.email}`} className="hover:text-amber-500 transition-colors break-all">{footer.email}</a>
-              </li>
-              <li className="flex items-start gap-3">
-                <Phone className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                <a href={`tel:${footer.phone}`} className="hover:text-amber-500 transition-colors">{footer.phone}</a>
-              </li>
-              <li className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                <span>{footer.location}</span>
-              </li>
-            </ul>
-          </div>
+          {navigation.showContact && (
+            <div className="col-span-2 lg:col-span-2">
+              <h4 className={heading}>Contact</h4>
+              <ul className="space-y-3.5 text-sm text-gray-300">
+                <li className="flex items-start gap-3">
+                  <Mail className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <a href={`mailto:${footer.email}`} className="hover:text-amber-500 transition-colors break-all">{footer.email}</a>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Phone className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <a href={`tel:${footer.phone}`} className="hover:text-amber-500 transition-colors">{footer.phone}</a>
+                </li>
+                <li className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <span>{footer.location}</span>
+                </li>
+              </ul>
+            </div>
+          )}
 
           {/* Newsletter */}
+          {navigation.showNewsletter && (
           <div className="col-span-2 lg:col-span-2">
             <h4 className={heading}>{footer.newsletterHeading}</h4>
             <p className="text-gray-400 text-sm leading-relaxed mb-4">{footer.newsletterText}</p>
@@ -162,6 +171,7 @@ export default function Footer() {
             )}
             {subState === 'err' && <p className="text-red-400 text-xs mt-1.5">Please enter a valid email.</p>}
           </div>
+          )}
         </div>
 
         {/* Bottom bar */}
@@ -170,9 +180,11 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} {footer.copyrightName}. All rights reserved.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm">
-            <a href={withBase('/terms')} className={link}>Terms &amp; Conditions</a>
-            <a href={withBase('/privacy')} className={link}>Privacy Policy</a>
-            <a href={withBase('/publishing-agreement')} className={link}>Publishing Agreement</a>
+            {navigation.legalLinks
+              .filter((l) => l.enabled)
+              .map((l, i) => (
+                <FooterLink key={`${l.label}-${i}`} item={l} />
+              ))}
           </div>
         </div>
       </div>

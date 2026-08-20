@@ -334,9 +334,10 @@ function Field({
 
 export default function ContentEditor() {
   const content = useContent();
-  // `homeLayout` is managed in the dedicated Layout tab, not here.
+  // `homeLayout` (Layout tab) and `navigation` (Navigation Management tab) have
+  // their own dedicated editors, so they're not shown in the generic list here.
   const sections = useMemo(
-    () => (Object.keys(content) as (keyof SiteContent)[]).filter((k) => k !== 'homeLayout'),
+    () => (Object.keys(content) as (keyof SiteContent)[]).filter((k) => k !== 'homeLayout' && k !== 'navigation'),
     [content]
   );
   const [active, setActive] = useState<keyof SiteContent>(sections[0]);

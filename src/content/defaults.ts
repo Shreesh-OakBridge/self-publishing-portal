@@ -406,6 +406,27 @@ export interface BlogContent {
   subheading: string;
 }
 
+// Admin-managed navigation. A link's `url` may be an in-app route ("/plans"),
+// a homepage section anchor ("#testimonials"), or an external URL ("https://…").
+export interface NavLink {
+  label: string;
+  url: string;
+  enabled: boolean;
+}
+export interface FooterColumn {
+  heading: string;
+  enabled: boolean;
+  links: NavLink[];
+}
+export interface NavigationContent {
+  header: NavLink[];
+  footerColumns: FooterColumn[];
+  legalLinks: NavLink[];
+  showContact: boolean;
+  showSocial: boolean;
+  showNewsletter: boolean;
+}
+
 export interface SiteContent {
   branding: BrandingContent;
   welcome: WelcomeContent;
@@ -419,6 +440,7 @@ export interface SiteContent {
   journeys: JourneysContent;
   authorHub: AuthorHubContent;
   blog: BlogContent;
+  navigation: NavigationContent;
   portfolio: PortfolioContent;
   testimonials: TestimonialsContent;
   pricing: PricingContent;
@@ -1167,6 +1189,48 @@ export const defaultContent: SiteContent = {
   blog: {
     heading: 'From the Cursive blog',
     subheading: 'Guides, author stories and tips to help you publish with confidence.',
+  },
+  navigation: {
+    header: [
+      { label: 'Home', url: '#home', enabled: true },
+      { label: 'Services', url: '/services', enabled: true },
+      { label: 'Testimonials', url: '#testimonials', enabled: true },
+      { label: 'Portfolio', url: '/portfolio', enabled: true },
+      { label: 'Plans', url: '/plans', enabled: true },
+      { label: 'Blog', url: '/blog', enabled: true },
+    ],
+    footerColumns: [
+      {
+        heading: 'Company',
+        enabled: true,
+        links: [
+          { label: 'About Us', url: '/about', enabled: true },
+          { label: 'Services', url: '/services', enabled: true },
+          { label: 'Blog', url: '/blog', enabled: true },
+          { label: 'Our Process', url: '#process', enabled: true },
+          { label: 'FAQ', url: '/faq', enabled: true },
+        ],
+      },
+      {
+        heading: 'Explore',
+        enabled: true,
+        links: [
+          { label: 'Home', url: '#home', enabled: true },
+          { label: 'Pricing Plans', url: '#plans', enabled: true },
+          { label: 'Customize a Book', url: '/customize', enabled: true },
+          { label: 'Royalty Calculator', url: '/royalty-calculator', enabled: true },
+          { label: 'Submit Manuscript', url: '#submit', enabled: true },
+        ],
+      },
+    ],
+    legalLinks: [
+      { label: 'Terms & Conditions', url: '/terms', enabled: true },
+      { label: 'Privacy Policy', url: '/privacy', enabled: true },
+      { label: 'Publishing Agreement', url: '/publishing-agreement', enabled: true },
+    ],
+    showContact: true,
+    showSocial: true,
+    showNewsletter: true,
   },
 };
 // End of default site content.
