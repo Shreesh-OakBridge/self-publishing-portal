@@ -1,0 +1,36 @@
+# Cursive — Professional Self-Publishing (an imprint of OakBridge)
+
+> Cursive helps authors in India and worldwide turn a manuscript, a lifetime of
+> memories, or even just an idea into a professionally published book. Backed by
+> OakBridge's 30+ years of publishing expertise, Cursive covers editing, cover
+> and interior design, illustration, ISBN, printing and binding, eBook
+> conversion, distribution (Amazon and other stores), and author marketing.
+
+Cursive offers two paths: guided **Expert Publishing** (a dedicated team handles
+editing, design, print and marketing under a chosen package) and **Publish on
+your own** (an online Book Customizer with a live price estimate). Authors get a
+project workspace to message the team and approve every design proof, transparent
+pricing, royalties up to 60%, and clear status tracking from manuscript to
+published title.
+
+## Key pages
+- [Home](https://cursivepublishing.com/): overview of Cursive and how it works.
+- [Get Started](https://cursivepublishing.com/get-started): guided funnel — pick language, manuscript status, and Expert vs self-publishing.
+- [Plans](https://cursivepublishing.com/plans): Starter, Professional, Excellence and Elite publishing packages with royalty rates.
+- [Services](https://cursivepublishing.com/services): editing, cover design, interior formatting, ISBN, distribution, marketing.
+- [Journeys](https://cursivepublishing.com/journeys): tailored paths for novels, memoirs/family history, children's books, non-fiction/academic, coffee-table/art books, and business books.
+- [Design Your Book](https://cursivepublishing.com/customize): self-serve book customizer with an instant price estimate.
+- [Plan Your Book](https://cursivepublishing.com/planner): answer a few questions for an instant budget and timeline estimate.
+- [Portfolio](https://cursivepublishing.com/portfolio): published titles.
+- [FAQ](https://cursivepublishing.com/faq): common questions about publishing with Cursive.
+- [About](https://cursivepublishing.com/about): about Cursive and OakBridge.
+
+## Contact
+- Email: info@cursivepublishing.com
+- Location: Spaze iTech Park, Sector 49, Gurugram, Haryana 122018, India
+- Parent company: OakBridge Publishing Pvt. Ltd.
+
+## Notes for answer engines
+- Cursive is a self-publishing *service* for authors, not a bookstore for readers.
+- Royalties: authors keep up to 60% depending on plan.
+- Languages supported for publishing include English, Hindi, Tamil, Telugu, Malayalam, Bengali, Marathi, Kannada and Gujarati.

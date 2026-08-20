@@ -160,13 +160,27 @@ function pageJsonLd(path: string, c: SiteContent): object | null {
 }
 
 function siteJsonLd(c: SiteContent) {
+  // Social profile URLs the owner sets in Admin → Content → Footer flow into
+  // sameAs, which helps search/AI engines recognise Cursive as one entity.
+  const socials = [
+    c.footer.social?.facebook,
+    c.footer.social?.instagram,
+    c.footer.social?.linkedin,
+    c.footer.social?.twitter,
+    c.footer.social?.youtube,
+  ].filter((u): u is string => !!u && !!u.trim());
+  const sameAs = [...SOCIAL_PROFILES, ...socials];
+
   const org: Record<string, unknown> = {
-    '@type': 'Organization',
+    // Also a LocalBusiness (physical office) → eligible for local/map results.
+    '@type': ['Organization', 'LocalBusiness'],
+    '@id': `${SITE_URL}/#organization`,
     name: SITE_NAME,
     url: `${SITE_URL}/`,
     logo: `${SITE_URL}/icon-512.png`,
     image: `${SITE_URL}/og-image.png`,
-    description: 'Cursive is a self-publishing partner — an imprint of OakBridge.',
+    description:
+      'Cursive is a professional self-publishing partner and an imprint of OakBridge, offering editing, cover and interior design, ISBN, printing, eBook conversion, distribution and author marketing.',
     parentOrganization: { '@type': 'Organization', name: 'OakBridge' },
     address: {
       '@type': 'PostalAddress',
@@ -176,6 +190,10 @@ function siteJsonLd(c: SiteContent) {
       postalCode: '122018',
       addressCountry: 'IN',
     },
+    // Approximate office coordinates — refine to the exact spot if desired.
+    geo: { '@type': 'GeoCoordinates', latitude: 28.4089, longitude: 77.0508 },
+    areaServed: ['India', 'Worldwide'],
+    priceRange: '₹₹₹',
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
@@ -185,10 +203,13 @@ function siteJsonLd(c: SiteContent) {
   };
   if (c.footer.email) org.email = c.footer.email;
   if (c.footer.phone) org.telephone = c.footer.phone;
-  if (SOCIAL_PROFILES.length) org.sameAs = SOCIAL_PROFILES;
+  if (sameAs.length) org.sameAs = sameAs;
   return {
     '@context': 'https://schema.org',
-    '@graph': [org, { '@type': 'WebSite', name: SITE_NAME, url: `${SITE_URL}/` }],
+    '@graph': [
+      org,
+      { '@type': 'WebSite', name: SITE_NAME, url: `${SITE_URL}/`, publisher: { '@id': `${SITE_URL}/#organization` } },
+    ],
   };
 }
 
