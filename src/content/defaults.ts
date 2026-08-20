@@ -397,8 +397,14 @@ export const HOME_SECTIONS: { key: string; label: string }[] = [
   { key: 'testimonials', label: 'Testimonials' },
   { key: 'plans', label: 'Pricing Plans' },
   { key: 'estimate', label: 'Instant Estimate Band' },
+  { key: 'blog', label: 'Blog (latest posts)' },
   { key: 'contact', label: 'Contact Form' },
 ];
+
+export interface BlogContent {
+  heading: string;
+  subheading: string;
+}
 
 export interface SiteContent {
   branding: BrandingContent;
@@ -412,6 +418,7 @@ export interface SiteContent {
   services: ServicesContent;
   journeys: JourneysContent;
   authorHub: AuthorHubContent;
+  blog: BlogContent;
   portfolio: PortfolioContent;
   testimonials: TestimonialsContent;
   pricing: PricingContent;
@@ -1156,6 +1163,10 @@ export const defaultContent: SiteContent = {
     social: { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '' },
     newsletterHeading: 'Stay in the loop',
     newsletterText: 'Publishing tips and author stories, now and then. No spam.',
+  },
+  blog: {
+    heading: 'From the Cursive blog',
+    subheading: 'Guides, author stories and tips to help you publish with confidence.',
   },
 };
 // End of default site content.

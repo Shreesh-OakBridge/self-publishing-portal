@@ -25,6 +25,8 @@ import PortfolioPage from './components/PortfolioPage';
 import FaqPage from './components/FaqPage';
 import JourneysPage from './components/JourneysPage';
 import JourneyPage from './components/JourneyPage';
+import BlogList from './components/BlogList';
+import BlogPost from './components/BlogPost';
 import Planner from './components/Planner';
 import EstimateBanner from './components/EstimateBanner';
 import ProjectPage from './components/ProjectPage';
@@ -118,6 +120,7 @@ function HomePage() {
     testimonials: () => <Testimonials />,
     plans: () => <PlansTeaser />,
     estimate: () => (!isAdmin ? <EstimateBanner /> : null),
+    blog: () => <BlogList limit={3} teaser />,
     contact: () => (
       <section id="contact" className="py-20 px-4 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50">
         <div className="max-w-4xl mx-auto">
@@ -262,6 +265,18 @@ function App() {
     return (
       <SubPage crumb="Plan Your Book">
         <Planner />
+      </SubPage>
+    );
+  if (path === '/blog')
+    return (
+      <SubPage crumb="Blog">
+        <BlogList />
+      </SubPage>
+    );
+  if (path.startsWith('/blog/'))
+    return (
+      <SubPage crumb="Blog">
+        <BlogPost slug={decodeURIComponent(path.slice('/blog/'.length))} />
       </SubPage>
     );
   if (path === '/plans')

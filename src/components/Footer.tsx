@@ -90,6 +90,7 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li><a href={withBase('/about')} className={link}>About Us</a></li>
               <li><a href={withBase('/services')} className={link}>Services</a></li>
+              <li><a href={withBase('/blog')} className={link}>Blog</a></li>
               <li><button onClick={() => goToSection('process')} className={link}>Our Process</button></li>
               <li><a href={withBase('/faq')} className={link}>FAQ</a></li>
             </ul>

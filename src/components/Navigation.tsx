@@ -211,6 +211,9 @@ export default function Navigation() {
             <button onClick={() => goTo('/plans')} className={deskLink(path === '/plans')}>
               Plans
             </button>
+            <button onClick={() => goTo('/blog')} className={deskLink(path === '/blog' || path.startsWith('/blog/'))}>
+              Blog
+            </button>
           </div>
 
           {/* Desktop CTA */}
@@ -335,6 +338,9 @@ export default function Navigation() {
             </button>
             <button onClick={() => goTo('/portfolio')} className={mobileLink(path === '/portfolio')}>
               Portfolio
+            </button>
+            <button onClick={() => goTo('/blog')} className={mobileLink(path === '/blog' || path.startsWith('/blog/'))}>
+              Blog
             </button>
             <button onClick={() => goTo('/plans')} className={mobileLink(path === '/plans')}>
               Plans

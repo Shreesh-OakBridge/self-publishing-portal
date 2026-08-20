@@ -22,6 +22,7 @@ const CRUMB_LABELS: Record<string, string> = {
   '/planner': 'Plan Your Book',
   '/portfolio': 'Portfolio',
   '/plans': 'Plans',
+  '/blog': 'Blog',
   '/get-started': 'Get Started',
   '/faq': 'FAQ',
   '/about': 'About Us',
@@ -69,6 +70,8 @@ function buildSeo(path: string, c: SiteContent): SeoResult {
       return { title: t(c.pages.publishingAgreement.title), description: 'Our publishing agreement terms.' };
     case '/customize':
       return { title: t('Design Your Book'), description: c.customizer.subheading };
+    case '/blog':
+      return { title: t('Blog'), description: c.blog.subheading };
     case '/royalty-calculator':
       return { title: t('Royalty Calculator'), description: c.royaltyCalc.subheading, noindex: true };
     case '/login':
@@ -250,6 +253,15 @@ function setJsonLd(id: string, obj: object | null) {
 }
 
 export function applySeo(path: string, c: SiteContent) {
+  // Individual blog posts own their <head> (BlogPost sets title/description/
+  // canonical/OG + its own Article schema from the fetched post). Keep the
+  // site-level Organization schema, but don't overwrite the post's tags.
+  if (path.startsWith('/blog/')) {
+    setJsonLd('ld-site', siteJsonLd(c));
+    setJsonLd('ld-page', null);
+    return;
+  }
+
   const { title, description, noindex } = buildSeo(path, c);
   const url = `${SITE_URL}${path === '' ? '/' : path}`;
 
