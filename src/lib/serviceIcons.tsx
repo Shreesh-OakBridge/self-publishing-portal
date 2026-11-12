@@ -5,7 +5,8 @@ import {
   PenTool, Palette, LayoutGrid, ShieldCheck, Globe, Megaphone, BookOpen,
   Feather, Edit3, FileText, Type, Image, BadgeCheck, Award, Truck, Send,
   BarChart3, TrendingUp, Users, Star, Sparkles, Bookmark, Library, Newspaper,
-  Mic, Camera, Tag, ScrollText, Heart, Lightbulb, Search, type LucideIcon,
+  Mic, Camera, Tag, ScrollText, Heart, Lightbulb, Search,
+  Scale, GraduationCap, Briefcase, Stethoscope, type LucideIcon,
 } from 'lucide-react';
 
 // Order here = order shown in the admin picker grid.
@@ -17,6 +18,7 @@ export const SERVICE_ICONS: Record<string, LucideIcon> = {
   Globe, Truck, Send,
   Megaphone, Mic, Tag, Search,
   BarChart3, TrendingUp, Users, Star, Sparkles, Heart, Lightbulb,
+  Scale, GraduationCap, Briefcase, Stethoscope,
 };
 
 export const SERVICE_ICON_NAMES = Object.keys(SERVICE_ICONS);

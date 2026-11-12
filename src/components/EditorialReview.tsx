@@ -25,7 +25,7 @@ interface Props {
 const REVIEW_LABEL: Record<string, { label: string; color: string }> = {
   requested: { label: 'Requested', color: 'bg-amber-100 text-amber-800' },
   in_review: { label: 'In Review', color: 'bg-blue-100 text-blue-700' },
-  changes_requested: { label: 'Changes Requested', color: 'bg-orange-100 text-orange-700' },
+  changes_requested: { label: 'Changes Requested', color: 'bg-amber-100 text-amber-800' },
   completed: { label: 'Completed', color: 'bg-green-100 text-green-800' },
 };
 
@@ -147,7 +147,7 @@ export default function EditorialReview({ manuscriptId, text, reviewStatus, revi
       </div>
 
       {/* Expert editorial review */}
-      <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-100 p-5">
+      <div className="bg-gradient-to-br from-amber-50 to-stone-50 rounded-2xl border border-amber-100 p-5">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           <UserCheck className="w-5 h-5 text-amber-600" />
           <h3 className="font-bold text-gray-900">Expert Editorial Review</h3>
@@ -181,7 +181,7 @@ export default function EditorialReview({ manuscriptId, text, reviewStatus, revi
               <button
                 onClick={requestExpert}
                 disabled={requesting}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:from-amber-700 hover:to-orange-700 disabled:opacity-50"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:from-amber-700 hover:to-amber-900 disabled:opacity-50"
               >
                 {requesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
                 Request Expert Review — {inr(price)}

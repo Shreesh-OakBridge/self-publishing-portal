@@ -291,7 +291,7 @@ export default function Planner() {
 
         {step === LAST_STEP && (
           <div className="space-y-5">
-            <div className="bg-gradient-to-br from-amber-600 to-orange-600 text-white rounded-3xl p-8 text-center">
+            <div className="bg-gradient-to-br from-amber-600 to-amber-800 text-white rounded-3xl p-8 text-center">
               <p className="uppercase tracking-wide text-white/80 text-xs mb-2">Indicative estimate</p>
               {estimate.planIsQuote ? (
                 <>

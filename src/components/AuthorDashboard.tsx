@@ -97,7 +97,7 @@ export default function AuthorDashboard({ showHeading = true }: { showHeading?: 
       {/* Author Hub entry point */}
       <button
         onClick={() => go('/hub')}
-        className="w-full flex items-center justify-between gap-4 bg-gradient-to-br from-amber-600 to-orange-600 text-white rounded-2xl p-5 mb-5 hover:from-amber-700 hover:to-orange-700 transition-all text-left"
+        className="w-full flex items-center justify-between gap-4 bg-gradient-to-br from-amber-600 to-amber-800 text-white rounded-2xl p-5 mb-5 hover:from-amber-700 hover:to-amber-900 transition-all text-left"
       >
         <div className="flex items-center gap-3 min-w-0">
           <span className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
@@ -114,7 +114,7 @@ export default function AuthorDashboard({ showHeading = true }: { showHeading?: 
       {loading ? (
         <p className="text-gray-500">Loading…</p>
       ) : books.length === 0 ? (
-        <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 border border-amber-100 rounded-2xl p-8 sm:p-10 text-center">
+        <div className="bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50 border border-amber-100 rounded-2xl p-8 sm:p-10 text-center">
           <Sparkles className="w-10 h-10 text-amber-500 mx-auto mb-4" />
           <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
             Your story is still unwritten on these shelves
@@ -127,7 +127,7 @@ export default function AuthorDashboard({ showHeading = true }: { showHeading?: 
           </p>
           <button
             onClick={() => go('/get-started')}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-8 py-3.5 rounded-full font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-sm"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-800 text-white px-8 py-3.5 rounded-full font-semibold hover:from-amber-700 hover:to-amber-900 transition-all shadow-sm"
           >
             Begin Your Publishing Journey <ArrowRight className="w-4 h-4" />
           </button>

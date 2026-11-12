@@ -218,7 +218,7 @@ export default function AccountPage() {
           {/* Tabs: vertical sidebar on desktop, horizontal scroll on mobile */}
           <aside className="md:w-60 md:flex-shrink-0 mb-6 md:mb-0">
             <div className="flex items-center gap-3 mb-5 px-1">
-              <span className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center text-lg font-bold flex-shrink-0">
+              <span className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-500 to-amber-800 text-white flex items-center justify-center text-lg font-bold flex-shrink-0">
                 {initial}
               </span>
               <div className="min-w-0">

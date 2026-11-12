@@ -272,7 +272,7 @@ export default function BookCustomizer() {
           <div className="space-y-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <Palette className="w-6 h-6 text-amber-600" />
+                <Palette className="w-6 h-6 text-amber-700" />
                 <h3 className="text-2xl font-bold text-gray-900">Paper Type</h3>
               </div>
               <SectionHelp info={customizer.explainers.paper} />
@@ -289,7 +289,7 @@ export default function BookCustomizer() {
                   >
                     <h4 className="font-bold text-gray-900">{paper.name}</h4>
                     <p className="text-sm text-gray-600 mb-2">{paper.desc}</p>
-                    <p className="text-sm font-semibold text-amber-600">
+                    <p className="text-sm font-semibold text-amber-700">
                       +₹{paper.price}
                     </p>
                   </button>
@@ -299,7 +299,7 @@ export default function BookCustomizer() {
 
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <Book className="w-6 h-6 text-rose-600" />
+                <Book className="w-6 h-6 text-amber-700" />
                 <h3 className="text-2xl font-bold text-gray-900">Cover Design</h3>
               </div>
               <SectionHelp info={customizer.explainers.cover} />
@@ -310,13 +310,13 @@ export default function BookCustomizer() {
                     onClick={() => setCustomization({ ...customization, coverDesign: cover.id })}
                     className={`p-4 rounded-xl border-2 transition-all text-left ${
                       customization.coverDesign === cover.id
-                        ? 'border-rose-500 bg-rose-50'
-                        : 'border-gray-300 bg-white hover:border-rose-300'
+                        ? 'border-amber-600 bg-amber-50'
+                        : 'border-gray-300 bg-white hover:border-amber-300'
                     }`}
                   >
                     <h4 className="font-bold text-gray-900">{cover.name}</h4>
                     <p className="text-sm text-gray-600 mb-2">{cover.desc}</p>
-                    <p className="text-sm font-semibold text-rose-600">
+                    <p className="text-sm font-semibold text-amber-700">
                       +₹{cover.price}
                     </p>
                   </button>
@@ -326,7 +326,7 @@ export default function BookCustomizer() {
 
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <Layout className="w-6 h-6 text-orange-600" />
+                <Layout className="w-6 h-6 text-amber-700" />
                 <h3 className="text-2xl font-bold text-gray-900">Layout Style</h3>
               </div>
               <SectionHelp info={customizer.explainers.layout} />
@@ -337,13 +337,13 @@ export default function BookCustomizer() {
                     onClick={() => setCustomization({ ...customization, layoutOption: layout.id })}
                     className={`p-4 rounded-xl border-2 transition-all text-left ${
                       customization.layoutOption === layout.id
-                        ? 'border-orange-500 bg-orange-50'
-                        : 'border-gray-300 bg-white hover:border-orange-300'
+                        ? 'border-amber-600 bg-amber-50'
+                        : 'border-gray-300 bg-white hover:border-amber-300'
                     }`}
                   >
                     <h4 className="font-bold text-gray-900">{layout.name}</h4>
                     <p className="text-sm text-gray-600 mb-2">{layout.desc}</p>
-                    <p className="text-sm font-semibold text-orange-600">
+                    <p className="text-sm font-semibold text-amber-700">
                       +₹{layout.price}
                     </p>
                   </button>
@@ -353,7 +353,7 @@ export default function BookCustomizer() {
 
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <Ruler className="w-6 h-6 text-purple-600" />
+                <Ruler className="w-6 h-6 text-amber-700" />
                 <h3 className="text-2xl font-bold text-gray-900">Book Size</h3>
               </div>
               <SectionHelp info={customizer.explainers.size} />
@@ -364,13 +364,13 @@ export default function BookCustomizer() {
                     onClick={() => setCustomization({ ...customization, bookSize: size.id })}
                     className={`p-4 rounded-xl border-2 transition-all text-left ${
                       customization.bookSize === size.id
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-300 bg-white hover:border-purple-300'
+                        ? 'border-amber-500 bg-amber-50'
+                        : 'border-gray-300 bg-white hover:border-amber-300'
                     }`}
                   >
                     <h4 className="font-bold text-gray-900">{size.name}</h4>
                     <p className="text-sm text-gray-600 mb-1">{size.desc}</p>
-                    <p className="text-xs font-semibold text-purple-600">
+                    <p className="text-xs font-semibold text-amber-700">
                       {sizeDims(size, customization.binding)}
                     </p>
                   </button>
@@ -452,7 +452,7 @@ export default function BookCustomizer() {
                           }`}
                         >
                           <span className="block text-sm font-bold text-gray-900">{pl.name}</span>
-                          <span className="block text-xs font-semibold text-amber-600">{pl.price}</span>
+                          <span className="block text-xs font-semibold text-amber-700">{pl.price}</span>
                         </button>
                       );
                     })}
@@ -508,7 +508,7 @@ export default function BookCustomizer() {
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-2xl mb-6">
+                <div className="bg-gradient-to-br from-amber-50 to-stone-50 p-6 rounded-2xl mb-6">
                   <p className="text-gray-600 text-sm font-semibold mb-3">Price breakup</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between items-center">
@@ -526,7 +526,7 @@ export default function BookCustomizer() {
                   </div>
                   <div className="flex justify-between items-baseline mt-3 pt-3 border-t border-amber-200">
                     <span className="text-gray-800 font-semibold">Total</span>
-                    <span className="text-3xl font-bold text-amber-600">
+                    <span className="text-3xl font-bold text-amber-700">
                       {!selectedPlan ? '—' : planIsQuote ? 'Custom quote' : `₹${grandTotal.toLocaleString()}`}
                     </span>
                   </div>
@@ -545,7 +545,7 @@ export default function BookCustomizer() {
                 {suggestions.length > 0 && (
                   <div className="mb-6">
                     <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-3">
-                      <Sparkles className="w-5 h-5 text-amber-600" />
+                      <Sparkles className="w-5 h-5 text-amber-700" />
                       Recommended for your book
                     </h4>
                     <div className="space-y-3">
@@ -581,7 +581,7 @@ export default function BookCustomizer() {
                 <button
                   onClick={handleOrderClick}
                   disabled={isSaving || !selectedPlanName}
-                  className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white py-4 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-900 transition-all shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart className="w-5 h-5" />
                   <span>

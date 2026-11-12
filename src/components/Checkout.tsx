@@ -5,17 +5,12 @@ import { useAuth } from '../lib/auth';
 import { useContent } from '../content/ContentProvider';
 import { go, withBase } from '../lib/basePath';
 import { track } from '../lib/track';
+import { PLAN_ROYALTY_FALLBACK } from '../lib/royalty';
 
 const inr = (n: number) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const priceToNumber = (p: string) => Number((p || '').replace(/[^0-9.]/g, '')) || 0;
 
-// Fallback royalty rates by plan, used only if a CMS plan is missing its rate.
-const PLAN_ROYALTY_FALLBACK: Record<string, number> = {
-  Starter: 30,
-  Essential: 45,
-  Professional: 55,
-  Custom: 60,
-};
+// Fallback print-royalty rates by plan live in lib/royalty (shared).
 
 interface Customization {
   id: string;
@@ -439,7 +434,7 @@ export default function Checkout() {
       {plan && (
         <p className="text-sm text-gray-700 mb-2">
           <span className="font-semibold">Plan:</span> {plan.name}
-          {royaltyRate != null && <span className="text-gray-500"> · Royalty {royaltyRate}%</span>}
+          {royaltyRate != null && <span className="text-gray-500"> · Print royalty {royaltyRate}% · eBook 100%</span>}
         </p>
       )}
       {royalty && !plan && (
@@ -494,7 +489,7 @@ export default function Checkout() {
           </div>
           <button
             onClick={() => go('/account')}
-            className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700"
+            className="w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-900"
           >
             Go to My Account
           </button>
@@ -691,7 +686,7 @@ export default function Checkout() {
             <button
               onClick={placeOrder}
               disabled={placing || conflict}
-              className="w-full mt-6 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 disabled:opacity-50"
+              className="w-full mt-6 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 to-amber-800 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-900 disabled:opacity-50"
             >
               {placing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
               <span>{placing ? 'Placing…' : paymentsLive ? 'Place Order & Pay' : 'Place Order'}</span>
@@ -745,7 +740,7 @@ export default function Checkout() {
                   setTermsModalOpen(false);
                   submitOrder();
                 }}
-                className="px-5 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 text-white text-sm font-semibold hover:from-amber-700 hover:to-orange-700"
+                className="px-5 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-800 text-white text-sm font-semibold hover:from-amber-700 hover:to-amber-900"
               >
                 I accept &amp; place order
               </button>

@@ -176,7 +176,7 @@ export default function CouponsPanel() {
         <button
           type="submit"
           disabled={saving}
-          className="mt-4 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:from-amber-700 hover:to-orange-700 disabled:opacity-50"
+          className="mt-4 bg-gradient-to-r from-amber-600 to-amber-800 text-white px-6 py-2.5 rounded-lg font-semibold hover:from-amber-700 hover:to-amber-900 disabled:opacity-50"
         >
           {saving ? 'Creating…' : 'Create coupon'}
         </button>

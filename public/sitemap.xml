@@ -51,6 +51,26 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://cursivepublishing.com/journey/lawyers-and-judges</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cursivepublishing.com/journey/academics</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cursivepublishing.com/journey/founders-and-executives</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cursivepublishing.com/journey/doctors</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://cursivepublishing.com/services</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

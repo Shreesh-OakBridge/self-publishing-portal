@@ -4,7 +4,7 @@ import { go } from '../lib/basePath';
 
 export default function AuthPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50 px-4 py-12">
       <div className="w-full max-w-md">
         <button
           onClick={() => go('/')}

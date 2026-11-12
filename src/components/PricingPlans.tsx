@@ -1,22 +1,29 @@
 import { useState, useEffect, useRef } from 'react';
-import { Check, Crown, Zap, Rocket, Sparkles, ChevronDown, ChevronUp, X, ArrowRight } from 'lucide-react';
+import { Check, Crown, Zap, Rocket, Sparkles, ChevronDown, ChevronUp, X, ArrowRight, Table2 } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import type { PricingPlan } from '../content/defaults';
 import { useAuth } from '../lib/auth';
 import { go } from '../lib/basePath';
 import { track } from '../lib/track';
 import AuthModal from './AuthModal';
+import TalkToUsModal from './TalkToUsModal';
+import { PlanComparison, PlanAddOns, PlanFaq } from './PlanSections';
 
 const planIcons = [Zap, Rocket, Crown, Sparkles];
+// One brand palette — gold through to ink brown.
 const planColors = [
-  'from-blue-500 to-cyan-500',
-  'from-amber-500 to-orange-500',
-  'from-rose-500 to-pink-500',
-  'from-purple-500 to-indigo-500',
+  'from-amber-400 to-amber-600',
+  'from-amber-500 to-amber-700',
+  'from-amber-600 to-amber-800',
+  'from-stone-600 to-stone-800',
 ];
 
-// Number of features shown before the list collapses.
-const COLLAPSED_COUNT = 5;
+// Number of features shown before the list collapses (cards carry the 6
+// headline deliverables; the full detail lives in the comparison table).
+const COLLAPSED_COUNT = 6;
+
+const scrollToId = (id: string) =>
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
 // A plan whose price has no digits (e.g. "Custom") is quote-based: it routes to
 // the Request-a-quote flow instead of straight to checkout.
@@ -75,9 +82,9 @@ function PlanCard({
       <div
         className={`h-9 flex items-center justify-center text-white font-bold text-sm ${
           isSelected
-            ? 'bg-gradient-to-r from-amber-600 to-orange-600'
+            ? 'bg-gradient-to-r from-amber-600 to-amber-800'
             : plan.popular
-            ? 'bg-gradient-to-r from-amber-500 to-orange-500'
+            ? 'bg-gradient-to-r from-amber-500 to-amber-700'
             : ''
         }`}
       >
@@ -95,8 +102,8 @@ function PlanCard({
         <p className="text-gray-600 mb-4 min-h-[3rem]">{plan.tagline}</p>
 
         <div className="mb-6 flex items-baseline gap-x-2 whitespace-nowrap">
-          <span className="text-3xl font-bold text-gray-900">{plan.price}</span>
-          <span className="text-sm text-gray-500">{quote ? 'tailored quote' : 'one-time'}</span>
+          <span className={`${quote ? 'text-2xl' : 'text-3xl'} font-bold text-gray-900`}>{plan.price}</span>
+          {!quote && <span className="text-sm text-gray-500">+ GST</span>}
         </div>
 
         <button
@@ -138,6 +145,16 @@ function PlanCard({
               )}
             </button>
           )}
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              scrollToId('compare');
+            }}
+            className="flex items-center gap-1.5 text-sm font-semibold text-amber-700 hover:text-amber-900 pt-1"
+          >
+            <Table2 className="w-4 h-4" /> Compare all features
+          </button>
         </div>
       </div>
     </div>
@@ -145,20 +162,12 @@ function PlanCard({
 }
 
 export default function PricingPlans() {
-  const { pricing, customizer } = useContent();
-  // Featured add-ons for the banner, priced live from the Customizer options so
-  // the figures always match what an author actually pays (never hardcoded).
-  const priceOf = (list: { id: string; price: number }[], id: string) =>
-    list.find((o) => o.id === id)?.price;
-  const addonHighlights = [
-    { label: 'Hardback', price: priceOf(customizer.bindingOptions, 'hardback') },
-    { label: 'Foil cover', price: priceOf(customizer.coverDesigns, 'foil') },
-    { label: 'Full colour', price: priceOf(customizer.colorOptions, 'color') },
-    { label: 'Premium paper', price: priceOf(customizer.paperTypes, 'cream90') },
-  ].filter((h): h is { label: string; price: number } => typeof h.price === 'number' && h.price > 0);
+  const { pricing } = useContent();
   const { user } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
+  // Quote-based plan (e.g. Custom) the visitor wants to talk to us about.
+  const [quotePlan, setQuotePlan] = useState<string | null>(null);
   // Pre-select a plan when arriving from the homepage teaser (/plans?plan=...).
   const planParam = new URLSearchParams(window.location.search).get('plan');
   const [selectedPlan, setSelectedPlan] = useState<string | null>(planParam);
@@ -169,17 +178,24 @@ export default function PricingPlans() {
     track('view', { page: 'plans' });
   }, []);
 
+  // Deep links like /plans#compare or /plans#add-ons scroll to that block.
+  useEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (id) setTimeout(() => scrollToId(id), 150);
+  }, []);
+
   const goToCheckout = (plan: string) => {
     go(`/checkout?plan=${encodeURIComponent(plan)}`);
   };
 
   // Logged-in users go straight to checkout for the plan; visitors log in /
-  // sign up first, then continue to checkout for the chosen plan. Quote-based
-  // plans (e.g. Custom) route to the Request-a-quote flow instead.
+  // sign up first (an account is needed to pay). Quote-based plans (e.g.
+  // Custom) open a public "talk to us" form instead — no login needed.
   const handleGetStarted = (plan: string) => {
     const p = pricing.plans.find((pl) => pl.name === plan);
     if (p && isQuotePlan(p.price)) {
-      go(`/quote?plan=${encodeURIComponent(plan)}`);
+      track('click_event', { label: 'plan_request_quote', plan });
+      setQuotePlan(plan);
       return;
     }
     if (user) {
@@ -196,53 +212,7 @@ export default function PricingPlans() {
         <div className="text-center mb-10">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">{pricing.heading}</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">{pricing.subheading}</p>
-        </div>
-
-        {/* Add-ons highlight — prominent, above the plans so authors know they can enhance any plan */}
-        <div className="mb-12">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-500 to-orange-600 p-[2px] shadow-lg">
-            <div className="rounded-[calc(1.5rem-2px)] bg-white px-6 py-6 sm:px-8 sm:py-7">
-              <div className="flex flex-col lg:flex-row lg:items-center gap-5">
-                <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow">
-                  <Sparkles className="w-7 h-7 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="inline-flex items-center gap-2 mb-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-white bg-amber-500 rounded-full px-2.5 py-0.5">
-                      Make it yours
-                    </span>
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Optional add-ons</span>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-                    Personalise your book with premium add-ons
-                  </h3>
-                  <p className="text-gray-600 text-sm mt-1 max-w-2xl">
-                    Upgrade the paper, cover finish, binding and colour — added on top of any plan. Mix and match to
-                    make your book truly yours.
-                  </p>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {addonHighlights.map((h) => (
-                      <span
-                        key={h.label}
-                        className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-3 py-1"
-                      >
-                        {h.label} +₹{h.price.toLocaleString()}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex-shrink-0 w-full lg:w-auto">
-                  <button
-                    onClick={() => go('/customize')}
-                    className="inline-flex items-center justify-center gap-2 w-full lg:w-auto bg-gradient-to-r from-amber-600 to-orange-600 text-white px-7 py-3.5 rounded-full text-base font-bold hover:from-amber-700 hover:to-orange-700 transition-all shadow-md"
-                  >
-                    Customize your book <ArrowRight className="w-5 h-5" />
-                  </button>
-                  <p className="text-center text-xs text-gray-400 mt-2">Free to explore · pay only for what you pick</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <p className="text-sm text-gray-500 mt-3">{pricing.gstNote}</p>
         </div>
 
         <>
@@ -283,7 +253,7 @@ export default function PricingPlans() {
                 <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
                 <div className="mt-1 flex items-baseline gap-1 flex-wrap">
                   <span className="text-xl font-bold text-gray-900">{plan.price}</span>
-                  <span className="text-xs text-gray-500">{isQuotePlan(plan.price) ? 'tailored quote' : 'one-time'}</span>
+                  <span className="text-xs text-gray-500">{isQuotePlan(plan.price) ? '' : '+ GST'}</span>
                 </div>
                 <span className="mt-3 text-xs font-semibold text-amber-700">View details →</span>
               </button>
@@ -291,7 +261,11 @@ export default function PricingPlans() {
           })}
         </div>
 
-        <div className="mt-12 bg-white rounded-2xl shadow-lg p-6 sm:p-8 max-w-4xl mx-auto">
+        <PlanComparison />
+        <PlanAddOns />
+        <PlanFaq />
+
+        <div className="mt-16 bg-white rounded-2xl shadow-lg p-6 sm:p-8 max-w-4xl mx-auto">
           <h3 className="text-2xl font-bold text-gray-900 mb-4">{pricing.imprintsHeading}</h3>
 
           {/* Desktop: full descriptions */}
@@ -317,6 +291,12 @@ export default function PricingPlans() {
             ))}
           </div>
         </div>
+        <p className="text-center text-sm text-gray-500 mt-10">
+          Prefer to design and print your book yourself?{' '}
+          <button onClick={() => go('/customize')} className="font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2">
+            Use the Book Customizer
+          </button>
+        </p>
         </>
       </div>
 
@@ -351,7 +331,7 @@ export default function PricingPlans() {
               <p className="text-white/90 text-sm mt-1">{detailPlan.tagline}</p>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="text-3xl font-bold">{detailPlan.price}</span>
-                <span className="text-sm text-white/80">{isQuotePlan(detailPlan.price) ? 'tailored quote' : 'one-time'}</span>
+                <span className="text-sm text-white/80">{isQuotePlan(detailPlan.price) ? '' : '+ GST'}</span>
               </div>
             </div>
 
@@ -372,7 +352,7 @@ export default function PricingPlans() {
                   setDetailPlan(null);
                   handleGetStarted(name);
                 }}
-                className="w-full mt-6 bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700"
+                className="w-full mt-6 bg-gradient-to-r from-amber-600 to-amber-800 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-900"
               >
                 {isQuotePlan(detailPlan.price) ? 'Request a quote' : 'Get Started'}
               </button>
@@ -380,6 +360,15 @@ export default function PricingPlans() {
           </div>
         </div>
       )}
+
+      <TalkToUsModal
+        open={!!quotePlan}
+        onClose={() => setQuotePlan(null)}
+        plan={quotePlan}
+        context={`Requested a quote for the ${quotePlan ?? ''} plan from the plans page.`}
+        name={(user?.user_metadata?.full_name as string) || undefined}
+        email={user?.email || undefined}
+      />
 
       <AuthModal
         open={authOpen}

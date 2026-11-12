@@ -137,7 +137,7 @@ export default function QuotePage() {
         </div>
         <button
           onClick={() => go('/account')}
-          className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700"
+          className="w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-900"
         >
           Go to My Account
         </button>
@@ -202,7 +202,7 @@ export default function QuotePage() {
         <button
           onClick={submit}
           disabled={submitting}
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 to-amber-800 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-900 disabled:opacity-50"
         >
           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
           <span>{submitting ? 'Sending…' : 'Send quote request'}</span>

@@ -5,9 +5,9 @@ import { track } from '../lib/track';
 
 const cardIcons = [Feather, Sparkles, BookOpen];
 const cardGradients = [
-  'from-amber-500 to-orange-500',
-  'from-rose-500 to-pink-500',
-  'from-orange-500 to-amber-500',
+  'from-amber-600 to-amber-800',
+  'from-stone-600 to-stone-800',
+  'from-amber-500 to-amber-700',
 ];
 
 export default function Hero() {
@@ -19,7 +19,7 @@ export default function Hero() {
   };
 
   return (
-    <section id="home" className="pt-32 pb-20 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50">
+    <section id="home" className="pt-32 pb-20 bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <div className="inline-flex items-center space-x-2 bg-amber-100 px-4 py-2 rounded-full mb-6">
@@ -29,7 +29,7 @@ export default function Hero() {
 
           <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
             {hero.headlineLine1}<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-rose-600">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-800">
               {hero.headlineLine2}
             </span>
           </h1>
@@ -41,7 +41,7 @@ export default function Hero() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button
               onClick={goToJourneys}
-              className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              className="bg-gradient-to-r from-amber-600 to-amber-800 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-amber-700 hover:to-amber-900 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
               {hero.primaryCta}
             </button>

@@ -64,7 +64,7 @@ export default function PortfolioPage() {
           {shown.map((book, i) => {
             const inner = (
               <>
-                <div className="aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 border border-amber-100 flex items-center justify-center mb-3 shadow-sm group-hover:shadow-md transition-shadow">
+                <div className="aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-br from-amber-100 to-amber-100 border border-amber-100 flex items-center justify-center mb-3 shadow-sm group-hover:shadow-md transition-shadow">
                   {book.coverUrl ? (
                     <img src={book.coverUrl} alt={book.coverAlt || `${book.title} by ${book.author}`} className="w-full h-full object-cover" />
                   ) : (

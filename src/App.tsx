@@ -2,7 +2,7 @@ import { useEffect, useState, ReactNode, Fragment, lazy, Suspense } from 'react'
 import { useAuth } from './lib/auth';
 import { useContent } from './content/ContentProvider';
 import { HOME_SECTIONS } from './content/defaults';
-import { stripBase } from './lib/basePath';
+import { stripBase, withBase } from './lib/basePath';
 import { useSeo } from './lib/seo';
 import { track } from './lib/track';
 import Navigation from './components/Navigation';
@@ -20,6 +20,7 @@ import HomeManuscriptSection from './components/HomeManuscriptSection';
 import Testimonials from './components/Testimonials';
 import ConfidenceBar from './components/ConfidenceBar';
 import PortfolioSection from './components/PortfolioSection';
+import { HomePaths, RoyaltyEstimator, HomeFaq, EditorialSample } from './components/HomeSections';
 import ServicesPage from './components/ServicesPage';
 import PortfolioPage from './components/PortfolioPage';
 import FaqPage from './components/FaqPage';
@@ -58,18 +59,19 @@ function HomePage() {
   const { user, isAdmin } = useAuth();
   const { homeLayout, welcome } = useContent();
 
-  // Immersive welcome overlay — shown once per browser session, and never when
+  // Immersive welcome overlay — shown once per visitor (remembered in this
+  // browser), and never when
   // arriving deep-linked to a specific section (e.g. /#plans).
   const [showWelcome, setShowWelcome] = useState(() => {
     try {
-      return !window.location.hash && sessionStorage.getItem('ob_welcomed') !== '1';
+      return !window.location.hash && localStorage.getItem('ob_welcomed') !== '1';
     } catch {
       return !window.location.hash;
     }
   });
   const dismissWelcome = () => {
     try {
-      sessionStorage.setItem('ob_welcomed', '1');
+      localStorage.setItem('ob_welcomed', '1');
     } catch {
       /* ignore */
     }
@@ -99,7 +101,7 @@ function HomePage() {
       user && !isAdmin ? (
         <section
           id="home"
-          className="pt-28 pb-12 px-4 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50"
+          className="pt-28 pb-12 px-4 bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50"
         >
           <div className="max-w-6xl mx-auto">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
@@ -117,12 +119,16 @@ function HomePage() {
     process: () => <VideoSection />,
     submit: () => <HomeManuscriptSection />,
     portfolio: () => <PortfolioSection />,
+    paths: () => <HomePaths />,
+    royalty: () => <RoyaltyEstimator />,
+    faq: () => <HomeFaq />,
+    editorialSample: () => <EditorialSample />,
     testimonials: () => <Testimonials />,
     plans: () => <PlansTeaser />,
     estimate: () => (!isAdmin ? <EstimateBanner /> : null),
     blog: () => <BlogList limit={3} teaser />,
     contact: () => (
-      <section id="contact" className="py-20 px-4 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50">
+      <section id="contact" className="py-20 px-4 bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50">
         <div className="max-w-4xl mx-auto">
           <ContactForm />
         </div>
@@ -186,7 +192,13 @@ function App() {
   // Lightweight path-based routing — no router dependency. The SPA rewrite in
   // vercel.json ensures these paths serve index.html in production. stripBase
   // removes the "/cursive" prefix so matches stay simple.
-  const path = stripBase(window.location.pathname);
+  let path = stripBase(window.location.pathname);
+  // /pricing is a common guess (and appears in old links) — serve the plans
+  // page and rewrite the URL to the canonical /plans, keeping any #anchor.
+  if (path === '/pricing') {
+    window.history.replaceState(null, '', withBase('/plans') + window.location.search + window.location.hash);
+    path = '/plans';
+  }
 
   // Funnel step 1: every page load (fires once per load; navigation is full-page).
   useEffect(() => {

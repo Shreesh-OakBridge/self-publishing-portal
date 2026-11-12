@@ -55,7 +55,18 @@ const leadColumns: Column<Lead>[] = [
   { header: 'Status', value: (l) => l.manuscript_status },
   { header: 'Preferred Plan', value: (l) => l.preferred_plan || '' },
   { header: 'Message', value: (l) => l.message || '' },
+  { header: 'Sample Chapter', value: (l) => (l.sample_path ? 'Yes' : '') },
 ];
+
+// Sample chapters live in a private bucket — open via a short-lived signed URL.
+async function openSample(path: string) {
+  const { data, error } = await supabase.storage.from('sample-chapters').createSignedUrl(path, 300);
+  if (error || !data?.signedUrl) {
+    alert('Could not open the sample file.');
+    return;
+  }
+  window.open(data.signedUrl, '_blank', 'noopener');
+}
 
 interface Lead {
   id: string;
@@ -67,6 +78,7 @@ interface Lead {
   manuscript_status: string;
   preferred_plan: string | null;
   message: string | null;
+  sample_path?: string | null;
   created_at: string;
 }
 
@@ -151,6 +163,12 @@ export default function AdminDashboard() {
     leadColumns,
     leadSort,
   );
+
+  // Admin keeps plain sans-serif headings (see .admin-ui in index.css).
+  useEffect(() => {
+    document.body.classList.add('admin-ui');
+    return () => document.body.classList.remove('admin-ui');
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -451,6 +469,14 @@ export default function AdminDashboard() {
                     </td>
                     <td className="px-4 py-3 text-gray-600 max-w-xs">
                       {lead.message || <span className="text-gray-400">—</span>}
+                      {lead.sample_path && (
+                        <button
+                          onClick={() => openSample(lead.sample_path!)}
+                          className="mt-1 block text-xs font-semibold text-amber-700 hover:underline"
+                        >
+                          Download sample chapter
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

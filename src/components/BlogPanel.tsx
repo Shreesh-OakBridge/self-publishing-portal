@@ -241,7 +241,7 @@ export default function BlogPanel() {
             <button
               onClick={save}
               disabled={saving}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:from-amber-700 hover:to-orange-700 disabled:opacity-50"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:from-amber-700 hover:to-amber-900 disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
               {saving ? 'Saving…' : 'Save post'}

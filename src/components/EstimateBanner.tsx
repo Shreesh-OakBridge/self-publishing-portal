@@ -14,7 +14,7 @@ export default function EstimateBanner() {
       <div className="max-w-5xl mx-auto rounded-3xl bg-gradient-to-br from-gray-900 via-gray-900 to-amber-900 text-white p-8 md:p-12 text-center relative overflow-hidden">
         {/* soft decorative glow */}
         <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-amber-500/20 blur-3xl" />
-        <div className="absolute -bottom-20 -left-10 w-64 h-64 rounded-full bg-orange-500/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-10 w-64 h-64 rounded-full bg-amber-500/10 blur-3xl" />
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-amber-200 text-sm font-semibold mb-4">
             <Calculator className="w-4 h-4" /> 60-second estimate

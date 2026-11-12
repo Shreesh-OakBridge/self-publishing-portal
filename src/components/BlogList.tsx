@@ -47,7 +47,7 @@ export default function BlogList({ limit, teaser = false }: { limit?: number; te
       onClick={() => go(`/blog/${p.slug}`)}
       className="text-left bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-amber-300 transition-all group flex flex-col"
     >
-      <div className="aspect-[16/9] bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center overflow-hidden">
+      <div className="aspect-[16/9] bg-gradient-to-br from-amber-100 to-amber-100 flex items-center justify-center overflow-hidden">
         {p.cover_url ? (
           <img src={p.cover_url} alt={p.title} className="w-full h-full object-cover" loading="lazy" />
         ) : (

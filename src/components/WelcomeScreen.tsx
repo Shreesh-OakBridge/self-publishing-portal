@@ -22,11 +22,11 @@ const LEAVES = 6;
 // backdrop (so the screen itself turns), the rest are book pages revealing the
 // homepage behind.
 const EXIT_PAGES = [
-  'bg-gradient-to-br from-stone-950 via-amber-950 to-orange-950',
-  'bg-gradient-to-br from-amber-50 to-orange-100',
-  'bg-gradient-to-br from-orange-50 to-amber-100',
-  'bg-gradient-to-br from-amber-100 to-orange-50',
-  'bg-gradient-to-br from-amber-50 to-orange-50',
+  'bg-gradient-to-br from-stone-950 via-amber-950 to-stone-950',
+  'bg-gradient-to-br from-amber-50 to-amber-100',
+  'bg-gradient-to-br from-amber-50 to-amber-100',
+  'bg-gradient-to-br from-amber-100 to-stone-50',
+  'bg-gradient-to-br from-amber-50 to-stone-50',
 ];
 
 export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
@@ -118,7 +118,7 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-gradient-to-br from-stone-950 via-amber-950 to-orange-950 text-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-gradient-to-br from-stone-950 via-amber-950 to-stone-950 text-center">
       {/* Sound on/off — only shown when a brand sound is configured */}
       {soundOn && (
         <button
@@ -133,7 +133,7 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
       {/* Ambient glow orbs */}
       <div className="ob-orb absolute -top-24 -left-24 w-80 h-80 rounded-full bg-amber-500/20 blur-3xl" />
       <div
-        className="ob-orb absolute -bottom-32 -right-16 w-96 h-96 rounded-full bg-orange-600/20 blur-3xl"
+        className="ob-orb absolute -bottom-32 -right-16 w-96 h-96 rounded-full bg-amber-600/20 blur-3xl"
         style={{ animationDelay: '1.5s' }}
       />
 
@@ -222,7 +222,7 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
           {welcome.headlineLine2 && (
             <>
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-500">
                 {welcome.headlineLine2}
               </span>
             </>
@@ -237,7 +237,7 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
 
         <button
           onClick={enter}
-          className="ob-cta group inline-flex items-center gap-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-3.5 rounded-full text-base sm:text-lg font-semibold hover:from-amber-400 hover:to-orange-500 transition-colors"
+          className="ob-cta group inline-flex items-center gap-3 bg-gradient-to-r from-amber-500 to-amber-800 text-white px-8 py-3.5 rounded-full text-base sm:text-lg font-semibold hover:from-amber-400 hover:to-amber-700 transition-colors"
         >
           {welcome.ctaLabel}
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

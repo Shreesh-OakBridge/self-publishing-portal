@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Brand typography & palette ─────────────────────────────────────────
+   One look sitewide: ink-brown text, gold accents, cream background,
+   serif headings, sans-serif body. The admin keeps plain sans headings. */
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background-color: #fffdf8;
+  color: #292524;
+}
+h1, h2, h3 {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.01em;
+}
+body.admin-ui h1, body.admin-ui h2, body.admin-ui h3 {
+  font-family: inherit;
+  letter-spacing: normal;
+}
+
 /* ── Welcome / intro screen ─────────────────────────────────────────── */
 @keyframes ob-fade-up {
   from { opacity: 0; transform: translateY(28px); }

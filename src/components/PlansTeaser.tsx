@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Check, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Sparkles, Table2, PlusCircle } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { stageLabel } from '../lib/productionStages';
 import { go } from '../lib/basePath';
 import { track } from '../lib/track';
-import AuthModal from './AuthModal';
 
 interface CurrentOrder {
   id: string;
@@ -41,7 +40,6 @@ const statusColor = (s: string) =>
 export default function PlansTeaser() {
   const { pricing, customizer, projectWorkspace } = useContent();
   const { user } = useAuth();
-  const [authOpen, setAuthOpen] = useState(false);
   const [order, setOrder] = useState<CurrentOrder | null>(null);
   const [addons, setAddons] = useState<PurchasedAddons | null>(null);
   const [loadingOrder, setLoadingOrder] = useState(!!user);
@@ -79,27 +77,17 @@ export default function PlansTeaser() {
     })();
   }, [user]);
 
-  const explorePlans = () => {
-    track('click_event', { label: 'explore_plans' });
-    if (user) go('/plans');
-    else setAuthOpen(true);
+  // Plans are public — no login needed to look. Login is asked for only when
+  // an author actually buys a plan or uploads a full manuscript.
+  const explorePlans = (plan?: string) => {
+    track('click_event', { label: 'explore_plans', plan: plan ?? null });
+    go(plan ? `/plans?plan=${encodeURIComponent(plan)}` : '/plans');
   };
 
   // Map a customization option id to its friendly CMS name.
   const optName = (list: { id: string; name: string }[], id: string | null | undefined) =>
     list.find((o) => o.id === id)?.name || id || '—';
   const isQuotePlan = (price: string) => !/[0-9]/.test(price);
-
-  // Featured add-ons for the showcase, priced live from the Customizer options
-  // so the figures always match the real prices (never hardcoded / drifting).
-  const priceOf = (list: { id: string; price: number }[], id: string) =>
-    list.find((o) => o.id === id)?.price;
-  const addonHighlights = [
-    { icon: '📗', label: 'Hardback', price: priceOf(customizer.bindingOptions, 'hardback') },
-    { icon: '✨', label: 'Foil cover', price: priceOf(customizer.coverDesigns, 'foil') },
-    { icon: '🌈', label: 'Full colour', price: priceOf(customizer.colorOptions, 'color') },
-    { icon: '📄', label: 'Premium paper', price: priceOf(customizer.paperTypes, 'cream90') },
-  ].filter((h): h is { icon: string; label: string; price: number } => typeof h.price === 'number' && h.price > 0);
 
   const planDetails = order?.plan ? pricing.plans.find((p) => p.name === order.plan) : null;
   const hasCurrentPlan = !!order?.plan;
@@ -139,7 +127,7 @@ export default function PlansTeaser() {
                 {planDetails && (
                   <span>
                     <span className="text-gray-400">Royalty: </span>
-                    <strong>{planDetails.royaltyRate}%</strong>
+                    <strong>{planDetails.royaltyRate}% print · 100% eBook</strong>
                   </span>
                 )}
                 <span>
@@ -202,7 +190,7 @@ export default function PlansTeaser() {
                   Open project workspace
                 </button>
                 <button
-                  onClick={explorePlans}
+                  onClick={() => explorePlans()}
                   className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-6 py-3 rounded-full font-semibold hover:bg-gray-50"
                 >
                   Explore other plans <ArrowRight className="w-4 h-4" />
@@ -213,10 +201,7 @@ export default function PlansTeaser() {
         ) : (
           /* ── Default teaser (logged out, or no plan yet) ── */
           <>
-            <p className="text-center text-gray-500 mb-12 mt-3">
-              Pick one of our <strong className="text-gray-700">curated publishing packages</strong> — then, if you like,
-              <strong className="text-gray-700"> customize your book with optional add-ons</strong>.
-            </p>
+            <p className="text-center text-gray-500 mb-12 mt-3">{pricing.gstNote}</p>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
               {pricing.plans.map((plan) => {
@@ -235,12 +220,12 @@ export default function PlansTeaser() {
                     )}
                     <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
                     <div className="mt-1 mb-3 flex items-baseline gap-1.5 flex-wrap">
-                      <span className="text-2xl font-extrabold text-gray-900">{plan.price}</span>
-                      <span className="text-xs text-gray-500">{quote ? 'tailored quote' : 'one-time'}</span>
+                      <span className={`${quote ? 'text-xl' : 'text-2xl'} font-extrabold text-gray-900`}>{plan.price}</span>
+                      <span className="text-xs text-gray-500">{quote ? '' : '+ GST'}</span>
                     </div>
                     <p className="text-sm text-gray-500 mb-4">{plan.tagline}</p>
                     <ul className="space-y-1.5 mb-5 flex-1">
-                      {plan.features.slice(0, 4).map((f, j) => (
+                      {plan.features.slice(0, 6).map((f, j) => (
                         <li key={j} className="flex items-start gap-2 text-xs text-gray-700">
                           <Check className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
                           {f}
@@ -248,10 +233,10 @@ export default function PlansTeaser() {
                       ))}
                     </ul>
                     <button
-                      onClick={explorePlans}
+                      onClick={() => explorePlans(plan.name)}
                       className={`w-full py-2.5 rounded-full text-sm font-semibold transition-all ${
                         plan.popular
-                          ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-700 hover:to-orange-700'
+                          ? 'bg-gradient-to-r from-amber-600 to-amber-800 text-white hover:from-amber-700 hover:to-amber-900'
                           : 'border-2 border-amber-500 text-amber-700 hover:bg-amber-50'
                       }`}
                     >
@@ -262,71 +247,35 @@ export default function PlansTeaser() {
               })}
             </div>
 
-            {/* Add-ons showcase — orange brand card, high-contrast white tiles */}
-            <div className="max-w-4xl mx-auto mb-12">
-              <div className="rounded-3xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg p-6 sm:p-8">
-                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-                  <div>
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-orange-700 bg-white rounded-full px-3 py-1 mb-3 shadow-sm">
-                      <Sparkles className="w-3.5 h-3.5" /> Then make it yours
-                    </span>
-                    <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                      Add premium finishing touches
-                    </h3>
-                    <p className="text-white/90 text-sm sm:text-base mt-1.5 max-w-xl">
-                      Every plan can be customised — paper, cover finish, binding and colour. You only pay for the
-                      upgrades you love.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => go('/customize')}
-                    className="flex-shrink-0 inline-flex items-center gap-2 bg-white text-orange-700 px-6 py-3 rounded-full text-sm font-semibold hover:bg-amber-50 transition-colors shadow-sm"
-                  >
-                    Explore add-ons <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {addonHighlights.map((a) => (
-                    <div
-                      key={a.label}
-                      className="rounded-2xl bg-white shadow-sm px-4 py-4 text-center"
-                    >
-                      <div className="w-11 h-11 mx-auto mb-2.5 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-xl">
-                        {a.icon}
-                      </div>
-                      <div className="text-sm font-semibold text-gray-900">{a.label}</div>
-                      <div className="text-xs font-semibold text-amber-600 mt-0.5">+₹{a.price.toLocaleString()}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {/* Compare / add-ons — the full details live on the plans page */}
+            <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
+              <button
+                onClick={() => go('/plans#compare')}
+                className="inline-flex items-center gap-2 border-2 border-amber-500 text-amber-700 px-6 py-3 rounded-full text-sm font-semibold hover:bg-amber-50 transition-colors"
+              >
+                <Table2 className="w-4 h-4" /> Compare all features
+              </button>
+              <button
+                onClick={() => go('/plans#add-ons')}
+                className="inline-flex items-center gap-2 border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors"
+              >
+                <PlusCircle className="w-4 h-4" /> See add-ons &amp; prices
+              </button>
             </div>
 
             <div className="text-center">
               <button
-                onClick={explorePlans}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-9 py-4 rounded-full text-lg font-semibold hover:from-amber-700 hover:to-orange-700 transition-all"
+                onClick={() => explorePlans()}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-800 text-white px-9 py-4 rounded-full text-lg font-semibold hover:from-amber-700 hover:to-amber-900 transition-all"
               >
                 Explore Plans <ArrowRight className="w-5 h-5" />
               </button>
-              <p className="text-sm text-gray-500 mt-3">
-                {user
-                  ? 'Pick the package that fits your book.'
-                  : 'Sign in or create a free account to explore plans and continue.'}
-              </p>
+              <p className="text-sm text-gray-500 mt-3">No account needed to explore plans.</p>
             </div>
           </>
         )}
       </div>
 
-      <AuthModal
-        open={authOpen}
-        onClose={() => setAuthOpen(false)}
-        onAuthenticated={() => go('/plans')}
-        redirectPath="/plans"
-        heading="Log in or sign up to access plans"
-      />
     </section>
   );
 }

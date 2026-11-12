@@ -167,6 +167,7 @@ export default function NavigationManagement() {
             ['showContact', 'Show the Contact block (email / phone / location)'],
             ['showSocial', 'Show social icons (fill URLs under Content → Footer)'],
             ['showNewsletter', 'Show the newsletter signup'],
+            ['showWhatsApp', 'Show the floating WhatsApp button (number under Content → Footer)'],
           ] as [keyof NavigationContent, string][]).map(([key, label]) => (
             <label key={key} className="flex items-center gap-2 text-sm text-gray-700">
               <input
@@ -186,7 +187,7 @@ export default function NavigationManagement() {
         <button
           onClick={save}
           disabled={saving}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 text-white text-sm font-semibold hover:from-amber-700 hover:to-orange-700 disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-600 to-amber-800 text-white text-sm font-semibold hover:from-amber-700 hover:to-amber-900 disabled:opacity-50"
         >
           <Save className="w-4 h-4" /> {saving ? 'Saving…' : 'Save navigation'}
         </button>

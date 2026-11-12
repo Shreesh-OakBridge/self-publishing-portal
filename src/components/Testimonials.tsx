@@ -20,7 +20,7 @@ export default function Testimonials() {
   const Card = (t: TestimonialItem, key: Key, extra = '') => (
     <div
       key={key}
-      className={`relative bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-8 flex flex-col shrink-0 ${extra}`}
+      className={`relative bg-gradient-to-br from-amber-50 to-stone-50 border border-amber-100 rounded-2xl p-8 flex flex-col shrink-0 ${extra}`}
     >
       <Quote className="w-9 h-9 text-amber-400 mb-4" />
       <div className="flex mb-4">
@@ -29,9 +29,27 @@ export default function Testimonials() {
         ))}
       </div>
       <p className="text-gray-700 leading-relaxed flex-1">{t.quote}</p>
-      <div className="mt-6 pt-5 border-t border-amber-200">
-        <p className="font-bold text-gray-900">{t.name}</p>
-        <p className="text-sm text-amber-700">{t.role}</p>
+      <div className="mt-6 pt-5 border-t border-amber-200 flex items-center gap-3">
+        {t.photoUrl && (
+          <img
+            src={t.photoUrl}
+            alt={t.photoAlt || t.name}
+            className="w-12 h-12 rounded-full object-cover border border-amber-200 flex-shrink-0"
+            loading="lazy"
+          />
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-gray-900">{t.name}</p>
+          <p className="text-sm text-amber-700">{t.role}</p>
+        </div>
+        {t.coverUrl && (
+          <img
+            src={t.coverUrl}
+            alt={t.coverAlt || `Book cover — ${t.name}`}
+            className="w-10 h-14 rounded object-cover shadow-sm flex-shrink-0"
+            loading="lazy"
+          />
+        )}
       </div>
     </div>
   );

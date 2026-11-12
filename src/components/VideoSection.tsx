@@ -3,12 +3,12 @@ import { Play, CheckCircle, Star, ChevronDown } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 
 const stepGradients = [
-  'from-amber-500 to-orange-500',
-  'from-orange-500 to-rose-500',
-  'from-rose-500 to-pink-500',
-  'from-pink-500 to-purple-500',
-  'from-purple-500 to-indigo-500',
-  'from-indigo-500 to-blue-500',
+  'from-amber-600 to-amber-800',
+  'from-stone-600 to-stone-800',
+  'from-amber-500 to-amber-700',
+  'from-amber-800 to-stone-900',
+  'from-yellow-600 to-amber-700',
+  'from-stone-500 to-amber-800',
 ];
 
 // Uploaded files (direct video URLs) play in a <video>; embed links use <iframe>.
@@ -51,7 +51,7 @@ export default function VideoSection() {
             </div>
           ) : (
             <div
-              className="aspect-video bg-gradient-to-br from-amber-900 to-orange-900 bg-cover bg-center relative group cursor-pointer"
+              className="aspect-video bg-gradient-to-br from-amber-900 to-stone-900 bg-cover bg-center relative group cursor-pointer"
               style={video.posterUrl ? { backgroundImage: `url(${video.posterUrl})` } : undefined}
               onClick={() => video.videoUrl && setPlaying(true)}
               role={video.videoUrl ? 'button' : undefined}
@@ -140,7 +140,7 @@ export default function VideoSection() {
               ))}
             </div>
 
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-2xl border-2 border-amber-200 mt-6">
+            <div className="bg-gradient-to-br from-amber-50 to-stone-50 p-6 rounded-2xl border-2 border-amber-200 mt-6">
               <div className="flex items-center space-x-3 mb-2">
                 <Star className="w-6 h-6 text-amber-600" fill="currentColor" />
                 <h4 className="text-lg font-bold text-gray-900">{video.partnershipTitle}</h4>

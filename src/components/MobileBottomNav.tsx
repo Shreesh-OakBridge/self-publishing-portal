@@ -64,7 +64,7 @@ export default function MobileBottomNav() {
               path === '/account' ? 'text-amber-600' : 'text-gray-500'
             }`}
           >
-            <span className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white text-xs font-bold flex items-center justify-center">
+            <span className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-amber-800 text-white text-xs font-bold flex items-center justify-center">
               {initial}
             </span>
             <span className="text-[10px] font-medium leading-none">

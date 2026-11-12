@@ -185,7 +185,7 @@ export default function LayoutEditor() {
         <button
           onClick={save}
           disabled={saving}
-          className="flex items-center space-x-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 text-white text-sm font-semibold hover:from-amber-700 hover:to-orange-700 disabled:opacity-50"
+          className="flex items-center space-x-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-600 to-amber-800 text-white text-sm font-semibold hover:from-amber-700 hover:to-amber-900 disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
           <span>{saving ? 'Saving…' : 'Save layout'}</span>

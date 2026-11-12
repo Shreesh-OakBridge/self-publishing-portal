@@ -267,7 +267,7 @@ export default function Navigation() {
                     >
                     {/* Header: avatar + name + email */}
                     <div className="flex items-center gap-3 px-4 pb-3 mb-1 border-b border-gray-100">
-                      <span className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center text-base font-bold flex-shrink-0">
+                      <span className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-amber-800 text-white flex items-center justify-center text-base font-bold flex-shrink-0">
                         {accountInitial || <UserCircle className="w-6 h-6" />}
                       </span>
                       <div className="min-w-0">

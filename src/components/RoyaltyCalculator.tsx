@@ -6,6 +6,7 @@ import { useContent } from '../content/ContentProvider';
 import { go } from '../lib/basePath';
 import AuthModal from './AuthModal';
 import Toast, { type ToastMsg } from './Toast';
+import { printRoyaltyPerCopy, PLAN_ROYALTY_FALLBACK } from '../lib/royalty';
 
 interface RoyaltyData {
   bookPrice: number;
@@ -13,13 +14,7 @@ interface RoyaltyData {
   planType: string;
 }
 
-// Fallback royalty rates if a CMS plan is missing its rate.
-const FALLBACK_RATE: Record<string, number> = {
-  Starter: 30,
-  Essential: 45,
-  Professional: 55,
-  Custom: 60,
-};
+const FALLBACK_RATE = PLAN_ROYALTY_FALLBACK;
 const priceNum = (s: string) => Number((s || '').replace(/[^0-9.]/g, '')) || 0;
 
 export default function RoyaltyCalculator() {
@@ -59,7 +54,17 @@ export default function RoyaltyCalculator() {
 
   const calculateRoyalty = () => {
     const royaltyPercentage = rateFor(royaltyData.planType);
-    const royaltyPerBook = (royaltyData.bookPrice * royaltyPercentage) / 100;
+    // Royalty is a % of NET sales (MRP less store commission, print cost and
+    // GST), using the assumptions set in Admin → Site Content → Royalty Calc.
+    const royaltyPerBook = printRoyaltyPerCopy(
+      {
+        mrp: royaltyData.bookPrice,
+        printCost: royaltyCalc.printCost,
+        commissionPct: royaltyCalc.commissionPct,
+        gstPct: royaltyCalc.gstPct,
+      },
+      royaltyPercentage,
+    );
     const monthlyEarnings = royaltyPerBook * royaltyData.expectedSales;
     const annualEarnings = monthlyEarnings * 12;
 
@@ -131,7 +136,7 @@ export default function RoyaltyCalculator() {
   }
 
   return (
-    <section id="calculator" className="py-20 px-4 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <section id="calculator" className="py-20 px-4 bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
@@ -152,7 +157,7 @@ export default function RoyaltyCalculator() {
                 <select
                   value={royaltyData.planType}
                   onChange={(e) => setRoyaltyData({ ...royaltyData, planType: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
                 >
                   {pricing.plans.map((plan) => (
                     <option key={plan.name} value={plan.name}>
@@ -178,7 +183,7 @@ export default function RoyaltyCalculator() {
                       setRoyaltyData({ ...royaltyData, bookPrice: parseFloat(e.target.value) || 0 })
                     }
                     onBlur={calculateRoyalty}
-                    className="w-full pl-8 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
+                    className="w-full pl-8 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
                     placeholder="299"
                     min="0"
                   />
@@ -199,7 +204,7 @@ export default function RoyaltyCalculator() {
                     setRoyaltyData({ ...royaltyData, expectedSales: parseInt(e.target.value) || 0 })
                   }
                   onBlur={calculateRoyalty}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
                   placeholder="100"
                   min="0"
                 />
@@ -210,7 +215,7 @@ export default function RoyaltyCalculator() {
 
               <button
                 onClick={calculateRoyalty}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg"
+                className="w-full bg-gradient-to-r from-amber-700 to-stone-800 text-white py-3 rounded-xl font-semibold hover:from-amber-800 hover:to-stone-900 transition-all shadow-lg"
               >
                 Calculate Earnings
               </button>
@@ -218,13 +223,13 @@ export default function RoyaltyCalculator() {
               <button
                 onClick={handleSaveClick}
                 disabled={isSaving}
-                className="w-full border-2 border-purple-600 text-purple-600 py-3 rounded-xl font-semibold hover:bg-purple-50 transition-colors disabled:opacity-50"
+                className="w-full border-2 border-amber-600 text-amber-600 py-3 rounded-xl font-semibold hover:bg-amber-50 transition-colors disabled:opacity-50"
               >
                 {isSaving ? 'Saving...' : 'Save This Projection'}
               </button>
 
-              <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
-                <p className="text-sm text-purple-900">
+              <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                <p className="text-sm text-amber-900">
                   <strong>How Royalties Work:</strong> Your royalty percentage is calculated on the
                   final retail price. Higher-tier plans offer better percentages because you're
                   investing more in quality production and marketing.
@@ -234,7 +239,7 @@ export default function RoyaltyCalculator() {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-3xl shadow-xl p-8 text-white">
+            <div className="bg-gradient-to-br from-amber-700 to-stone-800 rounded-3xl shadow-xl p-8 text-white">
               <h3 className="text-2xl font-bold mb-6">Your Earnings Projection</h3>
 
               <div className="space-y-4">
@@ -245,6 +250,10 @@ export default function RoyaltyCalculator() {
                   </div>
                   <p className="text-4xl font-bold">
                     ₹{results.royaltyPerBook.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-white/80 mt-1">
+                    Print copy, after {royaltyCalc.commissionPct}% store commission and ₹{royaltyCalc.printCost} print
+                    cost. eBook royalty is 100% of net receipts.
                   </p>
                 </div>
 
@@ -284,13 +293,13 @@ export default function RoyaltyCalculator() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white rounded-2xl shadow-lg p-6">
                 <h4 className="font-bold text-gray-900 mb-3">Your Plan Tier</h4>
-                <p className="text-3xl font-bold text-purple-600">{rateFor(royaltyData.planType)}%</p>
+                <p className="text-3xl font-bold text-amber-600">{rateFor(royaltyData.planType)}%</p>
                 <p className="text-sm text-gray-600 mt-2">Royalty Rate</p>
               </div>
 
               <div className="bg-white rounded-2xl shadow-lg p-6">
                 <h4 className="font-bold text-gray-900 mb-3">Book Details</h4>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-2xl font-bold text-amber-600">
                   ₹{royaltyData.bookPrice}
                 </p>
                 <p className="text-sm text-gray-600 mt-2">Selling Price</p>
@@ -308,7 +317,7 @@ export default function RoyaltyCalculator() {
           </div>
         </div>
 
-        <div className="mt-12 bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl p-8 border-2 border-amber-200">
+        <div className="mt-12 bg-gradient-to-r from-amber-50 to-stone-50 rounded-3xl p-8 border-2 border-amber-200">
           <h3 className="text-2xl font-bold text-gray-900 mb-4">Maximize Your Earnings</h3>
           <div className="grid md:grid-cols-3 gap-6">
             <div>

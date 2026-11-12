@@ -54,11 +54,11 @@ export default function ResetPassword() {
     'w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50 px-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-3xl shadow-xl p-8 md:p-10">
           <div className="flex items-center space-x-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-800 flex items-center justify-center">
               <BookOpen className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -85,7 +85,7 @@ export default function ResetPassword() {
               </div>
               <a
                 href={withBase('/login')}
-                className="block w-full text-center bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700"
+                className="block w-full text-center bg-gradient-to-r from-amber-600 to-amber-800 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-900"
               >
                 Back to login
               </a>
@@ -123,7 +123,7 @@ export default function ResetPassword() {
               <button
                 type="submit"
                 disabled={busy}
-                className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 disabled:opacity-50"
+                className="w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-900 disabled:opacity-50"
               >
                 {busy ? 'Updating…' : 'Update password'}
               </button>

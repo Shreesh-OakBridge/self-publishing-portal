@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useContent } from '../content/ContentProvider';
 
 export default function ContactForm() {
-  const { contact } = useContent();
+  const { contact, pricing } = useContent();
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -178,11 +178,13 @@ export default function ContactForm() {
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
           >
             <option value="">Select a plan</option>
-            <option value="Starter">Starter - ₹29,999</option>
-            <option value="Professional">Professional - ₹79,999</option>
-            <option value="Excellence">Excellence - ₹1,59,999</option>
-            <option value="Elite">Elite - ₹2,99,999</option>
-            <option value="Custom">Custom Package</option>
+            {/* Read from the live plan list so this never drifts from the plan cards. */}
+            {pricing.plans.map((p) => (
+              <option key={p.name} value={p.name}>
+                {p.name} — {/[0-9]/.test(p.price) ? `${p.price} + GST` : p.price}
+              </option>
+            ))}
+            <option value="Not sure">Not sure yet — help me choose</option>
           </select>
         </div>
       </div>
@@ -268,7 +270,7 @@ export default function ContactForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4 rounded-xl text-lg font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+        className="w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white py-4 rounded-xl text-lg font-semibold hover:from-amber-700 hover:to-amber-900 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
       >
         {isSubmitting ? (
           <>

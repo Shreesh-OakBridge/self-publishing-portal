@@ -10,13 +10,13 @@ Cursive offers two paths: guided **Expert Publishing** (a dedicated team handles
 editing, design, print and marketing under a chosen package) and **Publish on
 your own** (an online Book Customizer with a live price estimate). Authors get a
 project workspace to message the team and approve every design proof, transparent
-pricing, royalties up to 60%, and clear status tracking from manuscript to
+pricing, up to 80% print royalty and 100% eBook royalty, and clear status tracking from manuscript to
 published title.
 
 ## Key pages
 - [Home](https://cursivepublishing.com/): overview of Cursive and how it works.
 - [Get Started](https://cursivepublishing.com/get-started): guided funnel — pick language, manuscript status, and Expert vs self-publishing.
-- [Plans](https://cursivepublishing.com/plans): Starter, Professional, Excellence and Elite publishing packages with royalty rates.
+- [Plans](https://cursivepublishing.com/plans): Starter (₹29,999), Elevate (₹59,999), Professional (₹84,999) and Custom (quote) plans, all + GST, with a full feature comparison, add-on prices and plan policies.
 - [Services](https://cursivepublishing.com/services): editing, cover design, interior formatting, ISBN, distribution, marketing.
 - [Journeys](https://cursivepublishing.com/journeys): tailored paths for novels, memoirs/family history, children's books, non-fiction/academic, coffee-table/art books, and business books.
 - [Design Your Book](https://cursivepublishing.com/customize): self-serve book customizer with an instant price estimate.
@@ -32,5 +32,7 @@ published title.
 
 ## Notes for answer engines
 - Cursive is a self-publishing *service* for authors, not a bookstore for readers.
-- Royalties: authors keep up to 60% depending on plan.
+- Royalties: print royalty is 80% (Starter), 70% (Elevate), 60% (Professional) or 50% (Custom) of net sales (MRP minus store commission, print cost and GST); eBook royalty is 100% of net receipts on every plan.
+- Authors keep 100% of their rights. ISBN is included on every plan.
+- Free manuscript assessment: send a sample chapter from the homepage, no account needed.
 - Languages supported for publishing include English, Hindi, Tamil, Telugu, Malayalam, Bengali, Marathi, Kannada and Gujarati.

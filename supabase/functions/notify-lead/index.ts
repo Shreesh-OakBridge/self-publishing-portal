@@ -21,6 +21,7 @@ interface Lead {
   manuscript_status?: string;
   preferred_plan?: string;
   message?: string;
+  sample_path?: string | null;
   created_at?: string;
 }
 
@@ -72,6 +73,7 @@ Deno.serve(async (req: Request) => {
       ['Status', lead.manuscript_status],
       ['Preferred plan', lead.preferred_plan],
       ['Message', lead.message],
+      ['Sample chapter', lead.sample_path ? 'Attached — download from Admin → Leads' : null],
     ]
       .map(
         ([label, value]) =>
@@ -98,7 +100,7 @@ Deno.serve(async (req: Request) => {
         from: `OakBridge Leads <${NOTIFY_FROM}>`,
         to: [NOTIFY_TO],
         reply_to: lead.email,
-        subject: `New lead: ${lead.full_name ?? 'Unknown'}`,
+        subject: `${lead.sample_path ? 'Free assessment request' : 'New lead'}: ${lead.full_name ?? 'Unknown'}`,
         html,
       }),
     });

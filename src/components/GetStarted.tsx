@@ -116,7 +116,7 @@ export default function GetStarted() {
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-800 flex items-center justify-center flex-shrink-0">
                         <Icon className="w-5 h-5 text-white" />
                       </div>
                       <div className="min-w-0">
@@ -171,7 +171,7 @@ export default function GetStarted() {
           <button
             onClick={proceed}
             disabled={!ready}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-10 py-4 rounded-full text-lg font-semibold hover:from-amber-700 hover:to-orange-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-800 text-white px-10 py-4 rounded-full text-lg font-semibold hover:from-amber-700 hover:to-amber-900 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {g.ctaLabel}
             <ArrowRight className="w-5 h-5" />

@@ -362,7 +362,7 @@ export default function ManuscriptUpload({ hideHeading = false }: { hideHeading?
         <button
           type="submit"
           disabled={busy}
-          className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 transition-all disabled:opacity-50"
+          className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-800 text-white px-6 py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-900 transition-all disabled:opacity-50"
         >
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
           <span>{busy ? 'Uploading…' : 'Submit Manuscript'}</span>

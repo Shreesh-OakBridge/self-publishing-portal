@@ -37,7 +37,7 @@ export default function AdminAuth({ mode }: { mode: 'login' | 'unauthorized' }) 
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50 px-4">
       {mode === 'unauthorized' ? (
         <div className="bg-white rounded-3xl shadow-xl p-8 md:p-10 w-full max-w-md text-center">
           <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-4">
@@ -58,7 +58,7 @@ export default function AdminAuth({ mode }: { mode: 'login' | 'unauthorized' }) 
       ) : (
         <form onSubmit={handleSignIn} className="bg-white rounded-3xl shadow-xl p-8 md:p-10 w-full max-w-md">
           <div className="flex items-center space-x-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-800 flex items-center justify-center">
               <Lock className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -97,7 +97,7 @@ export default function AdminAuth({ mode }: { mode: 'login' | 'unauthorized' }) 
           <button
             type="submit"
             disabled={signingIn}
-            className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {signingIn ? 'Signing in…' : 'Sign In'}
           </button>

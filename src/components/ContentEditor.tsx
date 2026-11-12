@@ -92,7 +92,33 @@ const MEDIA_FIELDS: Record<string, { label: string; accept: 'image' | 'video' | 
   coverUrl: { label: 'Book Cover Image', accept: 'image' },
   bannerUrl: { label: 'Banner Image', accept: 'image' },
   soundUrl: { label: 'Brand Sound (MP3)', accept: 'audio' },
+  photoUrl: { label: 'Photo', accept: 'image' },
+  sampleImageUrl: { label: 'Edited Sample Page (image)', accept: 'image' },
 };
+
+// Item templates for lists whose default is empty, so "Add" creates a proper
+// entry (not a bare string). Keyed by section, then by list field name.
+const LIST_ITEM_SHAPES: Record<string, Record<string, Json>> = {
+  testimonials: {
+    items: { quote: '', name: '', role: '', rating: 5, photoUrl: '', photoAlt: '', coverUrl: '', coverAlt: '' },
+  },
+  portfolio: {
+    items: { title: '', author: '', category: '', coverUrl: '', coverAlt: '', linkUrl: '' },
+  },
+};
+
+// The default value for a section, with empty lists given an item template.
+function sectionShape(section: string): Json {
+  const base = JSON.parse(JSON.stringify((defaultContent as unknown as Record<string, Json>)[section] ?? null)) as Json;
+  const extra = LIST_ITEM_SHAPES[section];
+  if (extra && base && typeof base === 'object' && !Array.isArray(base)) {
+    const obj = base as Record<string, Json>;
+    for (const [k, item] of Object.entries(extra)) {
+      if (Array.isArray(obj[k]) && (obj[k] as Json[]).length === 0) obj[k] = [item];
+    }
+  }
+  return base;
+}
 
 function humanize(key: string): string {
   return key
@@ -143,10 +169,13 @@ function Field({
   label,
   value,
   onChange,
+  shape,
 }: {
   label: string;
   value: Json;
   onChange: (v: Json) => void;
+  // Matching default value — used as the template when adding to a list.
+  shape?: Json;
 }) {
   // Boolean -> checkbox
   if (typeof value === 'boolean') {
@@ -206,8 +235,9 @@ function Field({
   // Array
   if (Array.isArray(value)) {
     const items = value as Json[];
+    const shapeItem = Array.isArray(shape) && shape.length > 0 ? shape[0] : undefined;
     const addItem = () => {
-      const template = items.length > 0 ? items[0] : '';
+      const template = items.length > 0 ? items[0] : shapeItem ?? '';
       onChange([...items, blankFromTemplate(template)]);
     };
     const removeItem = (i: number) => onChange(items.filter((_, idx) => idx !== i));
@@ -268,7 +298,7 @@ function Field({
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                  <Field label="" value={item} onChange={(v) => updateItem(i, v)} />
+                  <Field label="" value={item} shape={shapeItem} onChange={(v) => updateItem(i, v)} />
                 </>
               )}
             </div>
@@ -281,6 +311,8 @@ function Field({
   // Object
   if (value && typeof value === 'object') {
     const obj = value as Record<string, Json>;
+    const shapeObj =
+      shape && typeof shape === 'object' && !Array.isArray(shape) ? (shape as Record<string, Json>) : undefined;
     return (
       <div className={label ? 'mb-4' : ''}>
         {label && <h4 className="text-sm font-bold text-gray-800 mb-2">{label}</h4>}
@@ -320,6 +352,7 @@ function Field({
                 key={k}
                 label={humanize(k)}
                 value={v}
+                shape={shapeObj?.[k]}
                 onChange={(nv) => onChange({ ...obj, [k]: nv })}
               />
             );
@@ -432,7 +465,7 @@ export default function ContentEditor() {
             <button
               onClick={save}
               disabled={saving}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 text-white text-sm font-semibold hover:from-amber-700 hover:to-orange-700 disabled:opacity-50"
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-800 text-white text-sm font-semibold hover:from-amber-700 hover:to-amber-900 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               <span>{saving ? 'Saving…' : 'Save'}</span>
@@ -478,12 +511,13 @@ export default function ContentEditor() {
               <Field
                 label=""
                 value={(draft as Record<string, Json>)[subKey]}
+                shape={(sectionShape(active) as Record<string, Json> | null)?.[subKey]}
                 onChange={setSubDraft}
               />
             )}
           </>
         ) : (
-          <Field label="" value={draft} onChange={setDraft} />
+          <Field label="" value={draft} shape={sectionShape(active)} onChange={setDraft} />
         )}
       </div>
     </div>

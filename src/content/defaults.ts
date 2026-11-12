@@ -66,10 +66,38 @@ export interface ImprintItem {
   desc: string;
 }
 
+// "Compare all features" table: one row per inclusion, one value per plan
+// (values are in the same order as `plans`).
+export interface ComparisonRow {
+  label: string;
+  values: string[];
+}
+export interface ComparisonGroup {
+  group: string;
+  rows: ComparisonRow[];
+}
+export interface AddOnItem {
+  name: string;
+  desc: string;
+  price: string;
+}
+export interface AddOnGroup {
+  group: string;
+  items: AddOnItem[];
+}
+
 export interface PricingContent {
   heading: string;
   subheading: string;
+  gstNote: string;
   plans: PricingPlan[];
+  compareHeading: string;
+  comparison: ComparisonGroup[];
+  addOnsHeading: string;
+  addOnsNote: string;
+  addOns: AddOnGroup[];
+  faqHeading: string;
+  faqs: FaqItem[];
   imprintsHeading: string;
   imprints: ImprintItem[];
 }
@@ -87,11 +115,30 @@ export interface ManuscriptSectionContent {
   loggedOutTitle: string;
   loggedOutText: string;
   loggedOutCta: string;
+  // Free sample-chapter assessment (shown to visitors instead of a login wall).
+  assessTitle: string;
+  assessText: string;
+  assessCta: string;
+  assessSuccess: string;
 }
 
 export interface RoyaltyCalcContent {
   heading: string;
   subheading: string;
+  // Editable assumptions used by the royalty estimator. Royalty is paid on
+  // NET sales = MRP less store commission, print cost and GST.
+  commissionPct: number;
+  printCost: number;
+  gstPct: number;
+  assumptionsNote: string;
+}
+
+export interface EditorialSampleContent {
+  heading: string;
+  subheading: string;
+  text: string;
+  sampleImageUrl: string;
+  sampleImageAlt?: string;
 }
 
 export interface EditorialContent {
@@ -127,6 +174,8 @@ export interface FooterContent {
   tagline: string;
   email: string;
   phone: string;
+  // Number used by the floating WhatsApp chat button (digits, with country code).
+  whatsapp: string;
   location: string;
   copyrightName: string;
   // Social profile URLs — an icon shows only when its URL is filled in.
@@ -337,6 +386,11 @@ export interface TestimonialItem {
   name: string;
   role: string;
   rating: number;
+  // Optional — shown when set, so genuine quotes carry a face and a cover.
+  photoUrl?: string;
+  photoAlt?: string;
+  coverUrl?: string;
+  coverAlt?: string;
 }
 
 export interface TestimonialsContent {
@@ -387,19 +441,31 @@ export interface HomeLayoutContent {
 
 // Reorderable homepage sections (header/footer are fixed and not listed).
 // Shared by the renderer (App) and the admin Layout editor.
+// Order here is also the recommended default homepage order: headline + proof
+// → covers → author paths → the publishing journey → plans → royalty
+// calculator → author stories → free assessment → FAQ → enquiry form.
 export const HOME_SECTIONS: { key: string; label: string }[] = [
   { key: 'hero', label: 'Hero / Welcome' },
-  { key: 'confidenceBar', label: 'Confidence Bar' },
-  { key: 'about', label: 'Value Proposition' },
-  { key: 'process', label: 'Process & Video' },
-  { key: 'submit', label: 'Manuscript Upload' },
-  { key: 'portfolio', label: 'Portfolio' },
-  { key: 'testimonials', label: 'Testimonials' },
+  { key: 'confidenceBar', label: 'Confidence Bar (proof points)' },
+  { key: 'portfolio', label: 'Portfolio (book covers)' },
+  { key: 'paths', label: 'Author Paths (what kind of author are you?)' },
+  { key: 'process', label: 'Publishing Journey (process & video)' },
+  { key: 'editorialSample', label: 'Editing Sample' },
   { key: 'plans', label: 'Pricing Plans' },
-  { key: 'estimate', label: 'Instant Estimate Band' },
+  { key: 'royalty', label: 'Royalty Calculator' },
+  { key: 'testimonials', label: 'Author Stories (testimonials)' },
+  { key: 'submit', label: 'Free Assessment / Manuscript Upload' },
+  { key: 'faq', label: 'FAQ' },
   { key: 'blog', label: 'Blog (latest posts)' },
+  { key: 'estimate', label: 'Instant Estimate Band' },
   { key: 'contact', label: 'Contact Form' },
+  { key: 'about', label: 'Value Proposition (generic — hidden by default)' },
 ];
+
+// Sections hidden by default (the admin can switch them back on in Layout).
+const HIDDEN_BY_DEFAULT = new Set(['about']);
+const defaultHomeLayout = () =>
+  HOME_SECTIONS.map((s) => ({ key: s.key, enabled: !HIDDEN_BY_DEFAULT.has(s.key) }));
 
 export interface BlogContent {
   heading: string;
@@ -425,6 +491,7 @@ export interface NavigationContent {
   showContact: boolean;
   showSocial: boolean;
   showNewsletter: boolean;
+  showWhatsApp: boolean;
 }
 
 export interface SiteContent {
@@ -447,6 +514,7 @@ export interface SiteContent {
   customizer: CustomizerContent;
   manuscript: ManuscriptSectionContent;
   royaltyCalc: RoyaltyCalcContent;
+  editorialSample: EditorialSampleContent;
   editorial: EditorialContent;
   projectWorkspace: ProjectWorkspaceContent;
   contact: ContactContent;
@@ -568,131 +636,331 @@ export const defaultContent: SiteContent = {
       "We don't abandon you after publication. You'll have continued access to our expertise and support as your book grows its audience.",
   },
   testimonials: {
-    heading: 'Loved by authors',
-    subheading: 'Writers across the country trust Cursive to bring their stories to readers.',
+    heading: 'Author stories',
+    subheading: 'In their own words — authors we have published.',
     autoRotate: true,
     rotateSeconds: 4,
-    items: [
-      {
-        quote:
-          'Cursive made publishing my first novel effortless. From editing to the cover design, every step felt guided and professional. My book was on shelves in weeks.',
-        name: 'Ananya Sharma',
-        role: 'Author, “Threads of Dawn”',
-        rating: 5,
-      },
-      {
-        quote:
-          'The royalty terms were the most transparent I found anywhere in India. I always know exactly what I earn per copy, and payouts are right on time.',
-        name: 'Rajat Mehta',
-        role: 'Author, “The Quiet Quarter”',
-        rating: 5,
-      },
-      {
-        quote:
-          'I came in with just a manuscript and a lot of doubts. Their team handled the production beautifully and kept me involved through every decision.',
-        name: 'Fatima Qureshi',
-        role: 'Poet & Author',
-        rating: 5,
-      },
-    ],
+    // Intentionally empty: the section stays hidden until genuine quotes from
+    // published authors (with photo and book cover) are added in the admin.
+    items: [],
   },
   pricing: {
     heading: 'Publishing Plans for Every Author',
     subheading:
-      'Choose the perfect package for your publishing journey. All plans include professional quality and industry-standard services.',
+      'Four clear plans. Every one includes an ISBN, a free manuscript assessment, a dedicated relationship manager and 100% eBook royalty.',
+    gstNote: 'All prices exclude GST (18%), which is added at checkout.',
     plans: [
       {
         name: 'Starter',
-        price: '₹24,999',
-        tagline: 'Everything a first-time author needs to publish',
+        price: '₹29,999',
+        tagline: 'Your first step into print',
         popular: false,
-        royaltyRate: 30,
+        royaltyRate: 80,
         features: [
-          'Professional copyediting (up to 50,000 words)',
-          'Basic proofreading',
-          'Pre-designed cover template customization',
-          'Standard interior formatting (black & white)',
-          'ISBN assignment',
-          'Copyright registration assistance',
-          'Distribution to Amazon & major online retailers',
-          'Author copies (5 paperback copies)',
-          'Basic book description optimization',
-          'Email support',
-          'Cursive Classics imprint',
+          'Proofreading · up to 150 pages',
+          '10 author copies on 60 GSM paper',
+          'Sold on Amazon India + Kindle',
+          '80% print royalty · 100% eBook royalty',
+          'Marketing available as add-ons',
+          'Ready in about 2 weeks',
         ],
       },
       {
-        name: 'Essential',
-        price: '₹49,999',
-        tagline: 'For authors ready to build a brand',
+        name: 'Elevate',
+        price: '₹59,999',
+        tagline: "Elevate your book's reach",
         popular: true,
-        royaltyRate: 45,
+        royaltyRate: 70,
         features: [
-          'Comprehensive developmental editing',
-          'Professional copyediting (up to 100,000 words)',
-          'Multiple rounds of proofreading',
-          'Custom cover design (3 concepts)',
-          'Premium interior formatting (colour available)',
-          'ISBN & Barcode',
-          'Copyright registration (full service)',
-          'Wide distribution (Amazon, Flipkart, libraries)',
-          'Author copies (15 copies in mixed formats)',
-          'Professional book description & metadata',
-          'Press release (2 versions)',
-          'Marketing toolkit (social media graphics, bookmarks)',
-          'Author website (single page)',
-          'Launch strategy consultation',
-          'Cursive Imprint Series imprint',
-          'Priority support (phone & email)',
+          'Copyediting · up to 200 pages',
+          '25 author copies on 70 GSM paper',
+          'Amazon, Flipkart & Cursive Store + Kindle',
+          '70% print royalty · 100% eBook royalty',
+          '4 social posts + 10 days of Amazon Ads',
+          'Ready in about 4 weeks',
         ],
       },
       {
         name: 'Professional',
-        price: '₹89,999',
-        tagline: 'Premium publishing with full marketing support',
+        price: '₹84,999',
+        tagline: 'A signature publishing experience',
         popular: false,
-        royaltyRate: 55,
+        royaltyRate: 60,
         features: [
-          'Comprehensive developmental editing',
-          'Professional copyediting (unlimited words)',
-          'Multiple rounds of proofreading & fact-checking',
-          'Premium custom cover design (5 concepts)',
-          'Luxury interior formatting with custom elements',
-          'Multiple ISBNs (hardcover, paperback, ebook)',
-          'Copyright & trademark registration',
-          'Global + Indian distribution (40+ platforms)',
-          'Author copies (30 copies in all formats)',
-          'Professional book description & metadata optimization',
-          'Comprehensive press kit (3 press releases)',
-          'Full marketing suite (social media, email templates)',
-          'Professional author website (5 pages)',
-          'Video book trailer (60-90 seconds)',
-          'Professional author photography session',
-          'Launch campaign management (3 months)',
-          'Amazon & Flipkart Ads setup',
-          'Cursive Prestige imprint',
-          'Dedicated account manager',
-          'Priority support (24/7 access)',
+          'Copyediting + author review round · up to 250 pages',
+          '50 author copies on 80 GSM paper',
+          'Amazon (global), Flipkart, Cursive Store + bookstores in your city',
+          '60% print royalty · 100% eBook royalty',
+          '8 social posts + 30 days of Amazon Ads',
+          'Ready in 6–8 weeks',
         ],
       },
       {
         name: 'Custom',
-        price: 'Custom',
-        tagline: "Tailored to your book — let's build your package",
+        price: 'Request a quote',
+        tagline: 'The complete author launch',
         popular: false,
-        royaltyRate: 60,
+        royaltyRate: 50,
         features: [
-          'Everything in Professional, tailored to your goals',
-          'Full developmental & structural editing',
-          'Unlimited cover concepts by senior designers',
-          'Premium interior design by award-winning designers',
-          'Multiple ISBNs (all formats)',
-          'Full copyright & trademark protection',
-          'Bespoke marketing & ad-campaign planning',
-          'Custom author website & brand assets',
-          'Dedicated account manager',
-          'Priced to scope — request a tailored quote',
+          '3 editorial rounds + line edit · up to 350 pages',
+          '75 author copies on 80 GSM+ paper',
+          'Global distribution + bookstores across India',
+          '50% print royalty · 100% eBook royalty',
+          '12 posts, 3 months of content + 45 days of Amazon Ads',
+          'Ready in 8–10 weeks',
         ],
+      },
+    ],
+    compareHeading: 'Compare all features',
+    comparison: [
+      {
+        group: 'Overview',
+        rows: [
+          {
+            label: 'Best for',
+            values: [
+              'Authors with a finished, edited manuscript who want a clean print edition',
+              'First-time authors who want professional editing and online sales',
+              'Professionals and experts publishing to build authority',
+              'Flagship titles: memoirs, legacy and institutional books',
+            ],
+          },
+          { label: 'Price (excl. GST)', values: ['₹29,999', '₹59,999', '₹84,999', 'Request a quote'] },
+          { label: 'Payment terms', values: ['100% on signing', '100% on signing', '100% on signing', '100% on signing'] },
+        ],
+      },
+      {
+        group: 'Manuscript & Editorial',
+        rows: [
+          { label: 'Manuscript length covered', values: ['Up to 150 pages', 'Up to 200 pages', 'Up to 250 pages', 'Up to 350 pages'] },
+          {
+            label: 'Pages beyond the cap',
+            values: [
+              'First 10% free; rest charged pro rata',
+              'First 10% free; rest charged pro rata',
+              'First 10% free; rest charged pro rata',
+              'First 10% free; rest charged pro rata',
+            ],
+          },
+          {
+            label: 'Editorial review',
+            values: [
+              'Proofreading (copyediting and line edit as add-ons)',
+              'Copyediting (line edit and extra rounds as add-ons)',
+              'Copyediting with one round of author review (line edit and extra rounds as add-ons)',
+              '3 rounds of editorial review + line edit',
+            ],
+          },
+          { label: 'Manuscript assessment before onboarding', values: ['✓', '✓', '✓', '✓'] },
+          { label: 'Plagiarism check', values: ['Add-on (₹3,000)', 'Add-on (₹3,000)', '✓', '✓'] },
+          { label: 'Fact and citation check', values: ['Add-on (₹50 per page)', 'Add-on (₹50 per page)', 'Add-on (₹50 per page)', '✓'] },
+        ],
+      },
+      {
+        group: 'Design & Production',
+        rows: [
+          {
+            label: 'Cover design',
+            values: [
+              "Designed from the author's image; 1 round of changes",
+              '2 concepts, you pick one; 2 rounds of changes',
+              '3 concepts, you pick one; 3 rounds of changes',
+              '5 concepts with custom illustration; 5 rounds of changes',
+            ],
+          },
+          {
+            label: 'Typesetting / interior layout',
+            values: ['Standard layout', 'Custom layout, 2 options', 'Custom layout, 4 options', 'Custom layout, 5 options + hardcover-specific layout'],
+          },
+          { label: 'Layout revision rounds', values: ['—', '2', '3', '5'] },
+          { label: 'ISBN allotment', values: ['✓', '✓', '✓', '✓'] },
+          { label: 'Author copies', values: ['10', '25', '50', '75'] },
+          { label: 'Paper quality', values: ['60 GSM premium', '70 GSM premium', '80 GSM premium', '80 GSM and above, premium'] },
+          {
+            label: 'Binding',
+            values: [
+              'Paperback (hardback add-on ₹60 per copy)',
+              'Paperback (hardback add-on ₹60 per copy)',
+              'Paperback or hardback',
+              'Paperback or hardback',
+            ],
+          },
+          {
+            label: 'Additional copies',
+            values: [
+              '35% off MRP',
+              '35% off MRP (paperback), 40% off (hardback)',
+              '35% off MRP (paperback), 40% off (hardback)',
+              '35% off MRP (paperback), 40% off (hardback)',
+            ],
+          },
+        ],
+      },
+      {
+        group: 'Distribution & Sales Channels',
+        rows: [
+          {
+            label: 'eBook distribution',
+            values: [
+              'Amazon Kindle + OakBridge e-book store',
+              'Amazon Kindle + OakBridge e-book store',
+              'Amazon Kindle + OakBridge e-book store',
+              'Amazon Kindle + OakBridge e-book store',
+            ],
+          },
+          {
+            label: 'Print-on-demand',
+            values: [
+              'Amazon India (domestic)',
+              'Amazon, Flipkart & Cursive Store (India)',
+              'Amazon (global), Flipkart & Cursive Store',
+              'Global print-on-demand',
+            ],
+          },
+          { label: 'Offline bookstores', values: ['Add-on', 'Add-on', "Select bookstores in the author's city", 'Select bookstores across India'] },
+          { label: 'Library / institutional distribution', values: ['Add-on', '✓', '✓', '✓'] },
+        ],
+      },
+      {
+        group: 'Royalty / Profit Share',
+        rows: [
+          { label: 'eBook royalty', values: ['100% of net receipts', '100% of net receipts', '100% of net receipts', '100% of net receipts'] },
+          { label: 'Print royalty', values: ['80% of net sales', '70% of net sales', '60% of net sales', '50% of net sales'] },
+          {
+            label: 'Net sales means',
+            values: [
+              'MRP less store commission, print cost and GST',
+              'MRP less store commission, print cost and GST',
+              'MRP less store commission, print cost and GST',
+              'MRP less store commission, print cost and GST',
+            ],
+          },
+          { label: 'Sales & royalty updates', values: ['Quarterly', 'Quarterly', 'Annually', 'Annually'] },
+          {
+            label: 'Royalty payout',
+            values: ['Quarterly, by bank transfer', 'Quarterly, by bank transfer', 'Annually, by bank transfer', 'Annually, by bank transfer'],
+          },
+        ],
+      },
+      {
+        group: 'Post-Publishing Marketing',
+        rows: [
+          { label: 'Social media posts', values: ['Add-on', '4 posts', '8 posts', '12 posts + monthly content for 3 months'] },
+          { label: 'Amazon Ads', values: ['Add-on', '10 days', '30 days', '45 days'] },
+          { label: 'Amazon Author Page setup', values: ['Add-on', 'Add-on', '✓', '✓'] },
+          { label: 'Author page on the Cursive website', values: ['✓', '✓', '✓', '✓'] },
+          { label: 'Influencer marketing support', values: ['Add-on', 'Add-on', '✓', '✓'] },
+          { label: 'Book launch event', values: ['Add-on', 'Add-on', 'Add-on', 'Add-on'] },
+        ],
+      },
+      {
+        group: 'Service & Support',
+        rows: [
+          { label: 'Dedicated relationship manager', values: ['✓', '✓', '✓', '✓'] },
+          { label: 'Estimated turnaround', values: ['2 weeks', '4 weeks', '6–8 weeks', '8–10 weeks'] },
+          {
+            label: 'Post-publishing support',
+            values: ['Through your relationship manager (chargeable)', '1 month', '2 months', '6 months'],
+          },
+        ],
+      },
+    ],
+    addOnsHeading: 'Add-ons',
+    addOnsNote:
+      'Anything included in a higher plan can be added to a lower one. All add-on prices exclude GST.',
+    addOns: [
+      {
+        group: 'Manuscript & Editorial',
+        items: [
+          { name: 'Copyediting upgrade', desc: 'Upgrade from proofreading to full copyediting (grammar, consistency, clarity, house style)', price: '₹40 per page' },
+          { name: 'Additional editorial review round', desc: 'One more full pass after you have responded to edits', price: '₹20 per page, per round' },
+          { name: 'Line edit', desc: 'Sentence-level rewriting for flow, tone and readability', price: '₹60 per page' },
+          { name: 'Plagiarism check', desc: 'Similarity report on the full manuscript, with flagged passages marked', price: '₹3,000 flat' },
+          { name: 'Fact and citation check', desc: 'Verification of facts, case law, statutes and references against sources', price: '₹50 per page' },
+        ],
+      },
+      {
+        group: 'Design & Production',
+        items: [
+          { name: 'Additional cover concept', desc: 'One extra cover design concept to choose from', price: '₹3,000 each' },
+          { name: 'Custom cover illustration', desc: 'Original illustration commissioned for your cover', price: '₹10,000 flat' },
+          { name: 'Additional cover revision round', desc: 'One more round of changes to the selected cover', price: '₹1,500 each' },
+          { name: 'Custom interior layout', desc: 'Upgrade from the standard layout to a custom layout, 2 options', price: '₹5,000 flat' },
+          { name: 'Additional layout option', desc: 'One extra interior design option to choose from', price: '₹2,000 each' },
+          { name: 'Hardcover-specific layout', desc: 'Interior re-laid for hardcover trim and margins', price: '₹3,000 flat' },
+          { name: 'Additional layout revision round', desc: 'One more round of corrections on the typeset pages', price: '₹1,500 each' },
+          { name: 'Hardback binding', desc: 'Hardback edition in addition to paperback', price: '₹60 per copy' },
+          { name: 'Paper upgrade + matte lamination', desc: 'Upgrade to 100 GSM paper and a matte cover lamination', price: 'Quoted per print run' },
+          { name: 'Additional author copies', desc: 'Copies beyond your plan allowance', price: '35% off MRP (paperback) / 40% off (hardback)' },
+        ],
+      },
+      {
+        group: 'Distribution & Sales Channels',
+        items: [
+          { name: 'Global print-on-demand', desc: 'Print edition available to order worldwide', price: '₹5,000 flat' },
+          { name: 'Offline bookstore distribution', desc: 'Placement in select bookstores across India', price: '₹10,000 flat' },
+          { name: 'Bookstore launch display', desc: 'Front-of-store display at launch in select stores', price: '₹7,500 flat' },
+          { name: 'Library / institutional distribution', desc: 'Your book offered to libraries and institutions', price: '₹5,000 flat' },
+        ],
+      },
+      {
+        group: 'Post-Publishing Marketing',
+        items: [
+          { name: 'Social media post pack', desc: '4 designed posts after your book is released', price: '₹3,000 per pack of 4' },
+          { name: 'Monthly social media content', desc: 'An ongoing content calendar and posts for one month', price: '₹5,000 per month' },
+          { name: 'Amazon Ads campaign', desc: 'Campaign set-up and management, including ad spend', price: '₹6,000 per 15 days' },
+          { name: 'Amazon Author Page setup', desc: 'Author Central page with bio, photo and your books linked', price: '₹1,500 flat' },
+          { name: 'Influencer marketing support', desc: 'Your book sent to and promoted by selected readers and influencers', price: '₹10,000 flat' },
+          { name: 'Book launch event', desc: 'A launch event planned around your book and audience', price: 'Quoted' },
+        ],
+      },
+      {
+        group: 'Service & Support',
+        items: [
+          { name: 'Extended post-publishing support', desc: 'One more month of help through your relationship manager', price: '₹2,000 per month' },
+        ],
+      },
+    ],
+    faqHeading: 'Plans, payment & policies',
+    faqs: [
+      { question: 'Are prices inclusive of GST?', answer: 'No. All prices exclude applicable GST (18%), which is added at checkout.' },
+      { question: 'How do I pay?', answer: 'The full plan fee (100%) is paid on signing up.' },
+      {
+        question: 'Is my manuscript accepted automatically?',
+        answer:
+          'Every manuscript gets a free assessment before onboarding. Submission is provisional and subject to publisher approval.',
+      },
+      {
+        question: 'Can I cancel and get a refund?',
+        answer: 'Yes — you get a 100% refund if you cancel within 48 hours of payment. There is no refund after 48 hours.',
+      },
+      {
+        question: 'What if my book is longer than my plan covers?',
+        answer:
+          'Up to 10% over your plan’s page cap is absorbed at no cost. Any remaining pages are charged pro rata, and we confirm the amount with you by email first.',
+      },
+      {
+        question: 'Can I buy extra copies of my book?',
+        answer: 'Yes — at 35% off MRP for paperback and 40% off MRP for hardback.',
+      },
+      {
+        question: 'How is my royalty calculated?',
+        answer:
+          'You receive 100% of net receipts on eBooks. On print, you receive 80% (Starter), 70% (Elevate), 60% (Professional) or 50% (Custom) of net sales. Net sales means MRP less the store’s commission, the print cost and GST.',
+      },
+      {
+        question: 'How often are royalties paid?',
+        answer:
+          'By bank transfer — quarterly on Starter and Elevate, and annually on Professional and Custom. Sales updates follow the same schedule.',
+      },
+      {
+        question: 'Can I customise my plan?',
+        answer:
+          'Yes. Anything included in a higher plan can be added to a lower one — see the add-ons list for prices.',
+      },
+      {
+        question: 'What happens after my support window ends?',
+        answer: 'Further help is arranged through your relationship manager.',
       },
     ],
     imprintsHeading: 'About Our Imprints',
@@ -702,7 +970,7 @@ export const defaultContent: SiteContent = {
         desc: 'Our foundational imprint for emerging authors. Perfect for traditional fiction, memoirs, and first-time publications that will be printed with our classic, timeless aesthetic.',
       },
       {
-        name: 'Cursive Imprint Series (Essential Plan)',
+        name: 'Cursive Imprint Series (Elevate Plan)',
         desc: 'For authors building their brand and creating professional, market-competitive titles across all genres. This imprint signifies quality and editorial excellence.',
       },
       {
@@ -711,7 +979,7 @@ export const defaultContent: SiteContent = {
       },
       {
         name: 'Cursive Signature (Custom Plan)',
-        desc: "Our most exclusive imprint featuring the author's biography and signature edition mark. Only for authors receiving our fully bespoke, white-glove publishing service.",
+        desc: "Our most exclusive imprint featuring the author's biography and signature edition mark, for authors receiving our fully bespoke publishing service.",
       },
     ],
   },
@@ -851,11 +1119,29 @@ export const defaultContent: SiteContent = {
     loggedOutTitle: 'Ready to publish your book?',
     loggedOutText: 'Log in or create a free account to upload your manuscript and track its progress.',
     loggedOutCta: 'Log in / Sign up to upload',
+    assessTitle: 'Get a free manuscript assessment',
+    assessText:
+      'Send us a sample chapter — no account needed. Our editors will read it and tell you honestly what your book needs and which plan fits.',
+    assessCta: 'Send for free assessment',
+    assessSuccess:
+      'Thank you — we have your sample chapter. Our editorial team will review it and get back to you within 3 working days.',
   },
   royaltyCalc: {
     heading: 'Estimate Your Royalties',
     subheading:
-      'See how much you could earn. Adjust your book price and expected monthly sales to project your royalty income across our plans.',
+      'Enter your book’s price and see what you earn on every copy sold, on each plan.',
+    commissionPct: 40,
+    printCost: 120,
+    gstPct: 0,
+    assumptionsNote:
+      'An estimate. Royalty is paid on net sales: MRP less the store’s commission, the print cost and GST. Print cost depends on page count, paper and binding; printed books are generally GST-exempt in India. Your relationship manager confirms exact figures for your book.',
+  },
+  editorialSample: {
+    heading: 'See how we edit',
+    subheading: 'A real page from one of our edited manuscripts, with tracked changes.',
+    text: 'Every change is visible and explained, so you stay in control of your words.',
+    sampleImageUrl: '',
+    sampleImageAlt: 'Sample manuscript page showing tracked editorial changes',
   },
   editorial: {
     expertReviewPrice: 4999,
@@ -875,19 +1161,21 @@ export const defaultContent: SiteContent = {
       "We've received your information and are excited to learn more about your project. A member of our team will reach out to you within 24 hours to discuss your publishing journey.",
   },
   homeLayout: {
-    sections: HOME_SECTIONS.map((s) => ({ key: s.key, enabled: true })),
-    loggedInSections: HOME_SECTIONS.map((s) => ({ key: s.key, enabled: true })),
+    sections: defaultHomeLayout(),
+    loggedInSections: defaultHomeLayout(),
   },
   confidenceBar: {
     enabled: true,
     speed: 30,
     items: [
-      { label: '30+ Years', sublabel: 'Publishing Experience' },
-      { label: '500+ Titles', sublabel: 'Successfully Published' },
-      { label: '4.8 / 5', sublabel: 'Average Author Rating' },
-      { label: '40+ Platforms', sublabel: 'Global Distribution' },
+      // Only figures the plans themselves guarantee — no unsourced stats.
+      { label: '30+ Years', sublabel: 'OakBridge Publishing Experience' },
+      { label: '100%', sublabel: 'eBook Royalty on Every Plan' },
+      { label: 'Up to 80%', sublabel: 'Print Royalty' },
+      { label: 'ISBN', sublabel: 'Included in Every Plan' },
+      { label: 'Amazon · Flipkart · Kindle', sublabel: 'Where Your Book Sells' },
       { label: '100%', sublabel: 'Rights Retained by Authors' },
-      { label: 'On-Time', sublabel: 'Transparent Royalty Payouts' },
+      { label: 'Dedicated', sublabel: 'Relationship Manager' },
     ],
   },
   services: {
@@ -981,7 +1269,7 @@ export const defaultContent: SiteContent = {
         examples: ['Literary & commercial fiction', 'Thrillers & mystery', 'Romance', 'Short-story collections'],
         formats: ['Paperback & hardcover', 'Standard novel trim sizes', 'Matte or gloss covers', 'eBook & print'],
         timeline: 'Typically 6–10 weeks',
-        pricingNote: 'Plans from ₹ — final estimate after the planner.',
+        pricingNote: 'Plans from ₹29,999 + GST · final estimate after a free assessment.',
         faqs: [
           { question: 'Do you edit the manuscript?', answer: 'Yes — copy-editing and proofreading are available as part of your plan.' },
           { question: 'Will my book be on Amazon?', answer: 'Yes, distribution and listing support is included in our expert path.' },
@@ -1000,7 +1288,7 @@ export const defaultContent: SiteContent = {
         examples: ['Memoirs & life stories', 'Family histories', 'Tribute & anniversary books', 'Letters & journals'],
         formats: ['Premium hardcover', 'Photo-friendly paper', 'Private print runs', 'Reprints on demand'],
         timeline: 'Typically 4–8 weeks',
-        pricingNote: 'Private printing from ₹ — final estimate after the planner.',
+        pricingNote: 'Plans from ₹29,999 + GST · private family editions quoted on request.',
         faqs: [
           { question: 'Can you work from handwritten notes?', answer: 'Absolutely — we can transcribe and organise your material for you.' },
           { question: 'Can I order just a few copies?', answer: 'Yes, private runs can be as small as you like.' },
@@ -1019,7 +1307,7 @@ export const defaultContent: SiteContent = {
         examples: ['Picture books', 'Early readers', 'Rhyming stories', 'Activity books'],
         formats: ['Full-colour interior', 'Hardcover & paperback', 'Durable child-safe finishes', 'Large illustrated trims'],
         timeline: 'Typically 8–12 weeks',
-        pricingNote: 'Illustrated packages from ₹ — final estimate after the planner.',
+        pricingNote: 'Plans from ₹29,999 + GST · illustration quoted to your brief.',
         faqs: [
           { question: 'Do you provide illustrators?', answer: 'Yes — we can match you with an illustrator suited to your style.' },
           { question: 'Can it be full colour?', answer: 'Yes, full-colour interiors are standard for children’s books.' },
@@ -1038,7 +1326,7 @@ export const defaultContent: SiteContent = {
         examples: ['How-to & self-help', 'Business & professional', 'Academic & research', 'Reference & manuals'],
         formats: ['Clean typeset interiors', 'Tables, figures & indexes', 'Paperback & hardcover', 'eBook & print'],
         timeline: 'Typically 6–10 weeks',
-        pricingNote: 'Plans from ₹ — final estimate after the planner.',
+        pricingNote: 'Plans from ₹29,999 + GST · Professional (₹84,999) adds a plagiarism check.',
         faqs: [
           { question: 'Can you handle citations and an index?', answer: 'Yes, structured references and indexing are supported.' },
           { question: 'Do you assign ISBNs?', answer: 'Yes, ISBN assignment is part of the publishing process.' },
@@ -1057,7 +1345,7 @@ export const defaultContent: SiteContent = {
         examples: ['Photography', 'Art & design portfolios', 'Travel', 'Brand & lookbooks'],
         formats: ['Large landscape & square trims', 'Premium art paper', 'Lay-flat & hardcover binding', 'High-fidelity colour'],
         timeline: 'Typically 8–12 weeks',
-        pricingNote: 'Premium print from ₹ — final estimate after the planner.',
+        pricingNote: 'Usually a Custom plan · request a quote for large-format print.',
         faqs: [
           { question: 'Can you colour-match my images?', answer: 'Yes, we proof and calibrate colour for image-led books.' },
           { question: 'What paper options are there?', answer: 'A range of art papers and finishes — we’ll recommend based on your images.' },
@@ -1076,12 +1364,116 @@ export const defaultContent: SiteContent = {
         examples: ['Founder & company stories', 'Thought leadership', 'Anniversary & milestone books', 'Corporate gifting'],
         formats: ['On-brand design', 'Hardcover & paperback', 'Bulk corporate runs', 'eBook & print'],
         timeline: 'Typically 6–10 weeks',
-        pricingNote: 'Corporate packages from ₹ — final estimate after the planner.',
+        pricingNote: 'Professional from ₹84,999 + GST, or a Custom quote.',
         faqs: [
           { question: 'Can you print in bulk for our team?', answer: 'Yes, bulk corporate runs and gifting editions are available.' },
           { question: 'Can you match our brand guidelines?', answer: 'Yes, we design to your brand colours, fonts and tone.' },
         ],
         ctaLabel: 'Start my company book',
+      },
+      {
+        slug: 'lawyers-and-judges',
+        icon: 'Scale',
+        title: 'Lawyers & Judges',
+        tagline: 'Publish your commentary, casebook or memoir with the rigour legal writing demands.',
+        heroUrl: '',
+        heroAlt: '',
+        intro:
+          'Legal writing lives or dies on accuracy. Our editors check citations, case law and statutes against sources, keep terminology consistent, and typeset dense material so it stays readable. As an imprint of OakBridge, a publisher of law and tax titles, we know this ground well.',
+        examples: ['Commentaries & practice guides', 'Annotated statutes', 'Judicial memoirs & essays', 'Collections of judgments or opinions'],
+        formats: ['Hardback & paperback', 'Footnotes, tables of cases & indexes', 'Fact and citation checking', 'eBook & print'],
+        timeline: 'Typically 6–10 weeks',
+        pricingNote: 'Professional (₹84,999 + GST) includes a plagiarism check; fact and citation checking is ₹50 per page.',
+        faqs: [
+          {
+            question: 'Can you verify case citations?',
+            answer:
+              'Yes. Our fact and citation check verifies facts, case law, statutes and references against sources. It is included in the Custom plan and available as an add-on on the others.',
+          },
+          {
+            question: 'Can the book include a table of cases and an index?',
+            answer: 'Yes. We typeset tables of cases, statutes and indexes as part of the interior layout.',
+          },
+        ],
+        ctaLabel: 'Start my legal book',
+      },
+      {
+        slug: 'academics',
+        icon: 'GraduationCap',
+        title: 'Academics & Researchers',
+        tagline: 'Turn your research, thesis or course material into a book for your field.',
+        heroUrl: '',
+        heroAlt: '',
+        intro:
+          'We help academics adapt theses, research and lecture notes into well-structured books, with consistent referencing, clean tables and figures, and a plagiarism check before anything goes to print.',
+        examples: ['Monographs from a PhD thesis', 'Textbooks & course readers', 'Edited volumes', 'Research-based non-fiction'],
+        formats: ['Paperback & hardback', 'Tables, figures & references', 'Plagiarism check', 'eBook & print'],
+        timeline: 'Typically 6–10 weeks',
+        pricingNote: 'Plans from ₹29,999 + GST; Professional (₹84,999) includes a plagiarism check.',
+        faqs: [
+          {
+            question: 'Do you check for plagiarism?',
+            answer:
+              'Yes. A full similarity report is included in the Professional and Custom plans, and available for ₹3,000 on Starter and Elevate.',
+          },
+          {
+            question: 'Can you work with my referencing style?',
+            answer: 'Yes. Our editors keep your chosen referencing style consistent across the book.',
+          },
+        ],
+        ctaLabel: 'Start my academic book',
+      },
+      {
+        slug: 'founders-and-executives',
+        icon: 'Briefcase',
+        title: 'Founders & Executives',
+        tagline: 'Build authority with a book about your company, your ideas or your leadership.',
+        heroUrl: '',
+        heroAlt: '',
+        intro:
+          'A book is the most durable calling card a leader can have. We help founders and executives shape their ideas into a polished book, then put it in front of readers through Amazon, Flipkart, Amazon Ads and our marketing support.',
+        examples: ['Leadership & management books', 'Company histories', 'Thought-leadership books', 'Books for clients and conferences'],
+        formats: ['Hardback for gifting & events', 'Bulk author copies', 'Amazon Author Page', 'eBook & print'],
+        timeline: 'Typically 6–10 weeks',
+        pricingNote: 'Professional from ₹84,999 + GST, or a Custom quote for a complete launch.',
+        faqs: [
+          {
+            question: 'Can you help me market the book?',
+            answer:
+              'Yes. Elevate and above include social media posts and Amazon Ads; Professional adds an Amazon Author Page and influencer support.',
+          },
+          {
+            question: 'Can I order copies in bulk for my team or clients?',
+            answer: 'Yes. Additional copies are 35% off MRP for paperback and 40% off MRP for hardback.',
+          },
+        ],
+        ctaLabel: 'Start my book',
+      },
+      {
+        slug: 'doctors',
+        icon: 'Stethoscope',
+        title: 'Doctors & Healthcare Professionals',
+        tagline: 'Share your expertise with patients, peers or the public, accurately and clearly.',
+        heroUrl: '',
+        heroAlt: '',
+        intro:
+          'Whether it is a patient guide, a clinical handbook or the story of a career in medicine, we help healthcare professionals publish books that are accurate, carefully edited and easy to read.',
+        examples: ['Patient guides & health books', 'Clinical handbooks', 'Medical memoirs', 'Wellness non-fiction'],
+        formats: ['Paperback & hardback', 'Tables & illustrations', 'Fact checking', 'eBook & print'],
+        timeline: 'Typically 6–10 weeks',
+        pricingNote: 'Plans from ₹29,999 + GST; fact checking is ₹50 per page (included in Custom).',
+        faqs: [
+          {
+            question: 'Do you check medical facts?',
+            answer:
+              'Our fact and citation check verifies facts and references against your sources and flags anything that needs your review. Clinical accuracy remains the author’s responsibility.',
+          },
+          {
+            question: 'I am short on time. How involved do I need to be?',
+            answer: 'Your relationship manager runs the process; you review edits and approve proofs at each stage.',
+          },
+        ],
+        ctaLabel: 'Start my book',
       },
     ],
   },
@@ -1138,7 +1530,7 @@ export const defaultContent: SiteContent = {
       {
         question: 'How are royalties calculated and paid?',
         answer:
-          'Royalty rates depend on your chosen plan. Payouts are transparent and made on a regular schedule. Logged-in authors can project their earnings using the Royalty Calculator.',
+          'You keep 100% of net receipts on eBooks, and 80% (Starter), 70% (Elevate), 60% (Professional) or 50% (Custom) of net sales on print. Net sales means MRP less the store’s commission, print cost and GST. Royalties are paid by bank transfer — quarterly on Starter and Elevate, annually on Professional and Custom. Try the royalty calculator to see what you would earn per copy.',
       },
       {
         question: 'Do you offer editing for manuscripts in languages other than English?',
@@ -1179,9 +1571,12 @@ export const defaultContent: SiteContent = {
     tagline:
       'Transforming manuscripts into professionally published books with 30+ years of industry expertise.',
     email: 'info@oakbridge.in',
-    phone: '+91 00000 00000',
-    location: 'India',
-    copyrightName: 'Cursive Publishing',
+    // Real details as defaults, so no page ever renders a placeholder (even
+    // for the split second before saved content loads, or for crawlers).
+    phone: '+91 8800337299',
+    whatsapp: '918800337299',
+    location: 'Spaze iTech Park, Tower B3, Sector 49, Gurugram, Haryana 122018',
+    copyrightName: 'OakBridge Publishing',
     social: { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '' },
     newsletterHeading: 'Stay in the loop',
     newsletterText: 'Publishing tips and author stories, now and then. No spam.',
@@ -1194,7 +1589,8 @@ export const defaultContent: SiteContent = {
     header: [
       { label: 'Home', url: '#home', enabled: true },
       { label: 'Services', url: '/services', enabled: true },
-      { label: 'Testimonials', url: '#testimonials', enabled: true },
+      // Hidden until genuine author stories are added (the section is empty).
+      { label: 'Testimonials', url: '#testimonials', enabled: false },
       { label: 'Portfolio', url: '/portfolio', enabled: true },
       { label: 'Plans', url: '/plans', enabled: true },
       { label: 'Blog', url: '/blog', enabled: true },
@@ -1231,6 +1627,7 @@ export const defaultContent: SiteContent = {
     showContact: true,
     showSocial: true,
     showNewsletter: true,
+    showWhatsApp: true,
   },
 };
 // End of default site content.

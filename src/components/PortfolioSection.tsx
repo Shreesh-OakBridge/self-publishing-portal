@@ -1,81 +1,89 @@
-import type { Key } from 'react';
-import { BookOpen, ArrowRight } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { BookOpen, ArrowRight, ShoppingCart } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
-import { PortfolioItem } from '../content/defaults';
 import { withBase } from '../lib/basePath';
 
-// Homepage portfolio preview. With enough titles and auto-rotate on, the covers
-// glide as a seamless, never-ending marquee (pauses on hover). The admin
-// "rotateSeconds" sets the pace. Otherwise it's a static / manually-scrollable
-// row. The full /portfolio page shows everything as a grid.
+// Homepage portfolio: a large cover grid, filterable by genre, with a "Buy"
+// link on every title that has one. The full /portfolio page shows everything.
+const HOME_LIMIT = 12;
+
 export default function PortfolioSection() {
   const { portfolio } = useContent();
-  const items = portfolio.items;
-  const overflow = items.length > 4;
-  const autoRotate = portfolio.autoRotate ?? true;
-  const rotateSeconds = portfolio.rotateSeconds ?? 3;
-  const scrolling = autoRotate && overflow;
-  // Each cover takes ~rotateSeconds to pass; one full loop = items × seconds.
-  const duration = Math.max(12, items.length * Math.max(1, rotateSeconds));
+  const [genre, setGenre] = useState('All');
 
-  const Tile = (book: PortfolioItem, key: Key, extra = '') => {
-    const inner = (
-      <>
-        <div className="aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 border border-amber-100 flex items-center justify-center mb-3 shadow-sm group-hover:shadow-md transition-shadow">
-          {book.coverUrl ? (
-            <img
-              src={book.coverUrl}
-              alt={book.coverAlt || book.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="text-center px-3">
-              <BookOpen className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-              <p className="text-sm font-bold text-amber-800 leading-tight">{book.title}</p>
-            </div>
-          )}
-        </div>
-        <h3 className="font-semibold text-gray-900 leading-tight group-hover:text-amber-700 transition-colors">
-          {book.title}
-        </h3>
-        <p className="text-sm text-gray-500">{book.author}</p>
-        {book.category && <p className="text-xs text-amber-700 mt-0.5">{book.category}</p>}
-      </>
-    );
-    const cls = `group shrink-0 ${extra}`;
-    return book.linkUrl ? (
-      <a key={key} href={book.linkUrl} target="_blank" rel="noopener noreferrer" className={`${cls} cursor-pointer`}>
-        {inner}
-      </a>
-    ) : (
-      <div key={key} className={cls}>
-        {inner}
-      </div>
-    );
-  };
+  const genres = useMemo(() => {
+    const set = new Set<string>();
+    portfolio.items.forEach((b) => b.category && set.add(b.category));
+    return ['All', ...Array.from(set)];
+  }, [portfolio.items]);
+
+  const shown = (genre === 'All' ? portfolio.items : portfolio.items.filter((b) => b.category === genre)).slice(
+    0,
+    HOME_LIMIT,
+  );
+
+  if (portfolio.items.length === 0) return null;
 
   return (
     <section id="portfolio" className="py-20 px-4 bg-gradient-to-br from-gray-50 to-slate-100">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">{portfolio.heading}</h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">{portfolio.subheading}</p>
         </div>
 
-        {scrolling ? (
-          // Items rendered twice; the track translates -50% so it loops
-          // seamlessly. Right-margin (not gap) keeps the loop point exact.
-          <div className="overflow-hidden -mx-4 px-4 md:mx-0 md:px-0">
-            <div className="marquee-track flex w-max" style={{ animationDuration: `${duration}s` }}>
-              {items.map((b, i) => Tile(b, `a-${i}`, 'w-[150px] sm:w-[200px] mr-5 md:mr-7'))}
-              {items.map((b, i) => Tile(b, `b-${i}`, 'w-[150px] sm:w-[200px] mr-5 md:mr-7'))}
-            </div>
-          </div>
-        ) : (
-          <div className="flex md:flex-wrap md:justify-center gap-5 md:gap-6 overflow-x-auto md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
-            {items.map((b, i) => Tile(b, i, 'w-[40%] sm:w-[200px]'))}
+        {genres.length > 2 && (
+          <div className="flex flex-wrap justify-center gap-2 mb-10">
+            {genres.map((g) => (
+              <button
+                key={g}
+                onClick={() => setGenre(g)}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                  genre === g
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-white border border-gray-300 text-gray-600 hover:border-amber-400 hover:text-amber-700'
+                }`}
+              >
+                {g}
+              </button>
+            ))}
           </div>
         )}
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 md:gap-6">
+          {shown.map((book, i) => (
+            <div key={`${book.title}-${i}`} className="group flex flex-col">
+              <div className="aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-br from-amber-100 to-amber-50 border border-amber-100 flex items-center justify-center mb-3 shadow-sm group-hover:shadow-md transition-shadow">
+                {book.coverUrl ? (
+                  <img
+                    src={book.coverUrl}
+                    alt={book.coverAlt || `${book.title} by ${book.author}`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="text-center px-3">
+                    <BookOpen className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-amber-800 leading-tight">{book.title}</p>
+                  </div>
+                )}
+              </div>
+              <h3 className="font-semibold text-gray-900 leading-tight">{book.title}</h3>
+              <p className="text-sm text-gray-500">{book.author}</p>
+              {book.category && <p className="text-xs text-amber-700 mt-0.5">{book.category}</p>}
+              {book.linkUrl && (
+                <a
+                  href={book.linkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 self-start text-xs font-semibold text-amber-700 hover:text-amber-900"
+                >
+                  <ShoppingCart className="w-3.5 h-3.5" /> Buy
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
 
         <div className="text-center mt-10">
           <a

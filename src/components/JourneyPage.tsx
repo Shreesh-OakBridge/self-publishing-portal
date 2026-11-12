@@ -76,7 +76,7 @@ export default function JourneyPage({ slug }: { slug: string }) {
                 className="w-full rounded-3xl object-cover aspect-[4/3] shadow-lg"
               />
             ) : (
-              <div className="w-full aspect-[4/3] rounded-3xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+              <div className="w-full aspect-[4/3] rounded-3xl bg-gradient-to-br from-amber-100 to-amber-100 flex items-center justify-center">
                 <Icon className="w-20 h-20 text-amber-600/70" />
               </div>
             )}
@@ -152,7 +152,7 @@ export default function JourneyPage({ slug }: { slug: string }) {
 
       {/* CTA band */}
       <section className="px-4 pb-16">
-        <div className="max-w-5xl mx-auto rounded-3xl bg-gradient-to-br from-amber-600 to-orange-600 text-white p-8 md:p-12 text-center">
+        <div className="max-w-5xl mx-auto rounded-3xl bg-gradient-to-br from-amber-600 to-amber-800 text-white p-8 md:p-12 text-center">
           <h2 className="text-2xl md:text-3xl font-bold mb-3">Ready to begin?</h2>
           <p className="text-white/90 mb-6 max-w-xl mx-auto">
             Answer a few quick questions and we’ll shape the perfect plan for your {j.title.toLowerCase()}.

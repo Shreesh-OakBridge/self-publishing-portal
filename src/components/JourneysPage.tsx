@@ -28,7 +28,7 @@ export default function JourneysPage() {
                 }}
                 className="text-left bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-amber-300 transition-all group"
               >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-800 flex items-center justify-center mb-4">
                   <Icon className="w-6 h-6 text-white" />
                 </div>
                 <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-1 group-hover:text-amber-700 transition-colors">

@@ -134,6 +134,15 @@ function pageJsonLd(path: string, c: SiteContent): object | null {
   if (label) graph.push(breadcrumbNode(path, label));
   if (path === '/services') graph.push(...serviceNodes(c));
   if (path === '/faq') graph.push(faqNode(c));
+  if (path === '/plans' && c.pricing.faqs?.length)
+    graph.push({
+      '@type': 'FAQPage',
+      mainEntity: c.pricing.faqs.map((q) => ({
+        '@type': 'Question',
+        name: q.question,
+        acceptedAnswer: { '@type': 'Answer', text: q.answer },
+      })),
+    });
   if (path.startsWith('/journey/')) {
     const slug = decodeURIComponent(path.slice('/journey/'.length));
     const j = c.journeys.items.find((x) => x.slug === slug);

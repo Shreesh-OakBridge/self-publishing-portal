@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import WhatsAppButton from './WhatsAppButton';
 import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Twitter, Youtube, Send, CheckCircle } from 'lucide-react';
 import { useContent } from '../content/ContentProvider';
 import type { NavLink } from '../content/defaults';
@@ -177,7 +178,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-white/10 mt-14 pt-8 flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
           <p className="text-gray-500 text-sm text-center sm:text-left">
-            &copy; {new Date().getFullYear()} {footer.copyrightName}. All rights reserved.
+            &copy; {new Date().getFullYear()} {footer.copyrightName}. Cursive is an imprint of OakBridge Publishing.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm">
             {navigation.legalLinks
@@ -188,6 +189,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
+      <WhatsAppButton />
     </footer>
   );
 }

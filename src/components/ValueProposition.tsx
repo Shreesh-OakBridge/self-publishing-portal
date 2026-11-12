@@ -3,10 +3,10 @@ import { useContent } from '../content/ContentProvider';
 
 const cardIcons = [Heart, Lightbulb, Users, TrendingUp];
 const cardGradients = [
-  'from-rose-500 to-pink-500',
-  'from-amber-500 to-orange-500',
-  'from-orange-500 to-amber-500',
-  'from-pink-500 to-rose-500',
+  'from-amber-600 to-amber-800',
+  'from-stone-600 to-stone-800',
+  'from-amber-500 to-amber-700',
+  'from-amber-800 to-stone-900',
 ];
 
 export default function ValueProposition() {
@@ -36,7 +36,7 @@ export default function ValueProposition() {
             <p className="text-base md:text-lg text-gray-700 leading-relaxed">{v.whyParagraph2}</p>
           </div>
 
-          <div className="bg-gradient-to-br from-amber-100 to-orange-100 p-6 md:p-8 rounded-3xl">
+          <div className="bg-gradient-to-br from-amber-100 to-amber-100 p-6 md:p-8 rounded-3xl">
             {/* Desktop: always expanded */}
             <h3 className="hidden md:block text-2xl font-bold text-gray-900 mb-6">{v.changesHeading}</h3>
             <ul className="hidden md:block space-y-4">{points}</ul>

@@ -144,7 +144,7 @@ export default function AuthorHub() {
               >
                 <div
                   className={`w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-2 ${
-                    earned ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white' : 'bg-gray-200 text-gray-400'
+                    earned ? 'bg-gradient-to-br from-amber-500 to-amber-800 text-white' : 'bg-gray-200 text-gray-400'
                   }`}
                 >
                   <Icon className="w-5 h-5" />

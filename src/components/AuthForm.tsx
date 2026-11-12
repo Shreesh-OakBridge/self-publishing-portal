@@ -260,7 +260,7 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login', oauth
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-xl p-8 md:p-10 w-full">
       <div className="flex items-center space-x-3 mb-6">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-800 flex items-center justify-center">
           <BookOpen className="w-6 h-6 text-white" />
         </div>
         <div>
@@ -477,7 +477,7 @@ export default function AuthForm({ onAuthenticated, initialMode = 'login', oauth
       <button
         type="submit"
         disabled={busy}
-        className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {busy
           ? 'Please wait…'
